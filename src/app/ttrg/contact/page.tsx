@@ -1,0 +1,128 @@
+"use client";
+
+import { useState } from "react";
+import { CheckCircle2, MapPin, Phone, Mail, Clock } from "lucide-react";
+import Link from "next/link";
+import { addContactMessage, type ContactMessage } from "@/lib/admin-store";
+
+function FacebookIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+  );
+}
+
+export default function ContactPage() {
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", subject: "", reason: "", message: "" });
+  const u = (field: string, val: string) => setForm((f) => ({ ...f, [field]: val }));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const msg: ContactMessage = {
+      id: "CM-" + Date.now().toString(36).toUpperCase(),
+      name: `${form.firstName} ${form.lastName}`.trim(),
+      email: form.email,
+      phone: form.phone,
+      subject: form.subject,
+      message: form.message,
+      date: new Date().toISOString().split("T")[0],
+      read: false,
+    };
+    addContactMessage(msg);
+    setSubmitted(true);
+  };
+
+  if (submitted) return (
+    <div className="min-h-[70vh] flex items-center justify-center">
+      <div className="text-center max-w-md px-4">
+        <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
+        <h1 className="text-3xl font-bold text-[#1B2A4A] mb-3">Message Sent!</h1>
+        <p className="text-[#1B2A4A]/60 mb-6">We&apos;ll get back to you within 24–48 hours.</p>
+        <Link href="/ttrg" className="text-[#C41E2A] font-semibold hover:underline">← Back to Home</Link>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="bg-white">
+      <section className="bg-[#1B2A4A] py-16 sm:py-20">
+        <div className="max-w-3xl mx-auto px-4 text-center">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Contact Us</h1>
+          <p className="text-white/60 max-w-lg mx-auto">Have a question, want to partner, or need help? We&apos;d love to hear from you.</p>
+        </div>
+      </section>
+
+      <section className="py-12 sm:py-16">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Info */}
+            <div className="space-y-6">
+              {[
+                { icon: MapPin, label: "Visit Us", value: "4805 Orchard Rd\nCleveland, OH 44128" },
+                { icon: Phone, label: "Call Us", value: "(866) 436-4959", href: "tel:+18664364959" },
+                { icon: Mail, label: "Email Us", value: "Teamtrainersrescue@gmail.com", href: "mailto:Teamtrainersrescue@gmail.com" },
+                { icon: Clock, label: "Hours", value: "Mon–Fri: 9am–6pm\nSat: 10am–4pm\nSun: Closed" },
+              ].map((item: { icon: typeof MapPin; label: string; value: string; href?: string }) => (
+                <div key={item.label} className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#FFF0F0] flex items-center justify-center flex-shrink-0">
+                    <item.icon className="w-5 h-5 text-[#C41E2A]" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-[#1B2A4A] text-sm">{item.label}</p>
+                    {item.href ? (
+                      <a href={item.href} className="text-sm text-[#1B2A4A]/50 hover:text-[#C41E2A] transition-colors">{item.value}</a>
+                    ) : (
+                      <p className="text-sm text-[#1B2A4A]/50 whitespace-pre-line">{item.value}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <a
+                href="https://www.facebook.com/TeamTrainersRescueGroup"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-4 group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#FFF0F0] flex items-center justify-center flex-shrink-0">
+                  <FacebookIcon className="w-5 h-5 text-[#C41E2A]" />
+                </div>
+                <div>
+                  <p className="font-bold text-[#1B2A4A] text-sm">Facebook</p>
+                  <p className="text-sm text-[#1B2A4A]/50 group-hover:text-[#C41E2A] transition-colors">Follow our rescue updates</p>
+                </div>
+              </a>
+            </div>
+
+            {/* Form */}
+            <div className="lg:col-span-2">
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <input type="text" placeholder="First Name *" required value={form.firstName} onChange={(e) => u("firstName", e.target.value)} className="h-12 px-5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                  <input type="text" placeholder="Last Name *" required value={form.lastName} onChange={(e) => u("lastName", e.target.value)} className="h-12 px-5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                </div>
+                <input type="email" placeholder="Email *" required value={form.email} onChange={(e) => u("email", e.target.value)} className="w-full h-12 px-5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                <input type="tel" placeholder="Phone (optional)" value={form.phone} onChange={(e) => u("phone", e.target.value)} className="w-full h-12 px-5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                <select required value={form.subject} onChange={(e) => u("subject", e.target.value)} className="w-full h-12 px-5 rounded-xl border border-slate-200 text-sm text-[#1B2A4A]/60 focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20">
+                  <option value="">Subject *</option>
+                  <option>Adoption</option>
+                  <option>Foster</option>
+                  <option>Volunteer</option>
+                  <option>Become a Trainer</option>
+                  <option>Recommend a Dog</option>
+                  <option>Partner With TTRG</option>
+                  <option>Donation Question</option>
+                  <option>General Inquiry</option>
+                </select>
+                <input type="text" placeholder="Reason for contact *" required value={form.reason} onChange={(e) => u("reason", e.target.value)} className="w-full h-12 px-5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                <textarea placeholder="Your message *" rows={5} required value={form.message} onChange={(e) => u("message", e.target.value)} className="w-full px-5 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none" />
+                <button type="submit" className="w-full bg-[#C41E2A] hover:bg-[#A01825] text-white py-3.5 rounded-xl text-sm font-bold transition-colors">
+                  SEND MESSAGE
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
