@@ -8,6 +8,22 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "cdn.coverr.co" },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/",
+        has: [{ type: "host", value: "teamtrainersrescuegroup.com" }],
+        destination: "/ttrg",
+        permanent: true,
+      },
+      {
+        source: "/",
+        has: [{ type: "host", value: "www.teamtrainersrescuegroup.com" }],
+        destination: "/ttrg",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
