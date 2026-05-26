@@ -42,3 +42,15 @@ next-env.d.ts
 
 # Large video files (served externally)
 public/ttrg/video/bo-brady.mov
+
+# All video files - too large for GitHub (use external hosting)
+public/ttrg/video/*.mov
+public/ttrg/video/*.mp4
+public/ttrg/videos/*.mp4
+public/ttrg/videos/*.mov
+public/lorenzo/videos/*.mp4
+public/lorenzo/videos/*.mov
+
+# Large images
+public/lorenzo/trainers/lorenzo-with-mts.jpg
+public/lorenzo/facility-outside.jpg
