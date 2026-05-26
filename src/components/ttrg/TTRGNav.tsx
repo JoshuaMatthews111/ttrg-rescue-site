@@ -37,25 +37,27 @@ function Dropdown({ label, items, open, onToggle, onClose }: { label: string; it
     <div ref={ref} className="relative">
       <button
         onClick={onToggle}
-        className="flex items-center gap-1 text-[#1B2A4A] text-sm font-semibold hover:text-[#C41E2A] transition-colors"
+        className="flex items-center gap-1 text-[#1B2A4A] text-sm font-semibold hover:text-[#C41E2A] transition-colors py-2"
       >
         {label}
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 animate-fade-up">
-          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-l border-t border-slate-100 rotate-45" />
-          {items.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={onClose}
-              className="flex items-center gap-3 px-4 py-2.5 text-[#1B2A4A] text-sm hover:bg-[#FFF0F0] hover:text-[#C41E2A] transition-colors"
-            >
-              <item.icon className="w-4 h-4 text-[#C41E2A]/60" />
-              {item.label}
-            </Link>
-          ))}
+        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50">
+          <div className="relative w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 animate-fade-up">
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-l border-t border-slate-100 rotate-45 pointer-events-none" />
+            {items.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={onClose}
+                className="relative z-10 flex items-center gap-3 px-4 py-2.5 text-[#1B2A4A] text-sm hover:bg-[#FFF0F0] hover:text-[#C41E2A] transition-colors"
+              >
+                <item.icon className="w-4 h-4 text-[#C41E2A]/60" />
+                {item.label}
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -84,14 +86,14 @@ export default function TTRGNav() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Logo — circular badge */}
+          {/* Logo */}
           <Link href="/ttrg" className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-full overflow-hidden border-[3px] border-white/80 shadow-lg flex-shrink-0 bg-white">
-              <img src="/ttrg/ttrg-logo.jpeg" alt="Team Trainers Rescue Group" className="w-full h-full object-cover" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-slate-100 shadow-md flex-shrink-0 bg-white p-0.5">
+              <img src="/ttrg/ttrg-logo.jpeg" alt="Team Trainers Rescue Group" className="w-full h-full object-cover rounded-full" />
             </div>
             <div className="hidden md:block leading-tight">
-              <p className="text-[#1B2A4A] font-black text-[13px] tracking-tight">TEAM TRAINERS</p>
-              <p className="text-[#C41E2A] font-black text-[13px] tracking-tight -mt-0.5">RESCUE GROUP</p>
+              <p className="text-[#1B2A4A] font-black text-sm tracking-tight">TEAM TRAINERS</p>
+              <p className="text-[#C41E2A] font-black text-sm tracking-tight -mt-0.5">RESCUE GROUP</p>
             </div>
           </Link>
 

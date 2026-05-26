@@ -386,7 +386,7 @@ function PartnerDashboard() {
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">PARTNER &amp; OUTREACH PORTAL</h1>
           <p className="text-white/40 text-xs mt-1">Stronger Partners. More Lives Saved.</p>
         </div>
-        <Link href="/ttrg/admin/partner-referrals" className="bg-[#C41E2A] hover:bg-[#A01825] text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2">
+        <Link href="/ttrg/admin/partners" className="bg-[#C41E2A] hover:bg-[#A01825] text-white text-xs font-bold px-5 py-2.5 rounded-lg transition-colors flex items-center gap-2">
           <Send className="w-4 h-4" /> Submit Referral
         </Link>
       </div>

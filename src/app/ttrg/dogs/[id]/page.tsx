@@ -2,46 +2,35 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { Heart, MapPin, Shield, Stethoscope, GraduationCap, Smile, Home, ChevronRight, ArrowLeft, Share2, PawPrint, AlertTriangle, Dumbbell, Brain, Utensils, X, Phone, Mail, CheckCircle2 } from "lucide-react";
-import { getDogById, donationTiers, dogs } from "@/lib/dogs";
+import {
+  Heart, MapPin, Shield, Stethoscope, GraduationCap, Home, ChevronRight, ChevronLeft, ArrowLeft, Share2,
+  PawPrint, AlertTriangle, X, Phone, Mail, CheckCircle2, Clock, Star, Utensils, Dumbbell, Brain,
+  Calendar, Users,
+} from "lucide-react";
+import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
 import { getAdminDogById } from "@/lib/admin-store";
 
-const stageInfo: Record<string, { icon: typeof Shield; label: string; color: string }> = {
-  rescue: { icon: Shield, label: "Rescued", color: "bg-red-500" },
-  rehabilitate: { icon: Stethoscope, label: "In Rehabilitation", color: "bg-amber-500" },
-  train: { icon: GraduationCap, label: "In Training", color: "bg-emerald-500" },
-  foster: { icon: Home, label: "In Foster", color: "bg-blue-500" },
-  adopt: { icon: Home, label: "Ready to Adopt", color: "bg-violet-500" },
-  recover: { icon: Home, label: "Recovering", color: "bg-blue-500" },
-  rehome: { icon: Home, label: "Ready for Home", color: "bg-violet-500" },
-};
-
-const allStages = ["rescue", "rehabilitate", "foster", "adopt"] as const;
-const stageMapping: Record<string, number> = { rescue: 0, rehabilitate: 1, train: 1, foster: 2, recover: 2, adopt: 3, rehome: 3 };
-
-const stageNeeds: Record<string, { label: string; cta: string; href: string }> = {
-  rescue: { label: "Urgent Foster Needed", cta: "Apply to Foster", href: "/ttrg/foster" },
-  rehabilitate: { label: "Medical Support Needed", cta: "Sponsor Rehab", href: "/ttrg/donate" },
-  train: { label: "Sponsor This Stage", cta: "Sponsor Training", href: "/ttrg/donate" },
-  recover: { label: "Needs Placement Soon", cta: "Sponsor Recovery", href: "/ttrg/donate" },
-  foster: { label: "In Foster Care", cta: "Sponsor Foster Care", href: "/ttrg/donate" },
-  adopt: { label: "Ready for Adoption", cta: "Apply to Adopt", href: "/ttrg/adopt" },
-  rehome: { label: "Ready for Adoption", cta: "Apply to Adopt", href: "/ttrg/adopt" },
-};
-const sponsorLabels: Record<string, string> = { rescue: "Sponsor Rescue", rehabilitate: "Sponsor Rehab", train: "Sponsor Training", recover: "Sponsor Recovery", foster: "Sponsor Foster Care", adopt: "Sponsor Adoption", rehome: "Sponsor Adoption" };
+/* ── stage helpers ── */
+const stageOrder: Record<string, number> = { rescue: 0, medical: 1, rehab: 2, foster: 3, adopt: 4, home: 5 };
+const needIcons: Record<string, typeof Stethoscope> = { nutrition: Utensils, vet: Stethoscope, training: Dumbbell, foster: Home };
+const milestoneColor: Record<string, string> = { completed: "text-emerald-500", in_progress: "text-amber-500", upcoming: "text-slate-300", urgent: "text-red-500" };
+const milestoneBg: Record<string, string> = { completed: "bg-emerald-500", in_progress: "bg-amber-500", upcoming: "bg-slate-200", urgent: "bg-red-500" };
+const legendItems = [
+  { label: "Completed", desc: "Stage completed", color: "bg-emerald-500" },
+  { label: "In Progress", desc: "Currently in this stage", color: "bg-amber-500" },
+  { label: "Upcoming", desc: "Not yet started", color: "bg-slate-200" },
+  { label: "Urgent", desc: "Needs immediate attention", color: "bg-red-500" },
+  { label: "Sponsored", desc: "Has a sponsor", color: "bg-violet-500" },
+];
 
 export default function DogProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const adminDog = typeof window !== "undefined" ? getAdminDogById(id) : undefined;
   const staticDog = getDogById(id);
-  const dog = adminDog || staticDog;
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
-  const [customAmount, setCustomAmount] = useState("");
-  const [showDonateModal, setShowDonateModal] = useState(false);
-  const [sponsorSubmitted, setSponsorSubmitted] = useState(false);
+  const rawDog = (adminDog || staticDog) as (Dog & Record<string, unknown>) | undefined;
   const [activeImage, setActiveImage] = useState(0);
 
-  if (!dog) {
+  if (!rawDog) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
         <PawPrint className="w-16 h-16 text-slate-200" />
@@ -51,19 +40,36 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const stage = stageInfo[dog.stage] || stageInfo.rescue;
-  const StageIcon = stage.icon;
-  const currentStageIndex = stageMapping[dog.stage] ?? 0;
+  /* safe defaults for legacy admin dogs missing extended fields */
+  const oldStageMap: Record<string, string> = { rescue: "rescue", rehabilitate: "rehab", train: "rehab", recover: "medical", rehome: "adopt" };
+  const dog: Dog = {
+    ...rawDog,
+    rescueDate: rawDog.rescueDate || "Unknown",
+    daysInRescue: rawDog.daysInRescue || 0,
+    currentJourneyStage: rawDog.currentJourneyStage || (oldStageMap[rawDog.stage] as Dog["currentJourneyStage"]) || "rescue",
+    journeyDates: rawDog.journeyDates || {},
+    progressPercent: rawDog.progressPercent || 0,
+    currentStageLabel: rawDog.currentStageLabel || rawDog.stage || "In Progress",
+    statusBadges: rawDog.statusBadges || (rawDog.urgent ? ["Urgent"] : []),
+    milestones: rawDog.milestones || [],
+    currentNeeds: rawDog.currentNeeds || [],
+    careTeam: rawDog.careTeam || "TTRG Team",
+    lastUpdate: rawDog.lastUpdate || "Recently",
+    adminNote: rawDog.adminNote || "",
+    sponsorStatus: rawDog.sponsorStatus || "none",
+  };
+
+  const currentIdx = stageOrder[dog.currentJourneyStage] ?? 0;
 
   return (
-    <div className="bg-white">
-      {/* Breadcrumb */}
-      <div className="bg-[#FAFAF8] border-b border-slate-100">
+    <div className="bg-[#FAFAF8] min-h-screen">
+      {/* ── BREADCRUMB ── */}
+      <div className="bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center gap-2 text-sm text-[#1B2A4A]/50">
             <Link href="/ttrg" className="hover:text-[#C41E2A]">Home</Link>
             <ChevronRight className="w-3 h-3" />
-            <Link href="/ttrg/sponsor" className="hover:text-[#C41E2A]">Sponsor a Dog</Link>
+            <Link href="/ttrg/sponsor" className="hover:text-[#C41E2A]">Our Dogs</Link>
             <ChevronRight className="w-3 h-3" />
             <span className="text-[#1B2A4A] font-medium">{dog.name}</span>
           </div>
@@ -71,184 +77,259 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* LEFT — Images */}
-          <div>
-            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] mb-4">
-              <img src={dog.gallery[activeImage] || dog.image} alt={dog.name} className="w-full h-full object-cover" />
-              {dog.urgent && (
-                <span className="absolute top-4 left-4 bg-[#C41E2A] text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full flex items-center gap-1 animate-pulse">
-                  <AlertTriangle className="w-3 h-3" /> {stageNeeds[dog.stage]?.label || "Urgent Need"}
-                </span>
-              )}
-              {!dog.urgent && stageNeeds[dog.stage] && (
-                <span className="absolute top-4 left-4 bg-[#1B2A4A]/80 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
-                  {stageNeeds[dog.stage].label}
-                </span>
-              )}
-              <span className={`absolute top-4 right-4 ${stage.color} text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1`}>
-                <StageIcon className="w-3 h-3" /> {stage.label}
-              </span>
+        {/* ══════ HEADING ══════ */}
+        <div className="mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1B2A4A] flex items-center gap-3">
+                {dog.name}&apos;s Rescue Journey <PawPrint className="w-8 h-8 text-[#C41E2A]" />
+              </h1>
+              <p className="text-[#1B2A4A]/50 text-base mt-2">Every step forward is possible because of people like you.</p>
             </div>
-            {dog.gallery.length > 1 && (
-              <div className="flex gap-3">
-                {dog.gallery.map((img, i) => (
-                  <button key={i} onClick={() => setActiveImage(i)} className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${activeImage === i ? "border-[#C41E2A]" : "border-transparent opacity-60 hover:opacity-100"}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
+            <div className="flex items-center gap-3 bg-white rounded-2xl px-5 py-3 border border-slate-100">
+              <Heart className="w-5 h-5 text-[#C41E2A] fill-[#C41E2A]/20" />
+              <div>
+                <span className="text-2xl font-black text-[#C41E2A]">{dog.progressPercent}%</span>
+                <span className="text-xs text-[#1B2A4A]/50 ml-2">Stage {currentIdx + 1} of 6</span>
               </div>
-            )}
+            </div>
+          </div>
+        </div>
+
+        {/* ══════ JOURNEY TRACKER ══════ */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 mb-8 border border-slate-100">
+          {/* current stage label */}
+          <div className="text-center mb-6">
+            <span className="inline-block bg-amber-100 text-amber-700 text-[11px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-full">Current Stage</span>
+          </div>
+          <div className="flex items-center justify-between gap-0 overflow-x-auto pb-2">
+            {journeyStages.map((stage, i) => {
+              const isCompleted = i < currentIdx;
+              const isCurrent = i === currentIdx;
+              const isUpcoming = i > currentIdx;
+              const date = dog.journeyDates[stage.key];
+
+              return (
+                <div key={stage.key} className="flex items-center flex-1 min-w-0">
+                  {i > 0 && (
+                    <div className={`h-[3px] flex-1 min-w-4 ${isCompleted || isCurrent ? "bg-emerald-400" : "bg-slate-200"}`} />
+                  )}
+                  <div className="flex flex-col items-center gap-1.5 relative">
+                    {isCurrent && (
+                      <span className="absolute -top-7 text-[9px] font-bold text-amber-600 uppercase tracking-wider whitespace-nowrap hidden sm:block">Current Stage</span>
+                    )}
+                    <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-[3px] transition-all relative ${
+                      isCompleted ? "bg-emerald-500 border-emerald-500 text-white" :
+                      isCurrent ? "bg-amber-500 border-amber-500 text-white scale-110 shadow-lg shadow-amber-200" :
+                      "bg-slate-100 border-slate-200 text-slate-400"
+                    }`}>
+                      {isCompleted && <CheckCircle2 className="w-6 h-6" />}
+                      {isCurrent && (() => {
+                        const icons = [Shield, Stethoscope, Dumbbell, Home, Heart, Home];
+                        const Icon = icons[i] || PawPrint;
+                        return <Icon className="w-6 h-6" />;
+                      })()}
+                      {isUpcoming && (() => {
+                        const icons = [Shield, Stethoscope, Dumbbell, Home, Heart, Home];
+                        const Icon = icons[i] || PawPrint;
+                        return <Icon className="w-6 h-6" />;
+                      })()}
+                      {isCompleted && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center">
+                          <CheckCircle2 className="w-3 h-3 text-white" />
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <p className={`text-[10px] sm:text-xs font-bold ${isCompleted ? "text-emerald-600" : isCurrent ? "text-amber-600" : "text-slate-400"}`}>
+                        {stage.num}. {stage.label}
+                      </p>
+                      <p className={`text-[9px] ${isCurrent ? "text-amber-500 font-semibold" : "text-slate-400"}`}>
+                        {isCurrent ? `Since ${date || "Now"}` : date || (isUpcoming ? "Upcoming" : "")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ══════ MAIN 3-COLUMN LAYOUT ══════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* ── COL 1: Gallery + Status ── */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* Image gallery */}
+            <div className="bg-white rounded-3xl overflow-hidden border border-slate-100">
+              <div className="relative aspect-[4/3]">
+                <img src={dog.gallery[activeImage] || dog.image} alt={dog.name} className="w-full h-full object-cover" />
+                <div className="absolute top-4 right-4 bg-black/50 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                  {activeImage + 1} / {dog.gallery.length || 1}
+                </div>
+                {dog.gallery.length > 1 && (
+                  <>
+                    <button onClick={() => setActiveImage((p) => (p - 1 + dog.gallery.length) % dog.gallery.length)} className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors">
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => setActiveImage((p) => (p + 1) % dog.gallery.length)} className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors">
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                  <p className="text-white/80 text-xs">The day we rescued {dog.name}.</p>
+                  <p className="text-white/50 text-[10px]">{dog.rescueDate}</p>
+                </div>
+              </div>
+              {dog.gallery.length > 1 && (
+                <div className="flex gap-2 p-3 overflow-x-auto">
+                  {dog.gallery.map((img, i) => (
+                    <button key={i} onClick={() => setActiveImage(i)} className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${activeImage === i ? "border-[#C41E2A]" : "border-transparent opacity-60 hover:opacity-100"}`}>
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Current Status */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 mb-2 block">Current Status</span>
+              <h3 className="text-xl font-black text-[#1B2A4A] mb-3">{dog.currentStageLabel}</h3>
+              <p className="text-sm text-[#1B2A4A]/60 leading-relaxed mb-5">{dog.fullStory.slice(0, 200)}...</p>
+
+              <div className="space-y-3 text-sm">
+                <div className="flex items-start gap-3">
+                  <Calendar className="w-4 h-4 text-[#1B2A4A]/40 mt-0.5 flex-shrink-0" />
+                  <div><span className="font-bold text-[#1B2A4A]">Last Update</span> <span className="text-[#1B2A4A]/50 ml-2">{dog.lastUpdate}</span></div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Users className="w-4 h-4 text-[#1B2A4A]/40 mt-0.5 flex-shrink-0" />
+                  <div><span className="font-bold text-[#1B2A4A]">Care Team</span> <span className="text-[#1B2A4A]/50 ml-2">{dog.careTeam}</span></div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <PawPrint className="w-4 h-4 text-[#1B2A4A]/40 mt-0.5 flex-shrink-0" />
+                  <div><span className="font-bold text-[#1B2A4A]">Admin Note</span> <span className="text-[#1B2A4A]/50 ml-2">{dog.adminNote}</span></div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* RIGHT — Info */}
-          <div>
-            <Link href="/ttrg/sponsor" className="inline-flex items-center gap-1 text-sm text-[#1B2A4A]/50 hover:text-[#C41E2A] mb-4">
-              <ArrowLeft className="w-4 h-4" /> Back to all dogs
-            </Link>
-
-            <h1 className="text-3xl sm:text-4xl font-bold text-[#1B2A4A] mb-2">{dog.name}</h1>
-            <p className="text-[#1B2A4A]/50 text-sm mb-4">{dog.age} · {dog.gender} · {dog.breed} · {dog.weight}</p>
-            <p className="flex items-center gap-2 text-sm text-[#1B2A4A]/40 mb-6"><MapPin className="w-4 h-4" /> {dog.location}</p>
-
-            {/* Story */}
-            <div className="mb-8">
-              <h2 className="text-lg font-bold text-[#1B2A4A] mb-2">{dog.name}&apos;s Story</h2>
-              <p className="text-[#1B2A4A]/60 text-sm leading-relaxed">{dog.fullStory}</p>
-            </div>
-
-            {/* Journey Progress */}
-            <div className="bg-[#FAFAF8] rounded-2xl p-5 mb-8 border border-slate-100">
-              <h3 className="text-sm font-bold text-[#1B2A4A] mb-4">Rescue Journey Progress</h3>
-              <div className="flex items-center gap-1">
-                {allStages.map((s, i) => {
-                  const info = stageInfo[s];
-                  const Icon = info.icon;
-                  const isActive = i <= currentStageIndex;
+          {/* ── COL 2: Needs + CTAs ── */}
+          <div className="lg:col-span-4 space-y-6">
+            {/* What dog needs now */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100">
+              <h3 className="text-lg font-black text-[#1B2A4A] mb-4">What {dog.name} Needs Now</h3>
+              <div className="space-y-3">
+                {dog.currentNeeds.map((need) => {
+                  const Icon = needIcons[need.icon] || Heart;
                   return (
-                    <div key={s} className="flex-1 flex flex-col items-center gap-1">
-                      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${isActive ? info.color + " text-white" : "bg-slate-100 text-slate-300"}`}>
-                        <Icon className="w-4 h-4" />
+                    <div key={need.label} className="flex items-start gap-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${need.urgent ? "bg-red-100" : "bg-slate-100"}`}>
+                        <Icon className={`w-4 h-4 ${need.urgent ? "text-red-500" : "text-[#1B2A4A]/60"}`} />
                       </div>
-                      <span className={`text-[9px] sm:text-[10px] font-semibold text-center ${isActive ? "text-[#1B2A4A]" : "text-[#1B2A4A]/30"}`}>{info.label.replace("In ", "")}</span>
+                      <div>
+                        <p className="text-sm font-bold text-[#1B2A4A]">{need.label}</p>
+                        <p className={`text-xs ${need.urgent ? "text-red-500 font-semibold" : "text-[#1B2A4A]/50"}`}>{need.detail}</p>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Needs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              {[
-                { icon: Stethoscope, label: "Medical Needs", value: dog.medicalNeeds },
-                { icon: Dumbbell, label: "Training Needs", value: dog.trainingNeeds },
-                { icon: Brain, label: "Behavior Notes", value: dog.behaviorNotes },
-                { icon: Utensils, label: "Special Needs", value: dog.specialNeeds },
-              ].map((item) => (
-                <div key={item.label} className="bg-[#FAFAF8] rounded-xl p-4 border border-slate-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    <item.icon className="w-4 h-4 text-[#C41E2A]" />
-                    <span className="text-xs font-bold text-[#1B2A4A]">{item.label}</span>
+            {/* CTA Buttons */}
+            <Link href={`/ttrg/donate?ttrgDog=${dog.name}`} className="block w-full bg-[#C41E2A] hover:bg-[#A01825] text-white py-4 rounded-2xl text-sm font-bold transition-colors text-center flex items-center justify-center gap-2">
+              <Heart className="w-5 h-5 fill-white" /> Support {dog.name}
+            </Link>
+            <Link href="/ttrg/foster" className="block w-full border-2 border-[#1B2A4A]/15 text-[#1B2A4A] py-4 rounded-2xl text-sm font-bold hover:bg-white transition-colors text-center">
+              Apply to Foster
+            </Link>
+          </div>
+
+          {/* ── COL 3: Milestones + About ── */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Milestones */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100">
+              <h3 className="text-sm font-black text-[#1B2A4A] mb-4 uppercase tracking-wider">{dog.name}&apos;s Milestones</h3>
+              <div className="space-y-3">
+                {dog.milestones.map((m, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${milestoneBg[m.status]}`}>
+                      {m.status === "completed" && <CheckCircle2 className="w-3 h-3 text-white" />}
+                      {m.status === "in_progress" && <div className="w-2 h-2 rounded-full bg-white" />}
+                      {m.status === "urgent" && <AlertTriangle className="w-3 h-3 text-white" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-semibold ${m.status === "in_progress" ? "text-[#1B2A4A] font-bold" : milestoneColor[m.status]}`}>{m.label}</p>
+                    </div>
+                    <span className="text-[10px] text-[#1B2A4A]/40 flex-shrink-0">{m.date || (m.status === "in_progress" ? "Ongoing" : "Upcoming")}</span>
                   </div>
-                  <p className="text-[11px] text-[#1B2A4A]/50 leading-relaxed">{item.value}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Donation CTA */}
-            <div className="bg-[#1B2A4A] rounded-2xl p-6 sm:p-8">
-              <h3 className="text-white font-bold text-lg mb-2">What {dog.name} Needs Right Now</h3>
-              <p className="text-white/50 text-sm mb-6">Your support goes directly to {dog.name}&apos;s care. Choose a giving level:</p>
-
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                {donationTiers.map((tier) => (
-                  <button
-                    key={tier.amount}
-                    onClick={() => { setSelectedAmount(tier.amount); setCustomAmount(""); }}
-                    className={`rounded-xl p-3 text-left transition-all border ${selectedAmount === tier.amount ? "bg-[#C41E2A] border-[#C41E2A] text-white" : "bg-white/5 border-white/10 text-white hover:bg-white/10"}`}
-                  >
-                    <span className="text-lg font-bold">${tier.amount}</span>
-                    <p className="text-[10px] mt-0.5 opacity-70">{tier.label}</p>
-                  </button>
                 ))}
               </div>
-
-              <div className="mb-5">
-                <input
-                  type="number"
-                  placeholder="Custom amount ($)"
-                  value={customAmount}
-                  onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
-                  className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/50"
-                />
-              </div>
-
-              <button
-                onClick={() => setShowDonateModal(true)}
-                className="w-full bg-[#C41E2A] hover:bg-[#A01825] text-white py-3.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
-              >
-                <Heart className="w-4 h-4 fill-white" />
-                {sponsorLabels[dog.stage] || "SPONSOR"} {dog.name.toUpperCase()} — ${customAmount || selectedAmount || 50}/MONTH
-              </button>
-
-              <div className="flex gap-3 mt-3">
-                <Link href="/ttrg/adopt" className="flex-1 bg-white/10 hover:bg-white/15 text-white py-2.5 rounded-xl text-xs font-semibold text-center transition-colors">
-                  APPLY TO ADOPT
-                </Link>
-                <Link href="/ttrg/foster" className="flex-1 bg-white/10 hover:bg-white/15 text-white py-2.5 rounded-xl text-xs font-semibold text-center transition-colors">
-                  APPLY TO FOSTER
-                </Link>
-                <button onClick={() => { if (navigator.share) navigator.share({ title: `Help ${dog.name}`, url: window.location.href }); else navigator.clipboard.writeText(window.location.href); }} className="flex-1 bg-white/10 hover:bg-white/15 text-white py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-colors">
-                  <Share2 className="w-3 h-3" /> SHARE
-                </button>
-              </div>
-
-              {/* Follow This Journey */}
-              <button className="w-full mt-3 border border-white/10 hover:bg-white/5 text-white/70 py-2.5 rounded-xl text-xs font-semibold text-center transition-colors flex items-center justify-center gap-2">
-                <PawPrint className="w-3 h-3" /> Follow {dog.name}&apos;s Journey — Coming Soon
-              </button>
             </div>
+
+            {/* About dog */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100">
+              <h3 className="text-sm font-black text-[#1B2A4A] mb-4 uppercase tracking-wider">About {dog.name}</h3>
+              <div className="space-y-2.5 text-sm">
+                {[
+                  { label: "Breed", value: dog.breed },
+                  { label: "Age", value: dog.age },
+                  { label: "Gender", value: dog.gender },
+                  { label: "Weight", value: dog.weight },
+                  { label: "Location", value: dog.location },
+                ].map((item) => (
+                  <div key={item.label} className="flex justify-between">
+                    <span className="text-[#1B2A4A]/50">{item.label}</span>
+                    <span className="font-semibold text-[#1B2A4A]">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+              {/* small about image */}
+              <div className="mt-4 rounded-xl overflow-hidden">
+                <img src={dog.gallery[dog.gallery.length - 1] || dog.image} alt={dog.name} className="w-full h-32 object-cover" />
+              </div>
+            </div>
+
+            {/* How You Can Help */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100">
+              <h3 className="text-sm font-black text-[#1B2A4A] mb-2 uppercase tracking-wider">How You Can Help</h3>
+              <p className="text-xs text-[#1B2A4A]/50 mb-4">Your support helps dogs like {dog.name} heal, recover, and find their forever home.</p>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                {[
+                  { label: "Donate", href: `/ttrg/donate?ttrgDog=${dog.name}`, icon: Heart },
+                  { label: "Foster", href: "/ttrg/foster", icon: Home },
+                  { label: "Sponsor", href: `/ttrg/dogs/${dog.id}`, icon: Star },
+                  { label: "Share", href: "#", icon: Share2 },
+                ].map((a) => (
+                  <Link key={a.label} href={a.href} className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-[#FFF0F0] flex items-center justify-center">
+                      <a.icon className="w-4 h-4 text-[#C41E2A]" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-[#1B2A4A]">{a.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ══════ LEGEND ══════ */}
+        <div className="mt-10 bg-white rounded-2xl p-5 border border-slate-100">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+            {legendItems.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded-full ${item.color}`} />
+                <div>
+                  <p className="text-xs font-bold text-[#1B2A4A]">{item.label}</p>
+                  <p className="text-[9px] text-[#1B2A4A]/40">{item.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-
-      {/* Donation Modal */}
-      {showDonateModal && (
-        <div className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4" onClick={() => setShowDonateModal(false)}>
-          <div className="bg-white rounded-2xl w-full max-w-md p-8 relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setShowDonateModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-            <div className="text-center mb-6">
-              <Heart className="w-10 h-10 text-[#C41E2A] mx-auto mb-3" />
-              <h3 className="text-xl font-bold text-[#1B2A4A]">Sponsor {dog.name}</h3>
-              <p className="text-sm text-[#1B2A4A]/50 mt-1">${customAmount || selectedAmount || 50}/month</p>
-            </div>
-            {sponsorSubmitted ? (
-              <div className="text-center py-4">
-                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                <h4 className="text-lg font-bold text-[#1B2A4A] mb-2">Interest Received!</h4>
-                <p className="text-sm text-[#1B2A4A]/50 mb-4">Our team will follow up with you to finalize your sponsorship of {dog.name}.</p>
-                <div className="space-y-2 text-sm text-[#1B2A4A]/50">
-                  <p className="flex items-center justify-center gap-2"><Phone className="w-4 h-4 text-[#C41E2A]" /> <a href="tel:+18664364959" className="hover:text-[#C41E2A]">(866) 436-4959</a></p>
-                  <p className="flex items-center justify-center gap-2"><Mail className="w-4 h-4 text-[#C41E2A]" /> <a href="mailto:Teamtrainersrescue@gmail.com" className="hover:text-[#C41E2A]">Teamtrainersrescue@gmail.com</a></p>
-                </div>
-                <button onClick={() => { setShowDonateModal(false); setSponsorSubmitted(false); }} className="mt-4 text-[#C41E2A] text-sm font-semibold hover:underline">Close</button>
-              </div>
-            ) : (
-              <>
-                <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); setSponsorSubmitted(true); }}>
-                  <input type="text" placeholder="Full Name" required className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
-                  <input type="email" placeholder="Email Address" required className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
-                  <input type="tel" placeholder="Phone (optional)" className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
-                  <button type="submit" className="w-full bg-[#C41E2A] hover:bg-[#A01825] text-white py-3.5 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
-                    <Heart className="w-4 h-4 fill-white" /> SUBMIT SPONSOR INTEREST
-                  </button>
-                </form>
-                <p className="text-[10px] text-slate-400 text-center mt-4">Our team will contact you to finalize sponsorship details. Your information is never shared.</p>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

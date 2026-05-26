@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, PawPrint, ChevronRight, ChevronDown, Filter, Gift, Stethoscope, GraduationCap, Home, Eye } from "lucide-react";
 import { dogs as staticDogs } from "@/lib/dogs";
 import { getPublishedDogs } from "@/lib/admin-store";
+import DogCard from "@/components/ttrg/DogCard";
 
 const filters = ["All Dogs", "Urgent Cases", "Puppies", "In Rehab", "Ready for Home"];
 
@@ -126,52 +127,14 @@ export default function SponsorPage() {
       {/* ═══ DOG GRID ═══ */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {dogs.map((dog) => (
-              <div key={dog.id} className="bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-xl transition-all group">
-                <Link href={`/ttrg/dogs/${dog.id}`} className="block">
-                  <div className="relative h-56 overflow-hidden">
-                    <img src={dog.image} alt={dog.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    {dog.urgent && (
-                      <span className="absolute top-3 left-3 bg-[#C41E2A] text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">Urgent Need</span>
-                    )}
-                    <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
-                      <Heart className="w-4 h-4 text-[#C41E2A]" />
-                    </span>
-                  </div>
-                </Link>
-                <div className="p-5">
-                  <Link href={`/ttrg/dogs/${dog.id}`}>
-                    <h3 className="text-xl font-bold text-[#1B2A4A] mb-0.5">{dog.name}</h3>
-                    <p className="text-[11px] text-[#1B2A4A]/50 mb-3">
-                      {dog.age} · {dog.gender} · {dog.breed}
-                    </p>
-                    <p className="text-sm text-[#1B2A4A]/60 leading-relaxed mb-4 line-clamp-3">{dog.story}</p>
-                  </Link>
-
-                  <div className="flex items-baseline gap-1 mb-4">
-                    <span className="text-xl font-bold text-[#1B2A4A]">${dog.price}</span>
-                    <span className="text-sm text-[#1B2A4A]/40">/ month</span>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Link href={`/ttrg/dogs/${dog.id}`} className="flex-1 bg-[#C41E2A] hover:bg-[#A01825] text-white py-3 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2">
-                      <Heart className="w-4 h-4 fill-white" />
-                      SPONSOR {dog.name.split(" ")[0].toUpperCase()}
-                    </Link>
-                    <Link href={`/ttrg/dogs/${dog.id}`} className="flex items-center justify-center w-12 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
-                      <Eye className="w-4 h-4 text-[#1B2A4A]/40" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              <DogCard key={dog.id} dog={dog} />
             ))}
           </div>
 
-          <div className="text-center mt-12">
-            <Link href="/ttrg/sponsor" className="inline-flex items-center gap-2 text-sm font-semibold text-[#1B2A4A] hover:text-[#C41E2A] transition-colors">
-              VIEW ALL DOGS IN NEED <ChevronRight className="w-4 h-4" />
-            </Link>
+          <div className="text-center mt-10">
+            <p className="text-xs text-[#1B2A4A]/40 mb-2">🐾 Each dog is on a journey. Your support helps write a better ending. 🐾</p>
           </div>
         </div>
       </section>

@@ -1,47 +1,82 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import {
   Heart, PawPrint, Users, ArrowRight, Play, X,
-  Home, Stethoscope, GraduationCap, Shield,
+  Home, Stethoscope, Shield,
   AlertTriangle, Clock, CheckCircle2, Repeat, ShieldCheck,
   HandHeart, Building2, ChevronRight, Quote, Share2,
-  Camera, Star, TrendingUp, Sparkles,
+  Star, TrendingUp, Award, MapPin,
 } from "lucide-react";
 import { dogs as dogData } from "@/lib/dogs";
 import { getPublishedDogs } from "@/lib/admin-store";
+import DogCard from "@/components/ttrg/DogCard";
 
-/* ─── DATA ─── */
-const stats = [
-  { icon: Shield, value: 2300, suffix: "+", label: "Dogs Rescued", desc: "From high-risk situations" },
-  { icon: Heart, value: 1850, suffix: "+", label: "Dogs Rehabilitated", desc: "Healing with care" },
-  { icon: Home, value: 1600, suffix: "+", label: "Dogs Rehomed", desc: "Forever families" },
-  { icon: Users, value: 2000, suffix: "+", label: "Supporters", desc: "Making it possible" },
+/* ─── HERO CAROUSEL DATA ─── */
+const heroSlides = [
+  {
+    video: "/ttrg/video/lo-walkin.mov",
+    headline: <>Rescue.<br />Rehabilitate.<br /><span className="text-[#C41E2A]">Rehome.</span>{" "}<span className="text-white/40 italic font-light text-3xl sm:text-5xl">Repeat.</span></>,
+    subtitle: "Every dog deserves a second chance. Join our mission to rescue, heal, and find forever homes for dogs in need.",
+    cta: { label: "DONATE NOW", href: "/ttrg/donate", icon: "heart" },
+    cta2: { label: "MEET OUR DOGS", href: "/ttrg/sponsor" },
+  },
+  {
+    video: "/ttrg/video/hero.mp4",
+    headline: <>Every Dog Deserves<br />A Safe <span className="text-[#C41E2A]">Happy</span> Home.</>,
+    subtitle: "From shelters to forever families — we provide rescue, medical care, training, and love every step of the way.",
+    cta: { label: "SPONSOR A DOG", href: "/ttrg/sponsor", icon: "paw" },
+    cta2: { label: "GET INVOLVED", href: "/ttrg/get-involved" },
+  },
+  {
+    video: "/ttrg/video/lo-walkin.mov",
+    headline: <>Follow <span className="text-[#C41E2A]">Real</span><br />Rescue Journeys.</>,
+    subtitle: "Track every dog's transformation from rescue to rehome. Real stories, real impact, real results.",
+    cta: { label: "VIEW JOURNEYS", href: "/ttrg/sponsor", icon: "paw" },
+    cta2: { label: "WATCH STORIES", href: "/ttrg/stories" },
+  },
+  {
+    video: "/ttrg/video/hero.mp4",
+    headline: <>Support A Dog&apos;s<br /><span className="text-[#C41E2A]">Transformation.</span></>,
+    subtitle: "Your donation funds medical care, professional training, and safe shelter — giving every rescue dog the life they deserve.",
+    cta: { label: "DONATE NOW", href: "/ttrg/donate", icon: "heart" },
+    cta2: { label: "LEARN MORE", href: "/ttrg/about" },
+  },
 ];
 
+/* ─── TICKER DATA ─── */
 const missionUpdates = [
-  { type: "rescue", text: "New dog recommended for review" },
-  { type: "foster", text: "A foster application was submitted" },
-  { type: "training", text: "A dog moved into training" },
-  { type: "story", text: "A new success story was published" },
-  { type: "donation", text: "A donor supported vet care" },
-  { type: "urgent", text: "Urgent case added — Houston, TX" },
-  { type: "adopt", text: "K9 Bella matched with a forever home" },
+  { text: "🐾 3 Dogs Rescued This Week — Your Support Saves Lives" },
+  { text: "🐾 127 Dogs Successfully Rehabilitated & Rehomed" },
+  { text: "🐾 New Rescue Story Added — Follow Bailey's Journey" },
+  { text: "🐾 Thank You To Our Amazing Donors & Foster Families" },
+  { text: "🐾 Emergency Foster Placements Helping Dogs in Critical Need" },
+  { text: "🐾 Every Adoption Opens Space for the Next Dog Waiting" },
+];
+
+/* ─── IMPACT STATS ─── */
+const impactStats = [
+  { label: "Dogs Rescued", value: 2300, suffix: "+", icon: ShieldCheck },
+  { label: "Trained & Rehabbed", value: 1850, suffix: "+", icon: Stethoscope },
+  { label: "Dogs Rehomed", value: 1600, suffix: "+", icon: Home },
+  { label: "Active Trainers", value: 45, suffix: "+", icon: Award },
+  { label: "Foster Families", value: 200, suffix: "+", icon: HandHeart },
+  { label: "Community Partners", value: 75, suffix: "+", icon: Building2 },
 ];
 
 const testimonialVideos = [
-  { id: 1, src: "/ttrg/videos/britta-testimonial.mp4", title: "From Fear to Family", quote: "Luna's journey from heartbreak to thriving.", category: "Rescue Story" },
-  { id: 2, src: "/ttrg/videos/testimonial-2.mp4", title: "Second Chances Work", quote: "Max went from neglected to thriving.", category: "Training Story" },
-  { id: 3, src: "/ttrg/videos/trefz-family.mp4", title: "A Bond That Heals", quote: "How Rex helped a family heal too.", category: "Client Testimonial" },
+  { id: 1, src: "/ttrg/videos/britta-testimonial.mp4", title: "From Fear to Family", quote: "Luna's journey from heartbreak to thriving.", category: "Rescue Story", thumb: "/ttrg/dogs/luna.jpg" },
+  { id: 2, src: "/ttrg/videos/testimonial-2.mp4", title: "Second Chances Work", quote: "Max went from neglected to thriving.", category: "Training Story", thumb: "/ttrg/dogs/tucker.jpg" },
+  { id: 3, src: "/ttrg/videos/trefz-family.mp4", title: "A Bond That Heals", quote: "How Rex helped a family heal too.", category: "Client Testimonial", thumb: "/ttrg/dogs/shadow.jpg" },
 ];
 
 const journey = [
-  { num: 1, label: "Rescue", icon: ShieldCheck, desc: "We save dogs from high-risk situations and transport them to safety.", detail: "Our rescue network spans shelters, owner surrenders, and emergency situations. Every dog is evaluated, stabilized, and moved to safety within 24–72 hours.", cta: "Recommend a Dog", ctaHref: "/ttrg/submit", stat: "2,300+ dogs rescued" },
-  { num: 2, label: "Rehabilitate", icon: Stethoscope, desc: "Medical care, healing, and behavior work to restore each dog.", detail: "Full vet exams, vaccinations, spay/neuter, dental work, and behavioral assessment. Dogs receive one-on-one rehabilitation with our certified trainers.", cta: "Fund Vet Care", ctaHref: "/ttrg/donate", stat: "Avg 45 days rehab" },
-  { num: 3, label: "Foster", icon: Home, desc: "Foster families provide stability and a calm home environment.", detail: "Foster homes give dogs a chance to decompress, socialize, and learn house manners in a real home. We provide supplies, vet care, and 24/7 support.", cta: "Become a Foster", ctaHref: "/ttrg/foster", stat: "200+ foster families" },
-  { num: 4, label: "Adopt", icon: HandHeart, desc: "We match every dog with a loving, permanent forever family.", detail: "Our matching process considers lifestyle, experience, and temperament. Every adoption includes training guidance and lifetime support.", cta: "View Adoptable Dogs", ctaHref: "/ttrg/sponsor", stat: "1,600+ forever homes" },
-  { num: 5, label: "Repeat", icon: Repeat, desc: "Every dog adopted means we can save the next one. The mission continues.", detail: "Each successful placement frees a spot — and every donor, foster, and volunteer makes the next rescue possible. The cycle never stops.", cta: "Donate Now", ctaHref: "/ttrg/donate", stat: "Mission ongoing" },
+  { num: 1, label: "Rescue", icon: ShieldCheck, desc: "We save dogs from high-risk situations and transport them to safety.", detail: "Our rescue network spans shelters, owner surrenders, and emergency situations. Every dog is evaluated, stabilized, and moved to safety within 24–72 hours.", cta: "Recommend a Dog for Rescue", ctaHref: "/ttrg/submit", stat: "2,300+ dogs rescued" },
+  { num: 2, label: "Train & Rehabilitate", icon: Stethoscope, desc: "Medical care, training, and behavior work to restore each dog.", detail: "Full vet exams, vaccinations, spay/neuter, dental work, and behavioral assessment. Dogs receive one-on-one training and rehabilitation with our certified trainers.", cta: "Apply to Volunteer", ctaHref: "/ttrg/volunteer", stat: "Avg 45 days rehab" },
+  { num: 3, label: "Foster", icon: Home, desc: "Foster families provide stability and a calm home environment.", detail: "Foster homes give dogs a chance to decompress, socialize, and learn house manners in a real home. We provide supplies, vet care, and 24/7 support.", cta: "Apply to Foster", ctaHref: "/ttrg/foster", stat: "200+ foster families" },
+  { num: 4, label: "Adopt", icon: HandHeart, desc: "We match every dog with a loving, permanent forever family.", detail: "Our matching process considers lifestyle, experience, and temperament. Every adoption includes training guidance and lifetime support.", cta: "Apply to Adopt", ctaHref: "/ttrg/adopt", stat: "1,600+ forever homes" },
+  { num: 5, label: "Repeat", icon: Repeat, desc: "Every dog adopted means we can save the next one. The mission continues.", detail: "Each successful placement frees a spot — and every donor, foster, and volunteer makes the next rescue possible. The cycle never stops.", cta: "Donate to Save the Next Dog", ctaHref: "/ttrg/donate", stat: "Mission ongoing" },
 ];
 
 const urgentLabels: Record<string, string> = { rescue: "Emergency Rescue", rehabilitate: "Needs Medical Care", train: "In Training", recover: "Recovering", rehome: "Ready for Adoption", foster: "In Foster", adopt: "Ready to Adopt" };
@@ -56,40 +91,6 @@ const urgencyNeeds: Record<string, { label: string; cta: string; href: string }>
   adopt: { label: "Ready for Adoption", cta: "Apply to Adopt", href: "/ttrg/adopt" },
 };
 
-const beforeAfter = [
-  {
-    name: "Bailey",
-    beforeImg: "https://images.unsplash.com/photo-1596854273338-cbf078ec7071?w=600&q=80",
-    afterImg: "https://images.unsplash.com/photo-1544568100-847a948585b9?w=600&q=80",
-    caption: "From terrified and underweight to tail-wagging and trusting.",
-    outcome: "In Rehabilitation",
-    id: "bailey",
-  },
-  {
-    name: "Tucker",
-    beforeImg: "https://images.unsplash.com/photo-1477884213360-7e9d7dcc8f9b?w=600&q=80",
-    afterImg: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80",
-    caption: "From heartbroken and shut down to playful and confident.",
-    outcome: "In Training",
-    id: "tucker",
-  },
-  {
-    name: "Shadow",
-    beforeImg: "https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=600&q=80",
-    afterImg: "https://images.unsplash.com/photo-1552053831-71594a27632d?w=600&q=80",
-    caption: "From neglected stray to loyal companion ready for a home.",
-    outcome: "Ready to Adopt",
-    id: "shadow",
-  },
-];
-
-const missionMilestones = [
-  { label: "Rescued This Month", value: "12", icon: Shield },
-  { label: "Adopted This Month", value: "8", icon: HandHeart },
-  { label: "In Foster Care", value: "23", icon: Home },
-  { label: "Urgent Cases", value: "4", icon: AlertTriangle },
-];
-
 const getInvolved = [
   { icon: HandHeart, label: "Adopt a Dog", desc: "Open your home to a rescue dog permanently.", href: "/ttrg/adopt", color: "from-red-500 to-red-700" },
   { icon: Home, label: "Foster a Dog", desc: "Provide a temporary home while we find them a family.", href: "/ttrg/foster", color: "from-orange-500 to-red-600" },
@@ -98,6 +99,34 @@ const getInvolved = [
   { icon: PawPrint, label: "Recommend a Dog", desc: "Know a dog that needs rescue? Send us their story.", href: "/ttrg/submit", color: "from-emerald-500 to-teal-600" },
   { icon: Building2, label: "Partner With TTRG", desc: "Corporate sponsorship and rescue partnership.", href: "/ttrg/get-involved#partner", color: "from-violet-500 to-purple-700" },
 ];
+
+/* ─── SHARE HELPER ─── */
+function shareStory(title: string, text: string) {
+  const url = typeof window !== "undefined" ? window.location.href : "";
+  if (typeof navigator !== "undefined" && navigator.share) {
+    navigator.share({ title, text, url }).catch(() => {});
+  } else if (typeof navigator !== "undefined") {
+    navigator.clipboard.writeText(url);
+  }
+}
+
+function ShareButtons({ title, className = "" }: { title: string; className?: string }) {
+  const url = typeof window !== "undefined" ? encodeURIComponent(window.location.href) : "";
+  const t = encodeURIComponent(title);
+  return (
+    <div className={`flex items-center gap-2 ${className}`}>
+      <a href={`https://www.facebook.com/sharer/sharer.php?u=${url}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-[#1877F2]/20 flex items-center justify-center transition-colors" title="Share on Facebook">
+        <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+      </a>
+      <a href={`https://api.whatsapp.com/send?text=${t}%20${url}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-white/10 hover:bg-[#25D366]/20 flex items-center justify-center transition-colors" title="Share on WhatsApp">
+        <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </a>
+      <button onClick={() => shareStory(title, "Check out this rescue story!")} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" title="Copy Link">
+        <Share2 className="w-3.5 h-3.5 text-white" />
+      </button>
+    </div>
+  );
+}
 
 /* ─── HOOKS ─── */
 function useInView(threshold = 0.15) {
@@ -113,29 +142,20 @@ function useInView(threshold = 0.15) {
   return { ref, visible };
 }
 
-function Counter({ target, suffix }: { target: number; suffix: string }) {
+function useCountUp(end: number, duration = 2000, start = false) {
   const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
   useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !started.current) {
-        started.current = true;
-        const duration = 2000;
-        const stepTime = 30;
-        const steps = duration / stepTime;
-        let current = 0;
-        const inc = target / steps;
-        const t = setInterval(() => {
-          current += inc;
-          if (current >= target) { setCount(target); clearInterval(t); } else { setCount(Math.floor(current)); }
-        }, stepTime);
-      }
-    }, { threshold: 0.3 });
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [target]);
-  return <span ref={ref}>{count.toLocaleString()}{suffix}</span>;
+    if (!start) return;
+    let startTime: number;
+    const step = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      setCount(Math.floor(progress * end));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [end, duration, start]);
+  return count;
 }
 
 function scrollToId(id: string) {
@@ -161,7 +181,7 @@ export default function TTRGHome() {
   }, []);
 
   useEffect(() => {
-    const t = setInterval(() => setTickerIdx((i) => (i + 1) % missionUpdates.length), 3500);
+    const t = setInterval(() => setTickerIdx((i) => (i + 1) % missionUpdates.length), 8000);
     return () => clearInterval(t);
   }, []);
 
@@ -179,26 +199,62 @@ export default function TTRGHome() {
 
   const closePopup = () => { setPopupOpen(false); setPopupDismissed(true); sessionStorage.setItem("ttrg-popup-closed", "1"); };
 
+  /* ─── Hero carousel ─── */
+  const [heroIdx, setHeroIdx] = useState(0);
+  const [heroFading, setHeroFading] = useState(false);
+  const heroVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  const advanceHero = useCallback(() => {
+    setHeroFading(true);
+    setTimeout(() => {
+      setHeroIdx((i) => (i + 1) % heroSlides.length);
+      setHeroFading(false);
+    }, 800);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(advanceHero, 5000);
+    return () => clearInterval(t);
+  }, [advanceHero]);
+
+  useEffect(() => {
+    heroVideoRefs.current.forEach((v, i) => {
+      if (!v) return;
+      if (i === heroIdx) { v.currentTime = 0; v.play().catch(() => {}); }
+      else v.pause();
+    });
+  }, [heroIdx]);
+
   const heroSec = useInView();
   const journeySec = useInView();
   const dogsSec = useInView();
   const founderSec = useInView();
+  const statsSec = useInView();
 
   return (
-    <div className="bg-white">
+    <div className="bg-[#FDFCFA]">
 
-      {/* ═══════ 1. HERO — VIDEO BACKGROUND ═══════ */}
+      {/* ═══════ 1. HERO — VIDEO CAROUSEL ═══════ */}
       <section ref={heroSec.ref} className="relative min-h-[92vh] flex items-center overflow-hidden">
-        <video
-          autoPlay muted loop playsInline
-          poster="/ttrg/hero-trainer.png"
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="/ttrg/video/hero.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1628]/85 via-[#0a1628]/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 via-transparent to-transparent" />
+        {/* Video layers */}
+        {heroSlides.map((slide, i) => (
+          <video
+            key={i}
+            ref={(el) => { heroVideoRefs.current[i] = el; }}
+            autoPlay={i === 0} muted loop playsInline
+            poster="/ttrg/hero-trainer.png"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${i === heroIdx && !heroFading ? "opacity-100" : "opacity-0"}`}
+          >
+            <source src={slide.video} type="video/mp4" />
+          </video>
+        ))}
 
+        {/* Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a1628]/90 via-[#0a1628]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#2d5a3d]/10 via-transparent to-transparent" />
+
+        {/* Content */}
         <div className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full ${heroSec.visible ? "animate-fade-up" : "opacity-0"}`}>
           <div className="max-w-3xl py-12 sm:py-16">
             <div className="flex items-center gap-4 mb-8">
@@ -211,69 +267,78 @@ export default function TTRGHome() {
               </div>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-[0.95] mb-5 tracking-tight">
-              Rescue.<br />
-              Rehabilitate.<br />
-              <span className="text-[#C41E2A]">Rehome.</span>{" "}
-              <span className="text-white/40 italic font-light text-3xl sm:text-5xl">Repeat.</span>
-            </h1>
+            {/* Rotating headline */}
+            <div className={`transition-all duration-700 ${heroFading ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"}`}>
+              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-[0.95] mb-5 tracking-tight">
+                {heroSlides[heroIdx].headline}
+              </h1>
+              <p className="text-white/70 text-base sm:text-lg leading-relaxed max-w-xl mb-9">
+                {heroSlides[heroIdx].subtitle}
+              </p>
+            </div>
 
-            <p className="text-white/70 text-base sm:text-lg leading-relaxed max-w-xl mb-9">
-              Every dog deserves a second chance. Join our mission to rescue, heal, and find forever homes for dogs in need.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 mb-8">
-              <Link href="/ttrg/donate" className="inline-flex items-center justify-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-7 py-4 rounded-full text-sm font-bold transition-all shadow-2xl shadow-red-900/40">
-                <Heart className="w-4 h-4 fill-white" /> DONATE NOW
+            <div className={`flex flex-col sm:flex-row gap-3 mb-8 transition-all duration-700 ${heroFading ? "opacity-0" : "opacity-100"}`}>
+              <Link href={heroSlides[heroIdx].cta.href} className="inline-flex items-center justify-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-7 py-4 rounded-full text-sm font-bold transition-all shadow-2xl shadow-red-900/40">
+                {heroSlides[heroIdx].cta.icon === "heart" ? <Heart className="w-4 h-4 fill-white" /> : <PawPrint className="w-4 h-4" />} {heroSlides[heroIdx].cta.label}
               </Link>
-              <Link href="/ttrg/sponsor" className="inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white px-7 py-4 rounded-full text-sm font-bold hover:bg-white/10 backdrop-blur-sm transition-all">
-                <PawPrint className="w-4 h-4" /> MEET OUR DOGS
-              </Link>
-              <Link href="/ttrg/get-involved" className="inline-flex items-center justify-center gap-2 border border-white/20 text-white/80 px-6 py-4 rounded-full text-sm font-semibold hover:bg-white/5 transition-all">
-                GET INVOLVED
+              <Link href={heroSlides[heroIdx].cta2.href} className="inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white px-7 py-4 rounded-full text-sm font-bold hover:bg-white/10 backdrop-blur-sm transition-all">
+                {heroSlides[heroIdx].cta2.label}
               </Link>
             </div>
-          </div>
-        </div>
 
-        {/* Mission Updates Ticker */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 bg-[#0a1628]/80 backdrop-blur-md border-t border-white/10 py-3">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-4 overflow-hidden">
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <span className="w-2 h-2 rounded-full bg-[#C41E2A] animate-pulse" />
-              <span className="text-[#C41E2A] text-[11px] font-bold tracking-wider uppercase">Mission Updates</span>
-            </div>
-            <div className="flex-1 overflow-hidden h-5">
-              <div key={tickerIdx} className="animate-fade-up text-white/80 text-xs sm:text-sm">
-                {missionUpdates[tickerIdx].text}
-              </div>
+            {/* Slide indicators */}
+            <div className="flex gap-2">
+              {heroSlides.map((_, i) => (
+                <button key={i} onClick={() => { setHeroFading(true); setTimeout(() => { setHeroIdx(i); setHeroFading(false); }, 600); }} className={`h-1 rounded-full transition-all duration-500 ${i === heroIdx ? "w-10 bg-[#C41E2A]" : "w-4 bg-white/30 hover:bg-white/50"}`} />
+              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ═══════ 2. IMPACT STATS ═══════ */}
-      <section className="py-14 bg-[#FAFAF8] border-b border-slate-100">
+      {/* ═══════ 2. MISSION UPDATES TICKER ═══════ */}
+      <section className="bg-gradient-to-r from-[#1B2A4A] via-[#243656] to-[#1B2A4A] border-b border-white/5 py-3.5 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center p-5 sm:p-7 rounded-2xl bg-white border border-slate-100 hover:shadow-lg transition-all">
-                <div className="w-12 h-12 rounded-2xl bg-[#FFF0F0] flex items-center justify-center mx-auto mb-3">
-                  <stat.icon className="w-6 h-6 text-[#C41E2A]" />
+          <div className="flex items-center justify-center gap-3 overflow-hidden h-6">
+            <TrendingUp className="w-4 h-4 text-[#C41E2A] flex-shrink-0 animate-pulse" />
+            <div key={tickerIdx} className="animate-fade-up text-white/80 text-xs sm:text-sm font-medium">
+              {missionUpdates[tickerIdx].text}
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* ═══════ 2B. IMPACT STATS ═══════ */}
+      <section ref={statsSec.ref} className="py-16 sm:py-20 bg-gradient-to-br from-[#f7f5f0] via-[#f0ece4] to-[#e8f0e8]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-[#2d5a3d]/10 rounded-full px-4 py-1.5 mb-4">
+              <TrendingUp className="w-3.5 h-3.5 text-[#2d5a3d]" />
+              <span className="text-[#2d5a3d] text-xs font-bold uppercase tracking-wider">Our Impact</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#1B2A4A] tracking-tight">Making a Measurable Difference</h2>
+            <p className="text-[#1B2A4A]/50 text-sm mt-2 max-w-xl mx-auto">Real numbers. Real lives saved. Every statistic represents a dog that found safety, healing, and a home.</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {impactStats.map((stat) => {
+              const count = useCountUp(stat.value, 2200, statsSec.visible);
+              return (
+                <div key={stat.label} className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 text-center border border-[#2d5a3d]/10 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#2d5a3d]/10 to-[#4a7c5c]/10 flex items-center justify-center mx-auto mb-3">
+                    <stat.icon className="w-6 h-6 text-[#2d5a3d]" />
+                  </div>
+                  <p className="text-3xl sm:text-4xl font-black text-[#1B2A4A]">{count.toLocaleString()}{stat.suffix}</p>
+                  <p className="text-xs font-semibold text-[#1B2A4A]/50 mt-1 uppercase tracking-wider">{stat.label}</p>
                 </div>
-                <div className="text-2xl sm:text-4xl font-black text-[#1B2A4A] mb-1">
-                  <Counter target={stat.value} suffix={stat.suffix} />
-                </div>
-                <p className="text-xs sm:text-sm font-bold text-[#1B2A4A]">{stat.label}</p>
-                <p className="text-[10px] sm:text-[11px] text-[#1B2A4A]/40 mt-0.5">{stat.desc}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ═══════ 3. RESCUE JOURNEY PROCESS — INTERACTIVE ═══════ */}
-      <section ref={journeySec.ref} className="py-20 sm:py-24">
+      <section ref={journeySec.ref} className="py-20 sm:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`text-center mb-14 ${journeySec.visible ? "animate-fade-up" : "opacity-0"}`}>
             <div className="inline-flex items-center gap-2 bg-[#C41E2A]/10 rounded-full px-4 py-1.5 mb-4">
@@ -353,116 +418,8 @@ export default function TTRGHome() {
         </div>
       </section>
 
-      {/* ═══════ 4. FEATURED DOGS ═══════ */}
-      <section id="dogs-in-need" ref={dogsSec.ref} className="py-20 sm:py-24 bg-[#FAFAF8]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className={`text-center mb-12 ${dogsSec.visible ? "animate-fade-up" : "opacity-0"}`}>
-            <div className="inline-flex items-center gap-2 bg-[#C41E2A]/10 rounded-full px-4 py-1.5 mb-4">
-              <Heart className="w-3.5 h-3.5 text-[#C41E2A]" />
-              <span className="text-[#C41E2A] text-xs font-bold uppercase tracking-wider">Dogs In Our Care</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1B2A4A]">Dogs Who Need Your Support</h2>
-            <p className="text-sm text-[#1B2A4A]/50 mt-2 max-w-xl mx-auto">Sponsor, foster, adopt, or share. Every action moves a dog closer to a permanent home.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {dogs.slice(0, 6).map((dog, idx) => {
-              const days = daysInRescue[dog.id] ?? 0;
-              return (
-                <div key={dog.id} className={`bg-white rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group ${dogsSec.visible ? "animate-fade-up" : "opacity-0"}`} style={{ animationDelay: `${idx * 0.08}s` }}>
-                  <Link href={`/ttrg/dogs/${dog.id}`} className="block">
-                    <div className="relative h-52 overflow-hidden">
-                      <img src={dog.image} alt={dog.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                      {dog.urgent && (
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-bold animate-pulse">
-                          <AlertTriangle className="w-3 h-3" /> URGENT
-                        </div>
-                      )}
-                      <div className="absolute top-3 right-3 bg-black/40 backdrop-blur-sm text-white px-3 py-1 rounded-full text-[10px] font-semibold">
-                        {urgentLabels[dog.stage]}
-                      </div>
-                      <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-white/80 text-[10px]">
-                        <Clock className="w-3 h-3" /> {days} days in rescue
-                      </div>
-                      <div className="absolute bottom-3 right-3">
-                        <p className="text-white font-bold text-lg">{dog.name}</p>
-                      </div>
-                    </div>
-                  </Link>
-                  <div className="p-5">
-                    <p className="text-[11px] text-[#1B2A4A]/40 mb-2">{dog.age} · {dog.breed} · {dog.gender}</p>
-                    <p className="text-sm text-[#1B2A4A]/60 leading-relaxed mb-4 line-clamp-2">{dog.story}</p>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      <Link href={`/ttrg/dogs/${dog.id}`} className="text-center px-2 py-2.5 rounded-lg bg-[#C41E2A] text-white text-[10px] font-bold hover:bg-[#A01825] transition-colors">
-                        SPONSOR
-                      </Link>
-                      <Link href="/ttrg/foster" className="text-center px-2 py-2.5 rounded-lg border border-slate-200 text-[#1B2A4A] text-[10px] font-bold hover:bg-slate-50 transition-colors">
-                        FOSTER
-                      </Link>
-                      <Link href="/ttrg/adopt" className="text-center px-2 py-2.5 rounded-lg border border-slate-200 text-[#1B2A4A] text-[10px] font-bold hover:bg-slate-50 transition-colors">
-                        ADOPT
-                      </Link>
-                      <button onClick={(e) => { e.preventDefault(); if (navigator.share) navigator.share({ title: `Help ${dog.name}`, url: `/ttrg/dogs/${dog.id}` }); else navigator.clipboard.writeText(window.location.origin + `/ttrg/dogs/${dog.id}`); }} className="text-center px-2 py-2.5 rounded-lg border border-slate-200 text-[#1B2A4A] text-[10px] font-bold hover:bg-slate-50 transition-colors">
-                        SHARE
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="text-center mt-10">
-            <Link href="/ttrg/sponsor" className="inline-flex items-center gap-2 border-2 border-[#C41E2A] text-[#C41E2A] px-7 py-3.5 rounded-full text-sm font-bold hover:bg-[#C41E2A] hover:text-white transition-all">
-              VIEW ALL DOGS <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ 5. BEFORE & AFTER ═══════ */}
-      <section className="py-16 sm:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-[#C41E2A]/10 rounded-full px-4 py-1.5 mb-4">
-              <Camera className="w-3.5 h-3.5 text-[#C41E2A]" />
-              <span className="text-[#C41E2A] text-xs font-bold uppercase tracking-wider">Real Transformation</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#1B2A4A] tracking-tight">Before &amp; After: Real Transformation Stories</h2>
-            <p className="text-sm text-[#1B2A4A]/50 mt-2 max-w-xl mx-auto">Every rescue has a journey. See how care, rehabilitation, training, and the right environment can change a dog&apos;s life.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {beforeAfter.map((dog) => (
-              <div key={dog.name} className="group bg-white rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl transition-all duration-500">
-                <div className="grid grid-cols-2 h-48 sm:h-56">
-                  <div className="relative overflow-hidden">
-                    <img src={dog.beforeImg} alt={`${dog.name} before`} className="w-full h-full object-cover brightness-75" />
-                    <span className="absolute bottom-2 left-2 bg-black/70 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">BEFORE</span>
-                  </div>
-                  <div className="relative overflow-hidden">
-                    <img src={dog.afterImg} alt={`${dog.name} after`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                    <span className="absolute bottom-2 left-2 bg-[#C41E2A] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">AFTER</span>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-[#1B2A4A] text-lg">{dog.name}</h3>
-                    <span className="text-[10px] font-bold text-[#C41E2A] bg-[#C41E2A]/10 px-2 py-0.5 rounded-full">{dog.outcome}</span>
-                  </div>
-                  <p className="text-sm text-[#1B2A4A]/60 leading-relaxed mb-3">{dog.caption}</p>
-                  <Link href={`/ttrg/dogs/${dog.id}`} className="inline-flex items-center gap-1.5 text-[#C41E2A] text-sm font-bold hover:gap-2.5 transition-all">
-                    View Journey <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ 6. SUCCESS STORIES + BO & BRADY ═══════ */}
-      <section className="py-20 sm:py-24 bg-[#FAFAF8]">
+      {/* ═══════ 4. SUCCESS STORIES + BO & BRADY ═══════ */}
+      <section className="py-20 sm:py-24 bg-gradient-to-br from-[#f7f5f0] via-[#f0ece4] to-[#eef3ee]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-[#1B2A4A]/10 rounded-full px-4 py-1.5 mb-4">
@@ -477,7 +434,7 @@ export default function TTRGHome() {
           <button onClick={() => setBoVideoOpen(true)} className="group w-full text-left mb-10 rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl transition-all duration-500 bg-[#1B2A4A]">
             <div className="flex flex-col md:flex-row">
               <div className="relative aspect-video md:w-1/2 overflow-hidden">
-                <video muted loop playsInline preload="metadata" className="w-full h-full object-cover brightness-75 group-hover:brightness-50 group-hover:scale-105 transition-all duration-700" onMouseOver={(e) => (e.target as HTMLVideoElement).play()} onMouseOut={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}>
+                <video muted loop playsInline preload="metadata" poster="/ttrg/video/bo-brady-poster.jpg" className="w-full h-full object-cover brightness-75 group-hover:brightness-50 group-hover:scale-105 transition-all duration-700" onMouseOver={(e) => (e.target as HTMLVideoElement).play()} onMouseOut={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}>
                   <source src="/ttrg/video/bo-brady.mov" type="video/mp4" />
                 </video>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -504,24 +461,28 @@ export default function TTRGHome() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {testimonialVideos.map((vid) => (
-              <button key={vid.id} onClick={() => setVideoModal(vid)} className="group text-left rounded-3xl overflow-hidden border border-slate-100 hover:shadow-2xl transition-all duration-500">
-                <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
-                  <video muted loop playsInline preload="metadata" className="w-full h-full object-cover brightness-75 group-hover:brightness-50 group-hover:scale-105 transition-all duration-700" onMouseOver={(e) => (e.target as HTMLVideoElement).play()} onMouseOut={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}>
-                    <source src={vid.src} type="video/mp4" />
-                  </video>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-[#C41E2A] group-hover:scale-110 transition-all shadow-lg">
-                      <Play className="w-6 h-6 text-white fill-white ml-1" />
+              <div key={vid.id} className="group text-left rounded-3xl overflow-hidden border border-[#2d5a3d]/10 hover:shadow-2xl transition-all duration-500 bg-white">
+                <button onClick={() => setVideoModal(vid)} className="w-full text-left">
+                  <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
+                    <img src={vid.thumb} alt={vid.title} className="w-full h-full object-cover brightness-90 group-hover:brightness-75 group-hover:scale-105 transition-all duration-700" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-[#C41E2A] group-hover:scale-110 transition-all shadow-lg">
+                        <Play className="w-6 h-6 text-white fill-white ml-1" />
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                      <span className="inline-block bg-[#C41E2A]/90 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2">{vid.category}</span>
+                      <p className="text-white font-bold text-sm">{vid.title}</p>
+                      <p className="text-white/60 text-xs italic mt-1">&ldquo;{vid.quote}&rdquo;</p>
                     </div>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-5">
-                    <span className="inline-block bg-[#C41E2A]/90 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2">{vid.category}</span>
-                    <p className="text-white font-bold text-sm">{vid.title}</p>
-                    <p className="text-white/60 text-xs italic mt-1">&ldquo;{vid.quote}&rdquo;</p>
-                  </div>
+                </button>
+                <div className="px-4 py-3 flex items-center justify-between">
+                  <span className="text-[10px] text-[#1B2A4A]/40 font-semibold uppercase tracking-wider">Share this story</span>
+                  <ShareButtons title={vid.title} />
                 </div>
-              </button>
+              </div>
             ))}
           </div>
 
@@ -533,8 +494,59 @@ export default function TTRGHome() {
         </div>
       </section>
 
+      {/* ═══════ 5. FEATURED DOGS ═══════ */}
+      <section id="dogs-in-need" ref={dogsSec.ref} className="py-20 sm:py-24 bg-gradient-to-br from-white via-[#faf9f5] to-[#f0f5ee]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={`text-center mb-12 ${dogsSec.visible ? "animate-fade-up" : "opacity-0"}`}>
+            <div className="inline-flex items-center gap-2 bg-[#C41E2A]/10 rounded-full px-4 py-1.5 mb-4">
+              <Heart className="w-3.5 h-3.5 text-[#C41E2A]" />
+              <span className="text-[#C41E2A] text-xs font-bold uppercase tracking-wider">Dogs In Our Care</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1B2A4A]">Dogs Who Need Your Support</h2>
+            <p className="text-sm text-[#1B2A4A]/50 mt-2 max-w-xl mx-auto">Sponsor, foster, adopt, or share. Every action moves a dog closer to a permanent home.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {dogs.slice(0, 6).map((dog, idx) => (
+              <div key={dog.id} className={`${dogsSec.visible ? "animate-fade-up" : "opacity-0"}`} style={{ animationDelay: `${idx * 0.08}s` }}>
+                <DogCard dog={dog} />
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-10">
+            <p className="text-xs text-[#1B2A4A]/40 mb-4">🐾 Each dog is on a journey. Your support helps write a better ending. 🐾</p>
+            <Link href="/ttrg/sponsor" className="inline-flex items-center gap-2 border-2 border-[#C41E2A] text-[#C41E2A] px-7 py-3.5 rounded-full text-sm font-bold hover:bg-[#C41E2A] hover:text-white transition-all">
+              VIEW ALL DOGS <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════ 6. PARTNERS PREVIEW ═══════ */}
+      <section className="py-12 bg-gradient-to-r from-[#f7f5f0] via-white to-[#f7f5f0] border-y border-[#2d5a3d]/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-xs font-bold text-[#1B2A4A]/30 uppercase tracking-[0.2em] mb-6">Trusted By Our Community Partners</p>
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-50 hover:opacity-80 transition-opacity">
+            {["Local Shelters", "Veterinary Partners", "Training Centers", "Foster Networks", "Community Sponsors"].map((p) => (
+              <div key={p} className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-lg bg-[#1B2A4A]/5 flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-[#1B2A4A]/30" />
+                </div>
+                <span className="text-sm font-semibold text-[#1B2A4A]/40">{p}</span>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-6">
+            <Link href="/ttrg/partners" className="text-xs font-bold text-[#2d5a3d] hover:text-[#C41E2A] transition-colors uppercase tracking-wider">
+              View All Partners →
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ═══════ 7. FOUNDER PREVIEW ═══════ */}
-      <section ref={founderSec.ref} className="py-20 sm:py-24 bg-white">
+      <section ref={founderSec.ref} className="py-20 sm:py-24 bg-gradient-to-br from-white via-[#faf9f5] to-[#eef3ee]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className={`relative ${founderSec.visible ? "animate-fade-up" : "opacity-0"}`}>
@@ -582,7 +594,7 @@ export default function TTRGHome() {
       </section>
 
       {/* ═══════ 8. GET INVOLVED ═══════ */}
-      <section className="py-20 sm:py-24 bg-[#FAFAF8]">
+      <section className="py-20 sm:py-24 bg-gradient-to-br from-[#f7f5f0] via-[#f0ece4] to-[#eef3ee]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-[#C41E2A]/10 rounded-full px-4 py-1.5 mb-4">
@@ -595,7 +607,7 @@ export default function TTRGHome() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {getInvolved.map((item) => (
-              <Link key={item.label} href={item.href} className="group bg-white rounded-3xl border border-slate-100 p-7 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
+              <Link key={item.label} href={item.href} className="group bg-white rounded-3xl border border-[#2d5a3d]/8 p-7 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
                   <item.icon className="w-7 h-7 text-white" />
                 </div>
@@ -610,25 +622,9 @@ export default function TTRGHome() {
         </div>
       </section>
 
-      {/* ═══════ 9. MISSION MILESTONES ═══════ */}
-      <section className="py-8 bg-white border-y border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {missionMilestones.map((m) => (
-              <div key={m.label} className="text-center py-3">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <m.icon className="w-4 h-4 text-[#C41E2A]" />
-                  <span className="text-2xl font-black text-[#1B2A4A]">{m.value}</span>
-                </div>
-                <p className="text-[10px] text-[#1B2A4A]/50 font-semibold uppercase tracking-wider">{m.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ═══════ 10. FINAL CTA ═══════ */}
-      <section className="relative py-20 sm:py-24 overflow-hidden bg-[#0a1628]">
+      <section className="relative py-20 sm:py-24 overflow-hidden bg-gradient-to-br from-[#0a1628] via-[#122a1a] to-[#0a1628]">
         <div className="relative z-10 max-w-3xl mx-auto px-4 text-center">
           <Heart className="w-14 h-14 text-[#C41E2A] fill-[#C41E2A]/30 mx-auto mb-6" />
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-tight mb-6 tracking-tight">

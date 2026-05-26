@@ -60,7 +60,7 @@ export default function StoriesPage() {
                 className="group relative w-full rounded-2xl overflow-hidden shadow-xl"
               >
                 <div className="relative aspect-video overflow-hidden bg-slate-900">
-                  <video muted loop playsInline preload="metadata" className="w-full h-full object-cover brightness-75 group-hover:brightness-50 group-hover:scale-105 transition-all duration-700" onMouseOver={(e) => (e.target as HTMLVideoElement).play()} onMouseOut={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}>
+                  <video muted loop playsInline preload="metadata" poster={featuredVideo.src.replace(/\.(mp4|mov)$/, '-poster.jpg')} className="w-full h-full object-cover brightness-75 group-hover:brightness-50 group-hover:scale-105 transition-all duration-700" onMouseOver={(e) => (e.target as HTMLVideoElement).play()} onMouseOut={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}>
                     <source src={featuredVideo.src} type="video/mp4" />
                   </video>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -115,7 +115,7 @@ export default function StoriesPage() {
                 className="group text-left rounded-2xl overflow-hidden bg-white border border-slate-100 hover:shadow-xl transition-all"
               >
                 <div className="relative aspect-video overflow-hidden bg-slate-900">
-                  <video muted loop playsInline preload="metadata" className="w-full h-full object-cover brightness-90 group-hover:brightness-60 group-hover:scale-105 transition-all duration-700" onMouseOver={(e) => (e.target as HTMLVideoElement).play()} onMouseOut={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}>
+                  <video muted loop playsInline preload="metadata" poster={vid.src.replace(/\.(mp4|mov)$/, '-poster.jpg')} className="w-full h-full object-cover brightness-90 group-hover:brightness-60 group-hover:scale-105 transition-all duration-700" onMouseOver={(e) => (e.target as HTMLVideoElement).play()} onMouseOut={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}>
                     <source src={vid.src} type={vid.src.endsWith('.mov') ? 'video/quicktime' : 'video/mp4'} />
                   </video>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />

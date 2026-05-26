@@ -1,18 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Heart, Shield, Stethoscope, GraduationCap, Home, PawPrint, CheckCircle2,
   Phone, Mail, Truck, Sparkles, Utensils, Activity, AlertTriangle, Award,
-  Building2, ArrowRight, DollarSign,
+  Building2, ArrowRight, DollarSign, CreditCard, Lock, Loader2, XCircle,
 } from "lucide-react";
-
-function FacebookIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-  );
-}
 
 const donationOptions = [
   { amount: 25, label: "Feed a Rescue", desc: "Provides nutritious meals for one dog for a week", icon: PawPrint },
@@ -52,13 +47,99 @@ const missionTiers = [
   { tier: "Expansion Sponsor", amount: 2500, supports: "Facility builds & expansion" },
 ];
 
-export default function DonatePage() {
+const inputCls = "w-full h-12 px-5 rounded-xl border border-slate-200 text-sm text-[#1B2A4A] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 focus:border-[#C41E2A]/40";
+
+function formatCardNumber(v: string) {
+  return v.replace(/\D/g, "").replace(/(\d{4})(?=\d)/g, "$1 ").slice(0, 19);
+}
+
+function formatExpiry(v: string) {
+  const d = v.replace(/\D/g, "").slice(0, 4);
+  if (d.length >= 3) return d.slice(0, 2) + "/" + d.slice(2);
+  return d;
+}
+
+function DonateInner() {
+  const params = useSearchParams();
+  const dogName = params.get("ttrgDog") || "";
+  const formRef = useRef<HTMLFormElement>(null);
+
   const [selected, setSelected] = useState<number | null>(50);
   const [custom, setCustom] = useState("");
-  const [donationType, setDonationType] = useState<"monthly" | "once">("monthly");
-  const [submitted, setSubmitted] = useState(false);
+  const [donationType, setDonationType] = useState<"monthly" | "once">("once");
+  const [showCosts, setShowCosts] = useState(false);
 
-  if (submitted) {
+  // Form fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [zip, setZip] = useState("");
+
+  // Card fields
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+
+  // State
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState<{ message: string; transactionId?: string; subscriptionId?: string } | null>(null);
+
+  const finalAmount = custom ? parseFloat(custom) : selected || 0;
+
+  function scrollToForm() {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (finalAmount < 1) { setError("Please select or enter a donation amount."); return; }
+
+    // Format expiry from MM/YY to MMYY
+    const expClean = expiry.replace(/\D/g, "");
+    if (expClean.length !== 4) { setError("Please enter a valid expiration date (MM/YY)."); return; }
+
+    setProcessing(true);
+    try {
+      const res = await fetch("/api/ttrg/charge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: finalAmount,
+          cardNumber: cardNumber.replace(/\s/g, ""),
+          expDate: expClean,
+          cvv,
+          firstName,
+          lastName,
+          email,
+          phone: phone || undefined,
+          address: address || undefined,
+          city: city || undefined,
+          state: state || undefined,
+          zip: zip || undefined,
+          donationType,
+          dogName: dogName || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccess(data);
+      } else {
+        setError(data.error || "Payment failed. Please try again.");
+      }
+    } catch {
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  if (success) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
         <div className="text-center max-w-md px-4">
@@ -66,8 +147,11 @@ export default function DonatePage() {
             <CheckCircle2 className="w-10 h-10 text-emerald-600" />
           </div>
           <h1 className="text-3xl font-bold text-[#1B2A4A] mb-3">Thank You!</h1>
-          <p className="text-[#1B2A4A]/60 mb-6">Your generous donation helps rescue, rehabilitate, and rehome dogs in need. You&apos;re making a real difference.</p>
-          <p className="text-sm text-[#1B2A4A]/40 mb-4">Our team will follow up with you shortly to complete your donation.</p>
+          <p className="text-[#1B2A4A]/60 mb-4">{success.message}</p>
+          {success.transactionId && <p className="text-sm text-[#1B2A4A]/40 mb-2">Transaction ID: <span className="font-mono font-bold">{success.transactionId}</span></p>}
+          {success.subscriptionId && <p className="text-sm text-[#1B2A4A]/40 mb-2">Subscription ID: <span className="font-mono font-bold">{success.subscriptionId}</span></p>}
+          <p className="text-sm text-[#1B2A4A]/40 mb-2">Amount: <strong>${finalAmount.toFixed(2)}{donationType === "monthly" ? "/month" : ""}</strong></p>
+          <p className="text-sm text-[#1B2A4A]/40 mb-6">A confirmation will be sent to <strong>{email}</strong></p>
           <p className="text-sm text-[#1B2A4A]/40 mb-8">Questions? Call <a href="tel:+18664364959" className="text-[#C41E2A] font-semibold">(866) 436-4959</a> or email <a href="mailto:Teamtrainersrescue@gmail.com" className="text-[#C41E2A] font-semibold">Teamtrainersrescue@gmail.com</a></p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/ttrg/sponsor" className="bg-[#C41E2A] hover:bg-[#A01825] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors">
@@ -88,10 +172,11 @@ export default function DonatePage() {
       <section className="bg-[#1B2A4A] py-16 sm:py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Heart className="w-12 h-12 text-[#C41E2A] mx-auto mb-4" />
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">Support the Mission</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-4">Every Dollar Saves a Life</h1>
           <p className="text-white/60 text-base sm:text-lg max-w-xl mx-auto">
-            Every dollar goes directly toward rescuing, rehabilitating, and rehoming dogs in need. Your generosity saves lives.
+            Your generosity rescues dogs from danger, heals them, and places them in loving forever homes.
           </p>
+          {dogName && <p className="text-[#C41E2A] font-bold mt-3">Donating for: {dogName}</p>}
           <p className="text-white/30 text-sm mt-3">Team Trainers Rescue Group · 501(c)(3)</p>
         </div>
       </section>
@@ -133,6 +218,7 @@ export default function DonatePage() {
           <div className="mb-8">
             <input
               type="number"
+              min="1"
               placeholder="Enter custom amount ($)"
               value={custom}
               onChange={(e) => { setCustom(e.target.value); setSelected(null); }}
@@ -140,72 +226,159 @@ export default function DonatePage() {
             />
           </div>
 
-          {/* Form */}
-          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }}>
+          {/* Payment Form */}
+          <form ref={formRef} className="space-y-4" onSubmit={handleSubmit}>
+            {/* Personal Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input type="text" placeholder="First Name" required className="h-12 px-5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
-              <input type="text" placeholder="Last Name" required className="h-12 px-5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+              <input type="text" placeholder="First Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputCls} />
+              <input type="text" placeholder="Last Name" required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputCls} />
             </div>
-            <input type="email" placeholder="Email Address" required className="w-full h-12 px-5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
-            <input type="tel" placeholder="Phone (optional)" className="w-full h-12 px-5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+            <input type="email" placeholder="Email Address" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
+            <input type="tel" placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} />
 
-            {/* Contact info */}
-            <div className="bg-[#FAFAF8] rounded-2xl p-6 border border-slate-100">
-              <div className="text-center mb-4">
-                <Heart className="w-8 h-8 text-[#C41E2A] mx-auto mb-2" />
-                <h3 className="text-lg font-bold text-[#1B2A4A] mb-1">Ready to Give?</h3>
-                <p className="text-sm text-[#1B2A4A]/50">To finalize your donation today, contact TTRG directly:</p>
+            {/* Billing Address */}
+            <div className="pt-2">
+              <p className="text-xs font-bold text-[#1B2A4A]/40 uppercase tracking-wider mb-3">Billing Address</p>
+              <input type="text" placeholder="Street Address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls + " mb-3"} />
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={inputCls} />
+                <input type="text" placeholder="State" maxLength={2} value={state} onChange={(e) => setState(e.target.value.toUpperCase())} className={inputCls} />
+                <input type="text" placeholder="ZIP Code" value={zip} onChange={(e) => setZip(e.target.value)} className={inputCls} />
+              </div>
+            </div>
+
+            {/* Credit Card */}
+            <div className="bg-[#FAFAF8] rounded-2xl p-6 border border-slate-100 mt-2">
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCard className="w-5 h-5 text-[#C41E2A]" />
+                <h3 className="text-sm font-bold text-[#1B2A4A]">Payment Details</h3>
+                <div className="ml-auto flex items-center gap-1 text-emerald-600">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider">Secure</span>
+                </div>
               </div>
               <div className="space-y-3">
-                <a href="tel:+18664364959" className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100 hover:border-[#C41E2A]/30 transition-colors">
-                  <div className="w-10 h-10 rounded-xl bg-[#FFF0F0] flex items-center justify-center flex-shrink-0"><Phone className="w-5 h-5 text-[#C41E2A]" /></div>
-                  <div><p className="text-sm font-semibold text-[#1B2A4A]">Call Us</p><p className="text-xs text-[#1B2A4A]/50">(866) 436-4959</p></div>
-                </a>
-                <a href="mailto:Teamtrainersrescue@gmail.com" className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100 hover:border-[#C41E2A]/30 transition-colors">
-                  <div className="w-10 h-10 rounded-xl bg-[#FFF0F0] flex items-center justify-center flex-shrink-0"><Mail className="w-5 h-5 text-[#C41E2A]" /></div>
-                  <div><p className="text-sm font-semibold text-[#1B2A4A]">Email Us</p><p className="text-xs text-[#1B2A4A]/50">Teamtrainersrescue@gmail.com</p></div>
-                </a>
-                <a href="https://www.facebook.com/TeamTrainersRescueGroup" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-100 hover:border-[#C41E2A]/30 transition-colors">
-                  <div className="w-10 h-10 rounded-xl bg-[#FFF0F0] flex items-center justify-center flex-shrink-0"><FacebookIcon className="w-5 h-5 text-[#C41E2A]" /></div>
-                  <div><p className="text-sm font-semibold text-[#1B2A4A]">Facebook</p><p className="text-xs text-[#1B2A4A]/50">Message us on Facebook</p></div>
-                </a>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Card Number"
+                    required
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                    maxLength={19}
+                    autoComplete="cc-number"
+                    className={inputCls + " pr-12"}
+                  />
+                  <CreditCard className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    placeholder="MM/YY"
+                    required
+                    value={expiry}
+                    onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                    maxLength={5}
+                    autoComplete="cc-exp"
+                    className={inputCls}
+                  />
+                  <input
+                    type="text"
+                    placeholder="CVV"
+                    required
+                    value={cvv}
+                    onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    maxLength={4}
+                    autoComplete="cc-csc"
+                    className={inputCls}
+                  />
+                </div>
               </div>
-              <p className="text-[11px] text-[#1B2A4A]/30 text-center mt-4">Secure online giving will be available once the approved payment processor is integrated.</p>
+              <div className="flex items-center gap-2 mt-4 text-[10px] text-[#1B2A4A]/30">
+                <Lock className="w-3 h-3" />
+                <span>Your payment is securely processed by Authorize.Net. TTRG never stores your card information.</span>
+              </div>
             </div>
 
-            <button type="submit" className="w-full bg-[#C41E2A] hover:bg-[#A01825] text-white py-4 rounded-xl text-base font-bold transition-colors flex items-center justify-center gap-2">
-              <Heart className="w-5 h-5 fill-white" />
-              SUBMIT DONATION INTEREST — ${custom || selected || 50} {donationType === "monthly" ? "/ MONTH" : ""}
+            {/* Error */}
+            {error && (
+              <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
+                <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={processing || finalAmount < 1}
+              className="w-full bg-[#C41E2A] hover:bg-[#A01825] disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl text-base font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              {processing ? (
+                <><Loader2 className="w-5 h-5 animate-spin" /> Processing Payment...</>
+              ) : (
+                <><Lock className="w-4 h-4" /> DONATE ${finalAmount > 0 ? finalAmount.toFixed(2) : "0.00"} {donationType === "monthly" ? "/ MONTH" : ""}</>
+              )}
             </button>
+
+            <p className="text-center text-[10px] text-[#1B2A4A]/30 mt-2">
+              {donationType === "monthly" ? "Your card will be charged monthly until you cancel. Contact us anytime to modify or cancel." : "One-time secure charge to your credit card."}
+            </p>
+
+            {/* Alt Contact */}
+            <div className="text-center pt-2">
+              <p className="text-xs text-[#1B2A4A]/40 mb-2">Prefer to donate another way?</p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <a href="tel:+18664364959" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1B2A4A]/60 hover:text-[#C41E2A] transition-colors">
+                  <Phone className="w-3.5 h-3.5" /> (866) 436-4959
+                </a>
+                <a href="mailto:Teamtrainersrescue@gmail.com" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1B2A4A]/60 hover:text-[#C41E2A] transition-colors">
+                  <Mail className="w-3.5 h-3.5" /> Email Us
+                </a>
+              </div>
+            </div>
           </form>
         </div>
       </section>
 
-      {/* ═══ B. COST TRANSPARENCY ═══ */}
+      {/* ═══ B. COST TRANSPARENCY (COLLAPSIBLE) ═══ */}
       <section className="py-14 sm:py-16 bg-[#FAFAF8]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl sm:text-3xl font-black text-[#1B2A4A]">How Your Donation Makes a Difference</h2>
-            <p className="text-[#1B2A4A]/50 text-sm mt-2 max-w-xl mx-auto">It costs approximately <strong className="text-[#C41E2A]">$10,000</strong> to fully rescue, rehabilitate, and rehome one dog. Here&apos;s where every dollar goes:</p>
+          <div className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-black text-[#1B2A4A] mb-3">How Your Donation Makes a Difference</h2>
+            <p className="text-[#1B2A4A]/50 text-sm max-w-xl mx-auto mb-6">Here&apos;s what it takes to move one dog from rescue to a forever home.</p>
+            <button
+              onClick={() => setShowCosts(!showCosts)}
+              className="inline-flex items-center gap-2 bg-[#1B2A4A] hover:bg-[#2a3d66] text-white px-6 py-3 rounded-full text-sm font-bold transition-colors"
+            >
+              <DollarSign className="w-4 h-4" />
+              {showCosts ? "Hide Cost Breakdown" : "See How Your Support Helps"}
+            </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {rescueCosts.map((item) => (
-              <div key={item.label} className="bg-white rounded-2xl border border-slate-100 p-5 flex items-start gap-4 hover:shadow-lg transition-all">
-                <div className="w-10 h-10 rounded-xl bg-[#FFF0F0] flex items-center justify-center flex-shrink-0">
-                  <item.icon className="w-5 h-5 text-[#C41E2A]" />
-                </div>
-                <div>
-                  <p className="font-bold text-[#1B2A4A] text-sm">{item.label}</p>
-                  <p className="text-[#C41E2A] font-black text-lg">{item.cost}</p>
+
+          {showCosts && (
+            <div className="mt-10 animate-fade-up">
+              <p className="text-center text-[#1B2A4A]/50 text-sm mb-6">It costs approximately <strong className="text-[#C41E2A]">$10,000</strong> to fully rescue, rehabilitate, and rehome one dog.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {rescueCosts.map((item) => (
+                  <div key={item.label} className="bg-white rounded-2xl border border-slate-100 p-5 flex items-start gap-4 hover:shadow-lg transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-[#FFF0F0] flex items-center justify-center flex-shrink-0">
+                      <item.icon className="w-5 h-5 text-[#C41E2A]" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-[#1B2A4A] text-sm">{item.label}</p>
+                      <p className="text-[#C41E2A] font-black text-lg">{item.cost}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="text-center mt-8">
+                <div className="inline-flex items-center gap-2 bg-[#1B2A4A] text-white px-6 py-3 rounded-full text-sm font-bold">
+                  <DollarSign className="w-4 h-4" /> Total Per Dog: ~$10,000
                 </div>
               </div>
-            ))}
-          </div>
-          <div className="text-center mt-8">
-            <div className="inline-flex items-center gap-2 bg-[#1B2A4A] text-white px-6 py-3 rounded-full text-sm font-bold">
-              <DollarSign className="w-4 h-4" /> Total Target Per Dog: ~$10,000
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -228,9 +401,9 @@ export default function DonatePage() {
                 <p className="text-sm font-bold text-[#1B2A4A]/50 uppercase tracking-wider">{tier.name}</p>
                 <p className="text-4xl font-black text-[#1B2A4A] mt-1">${tier.price}<span className="text-base font-medium text-[#1B2A4A]/40">/mo</span></p>
                 <p className="text-sm text-[#1B2A4A]/60 mt-2 mb-6">{tier.impact}</p>
-                <Link href="/ttrg/contact" className={`block text-center py-3 rounded-xl text-sm font-bold transition-colors ${tier.popular ? "bg-[#C41E2A] hover:bg-[#A01825] text-white" : "border border-slate-200 text-[#1B2A4A] hover:bg-slate-50"}`}>
+                <button onClick={() => { setSelected(tier.price); setCustom(""); setDonationType("monthly"); scrollToForm(); }} className={`block w-full text-center py-3 rounded-xl text-sm font-bold transition-colors ${tier.popular ? "bg-[#C41E2A] hover:bg-[#A01825] text-white" : "border border-slate-200 text-[#1B2A4A] hover:bg-slate-50"}`}>
                   Become a {tier.name}
-                </Link>
+                </button>
               </div>
             ))}
           </div>
@@ -270,9 +443,20 @@ export default function DonatePage() {
         </div>
       </section>
 
-      <p className="text-[11px] text-slate-400 text-center pb-8">
-        Team Trainers Rescue Group · 501(c)(3) · Tax information available upon request.
-      </p>
+      <div className="text-center pb-8 px-4">
+        <p className="text-[11px] text-slate-400">
+          Team Trainers Rescue Group is a 501(c)(3) nonprofit organization. EIN: [Pending from client]
+        </p>
+        <p className="text-[10px] text-slate-300 mt-1">All donations are tax-deductible to the extent allowed by law.</p>
+      </div>
     </div>
+  );
+}
+
+export default function DonatePage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-[#C41E2A]" /></div>}>
+      <DonateInner />
+    </Suspense>
   );
 }

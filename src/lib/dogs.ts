@@ -1,3 +1,28 @@
+/* ─── JOURNEY STAGES ─── */
+export const journeyStages = [
+  { key: "rescue", label: "Rescue Intake", num: 1 },
+  { key: "medical", label: "Medical Stabilization", num: 2 },
+  { key: "rehab", label: "Training & Rehab", num: 3 },
+  { key: "foster", label: "Foster Placement", num: 4 },
+  { key: "adopt", label: "Adoption Ready", num: 5 },
+  { key: "home", label: "Forever Home", num: 6 },
+] as const;
+
+export type JourneyStageKey = typeof journeyStages[number]["key"];
+
+export interface Milestone {
+  label: string;
+  date?: string;
+  status: "completed" | "in_progress" | "upcoming" | "urgent";
+}
+
+export interface DogNeed {
+  icon: string;
+  label: string;
+  detail: string;
+  urgent?: boolean;
+}
+
 export interface Dog {
   id: string;
   name: string;
@@ -19,6 +44,20 @@ export interface Dog {
   behaviorNotes: string;
   specialNeeds: string;
   location: string;
+  /* ── extended fields (T5) ── */
+  rescueDate: string;
+  daysInRescue: number;
+  currentJourneyStage: JourneyStageKey;
+  journeyDates: Partial<Record<JourneyStageKey, string>>;
+  progressPercent: number;
+  currentStageLabel: string;
+  statusBadges: string[];
+  milestones: Milestone[];
+  currentNeeds: DogNeed[];
+  careTeam: string;
+  lastUpdate: string;
+  adminNote: string;
+  sponsorStatus: "none" | "partial" | "full";
 }
 
 export const dogs: Dog[] = [
@@ -46,7 +85,32 @@ export const dogs: Dog[] = [
     trainingNeeds: "Basic trust building, leash introduction, socialization with calm dogs",
     behaviorNotes: "Fearful of loud noises, hand-shy, improving daily with consistent positive reinforcement",
     specialNeeds: "High-calorie diet for weight recovery, quiet environment preferred",
-    location: "Houston, TX",
+    location: "Cleveland, OH",
+    rescueDate: "Feb 10, 2025",
+    daysInRescue: 47,
+    currentJourneyStage: "rehab",
+    journeyDates: { rescue: "Feb 10, 2025", medical: "Feb 12, 2025", rehab: "Feb 15, 2025" },
+    progressPercent: 50,
+    currentStageLabel: "Rehabilitation In Progress",
+    statusBadges: ["Urgent", "Needs Medical Care"],
+    milestones: [
+      { label: "First vet exam completed", date: "Feb 11", status: "completed" },
+      { label: "Started weight recovery plan", date: "Feb 13", status: "completed" },
+      { label: "Responding to basic training", date: "Feb 18", status: "completed" },
+      { label: "Confidence building in progress", status: "in_progress" },
+      { label: "Foster placement needed", status: "upcoming" },
+      { label: "Ready for adoption", status: "upcoming" },
+    ],
+    currentNeeds: [
+      { icon: "nutrition", label: "Nutrition & Supplements", detail: "$75 helps for 1 week" },
+      { icon: "vet", label: "Ongoing Vet Care", detail: "$100 supports medical needs" },
+      { icon: "training", label: "Training & Rehab", detail: "$150 supports her recovery" },
+      { icon: "foster", label: "Foster Home", detail: "Most needed next step", urgent: true },
+    ],
+    careTeam: "TTRG Rehabilitation Team",
+    lastUpdate: "2 days ago",
+    adminNote: "Responding well to training. Building trust and social skills.",
+    sponsorStatus: "partial",
   },
   {
     id: "tucker",
@@ -72,7 +136,32 @@ export const dogs: Dog[] = [
     trainingNeeds: "Leash manners, basic obedience refresher, confidence building",
     behaviorNotes: "Separation anxiety improving, gentle with children, good with other dogs",
     specialNeeds: "Needs a home with a consistent daily routine",
-    location: "Houston, TX",
+    location: "Cleveland, OH",
+    rescueDate: "Mar 5, 2025",
+    daysInRescue: 23,
+    currentJourneyStage: "rehab",
+    journeyDates: { rescue: "Mar 5, 2025", medical: "Mar 7, 2025", rehab: "Mar 12, 2025" },
+    progressPercent: 50,
+    currentStageLabel: "In Training — Rehabilitation Phase",
+    statusBadges: ["In Training"],
+    milestones: [
+      { label: "Intake and vet exam completed", date: "Mar 6", status: "completed" },
+      { label: "Emotional assessment completed", date: "Mar 8", status: "completed" },
+      { label: "Leash training started", date: "Mar 14", status: "completed" },
+      { label: "Confidence building in progress", status: "in_progress" },
+      { label: "Foster placement search", status: "upcoming" },
+      { label: "Ready for adoption", status: "upcoming" },
+    ],
+    currentNeeds: [
+      { icon: "nutrition", label: "Nutrition & Supplements", detail: "$60 helps for 1 week" },
+      { icon: "vet", label: "Ongoing Vet Care", detail: "$80 supports medical needs" },
+      { icon: "training", label: "Training & Rehab", detail: "$150 supports his recovery" },
+      { icon: "foster", label: "Foster Home", detail: "Searching for foster family" },
+    ],
+    careTeam: "TTRG Training Team",
+    lastUpdate: "3 days ago",
+    adminNote: "Tucker is responding well. Building trust and confidence daily.",
+    sponsorStatus: "full",
   },
   {
     id: "daisy",
@@ -98,7 +187,32 @@ export const dogs: Dog[] = [
     trainingNeeds: "Basic obedience, crate training, socialization",
     behaviorNotes: "Extremely friendly, food-motivated, pulls on leash (improving)",
     specialNeeds: "Needs gradual introduction to indoor living",
-    location: "Houston, TX",
+    location: "Cleveland, OH",
+    rescueDate: "Feb 25, 2025",
+    daysInRescue: 31,
+    currentJourneyStage: "medical",
+    journeyDates: { rescue: "Feb 25, 2025", medical: "Feb 27, 2025" },
+    progressPercent: 33,
+    currentStageLabel: "Recovering — Medical Phase",
+    statusBadges: ["Recovering"],
+    milestones: [
+      { label: "Emergency intake completed", date: "Feb 25", status: "completed" },
+      { label: "Skin treatment started", date: "Feb 28", status: "completed" },
+      { label: "Weight gain program started", date: "Mar 2", status: "in_progress" },
+      { label: "Basic obedience intro", status: "upcoming" },
+      { label: "Foster placement needed", status: "upcoming" },
+      { label: "Ready for adoption", status: "upcoming" },
+    ],
+    currentNeeds: [
+      { icon: "nutrition", label: "Nutrition & Supplements", detail: "$80 helps for 1 week" },
+      { icon: "vet", label: "Skin Treatment", detail: "$120 supports medical care" },
+      { icon: "training", label: "Crate & Obedience Training", detail: "$100 supports her progress" },
+      { icon: "foster", label: "Foster Home", detail: "Needs indoor living introduction", urgent: true },
+    ],
+    careTeam: "TTRG Medical Team",
+    lastUpdate: "1 day ago",
+    adminNote: "Gaining weight steadily. Extremely friendly and food-motivated.",
+    sponsorStatus: "none",
   },
   {
     id: "shadow",
@@ -123,7 +237,32 @@ export const dogs: Dog[] = [
     trainingNeeds: "Minimal—well-mannered, knows basic commands",
     behaviorNotes: "Calm, gentle, great with people, tolerant of handling",
     specialNeeds: "Low-impact exercise only, orthopedic bed recommended, surgery funding needed",
-    location: "Houston, TX",
+    location: "Cleveland, OH",
+    rescueDate: "Jan 25, 2025",
+    daysInRescue: 62,
+    currentJourneyStage: "rescue",
+    journeyDates: { rescue: "Jan 25, 2025" },
+    progressPercent: 17,
+    currentStageLabel: "Awaiting Surgery — Rescue Phase",
+    statusBadges: ["Urgent", "Needs Medical Care"],
+    milestones: [
+      { label: "Highway rescue completed", date: "Jan 25", status: "completed" },
+      { label: "X-rays and diagnosis", date: "Jan 27", status: "completed" },
+      { label: "Corrective surgery needed", status: "urgent" },
+      { label: "Physical rehabilitation", status: "upcoming" },
+      { label: "Foster placement", status: "upcoming" },
+      { label: "Ready for adoption", status: "upcoming" },
+    ],
+    currentNeeds: [
+      { icon: "vet", label: "Corrective Leg Surgery", detail: "$2,500 needed urgently", urgent: true },
+      { icon: "nutrition", label: "Pain Management", detail: "$80/month for medication" },
+      { icon: "training", label: "Physical Therapy", detail: "$200 for rehab sessions" },
+      { icon: "foster", label: "Quiet Foster Home", detail: "Low-impact environment needed" },
+    ],
+    careTeam: "TTRG Veterinary Team",
+    lastUpdate: "Today",
+    adminNote: "Surgery funding critical. Shadow is comfortable but needs intervention soon.",
+    sponsorStatus: "partial",
   },
   {
     id: "prince",
@@ -148,7 +287,32 @@ export const dogs: Dog[] = [
     trainingNeeds: "Impulse control, leash training, recall training, boundary setting",
     behaviorNotes: "High energy, intelligent, responds well to structure, needs experienced handler",
     specialNeeds: "Needs daily exercise and mental stimulation, fenced yard preferred",
-    location: "Houston, TX",
+    location: "Cleveland, OH",
+    rescueDate: "Mar 16, 2025",
+    daysInRescue: 12,
+    currentJourneyStage: "rehab",
+    journeyDates: { rescue: "Mar 16, 2025", medical: "Mar 17, 2025", rehab: "Mar 20, 2025" },
+    progressPercent: 50,
+    currentStageLabel: "In Training — Behavioral Rehab",
+    statusBadges: ["Urgent", "In Training"],
+    milestones: [
+      { label: "Intake and vet exam", date: "Mar 17", status: "completed" },
+      { label: "Neutered and vaccinated", date: "Mar 18", status: "completed" },
+      { label: "Impulse control training started", date: "Mar 20", status: "in_progress" },
+      { label: "Leash and recall training", status: "upcoming" },
+      { label: "Foster placement search", status: "upcoming" },
+      { label: "Ready for adoption", status: "upcoming" },
+    ],
+    currentNeeds: [
+      { icon: "training", label: "Behavioral Training", detail: "$200 for intensive program", urgent: true },
+      { icon: "nutrition", label: "High-Energy Diet", detail: "$65 helps for 1 week" },
+      { icon: "vet", label: "Follow-up Vet Visit", detail: "$75 for checkup" },
+      { icon: "foster", label: "Experienced Foster", detail: "Needs handler with large breed experience" },
+    ],
+    careTeam: "TTRG Behavioral Team",
+    lastUpdate: "Today",
+    adminNote: "High energy but extremely smart. Responding well to structure.",
+    sponsorStatus: "none",
   },
   {
     id: "luna",
@@ -173,7 +337,32 @@ export const dogs: Dog[] = [
     trainingNeeds: "Leash training, socialization with new dogs, basic commands",
     behaviorNotes: "Shy and timid, warming up slowly, responds well to calm voices",
     specialNeeds: "Needs quiet environment, patient adopter, gradual introductions",
-    location: "Houston, TX",
+    location: "Cleveland, OH",
+    rescueDate: "Feb 18, 2025",
+    daysInRescue: 38,
+    currentJourneyStage: "rehab",
+    journeyDates: { rescue: "Feb 18, 2025", medical: "Feb 20, 2025", rehab: "Feb 24, 2025" },
+    progressPercent: 50,
+    currentStageLabel: "Rehabilitation In Progress",
+    statusBadges: ["Needs Foster"],
+    milestones: [
+      { label: "Intake and initial vet exam", date: "Feb 19", status: "completed" },
+      { label: "Spayed and vaccinated", date: "Feb 21", status: "completed" },
+      { label: "Trust building started", date: "Feb 24", status: "in_progress" },
+      { label: "Socialization with calm dogs", status: "upcoming" },
+      { label: "Foster placement needed", status: "upcoming" },
+      { label: "Ready for adoption", status: "upcoming" },
+    ],
+    currentNeeds: [
+      { icon: "nutrition", label: "Gentle Diet Plan", detail: "$55 helps for 1 week" },
+      { icon: "vet", label: "Dental Cleaning", detail: "$150 for procedure" },
+      { icon: "training", label: "Socialization Program", detail: "$100 supports her progress" },
+      { icon: "foster", label: "Quiet Foster Home", detail: "Calm environment needed", urgent: true },
+    ],
+    careTeam: "TTRG Rehabilitation Team",
+    lastUpdate: "4 days ago",
+    adminNote: "Luna is warming up slowly. Responds well to calm voices and gentle handling.",
+    sponsorStatus: "none",
   },
 ];
 

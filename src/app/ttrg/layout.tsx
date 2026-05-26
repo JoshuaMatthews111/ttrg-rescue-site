@@ -1,22 +1,20 @@
-"use client";
+import type { Metadata } from "next";
+import TTRGShell from "@/components/ttrg/TTRGShell";
 
-import { usePathname } from "next/navigation";
-import TTRGNav from "@/components/ttrg/TTRGNav";
-import TTRGFooter from "@/components/ttrg/TTRGFooter";
+export const metadata: Metadata = {
+  title: "Team Trainers Rescue Group — Rescue. Rehabilitate. Rehome. Repeat.",
+  description: "Nonprofit dog rescue in Cleveland, OH. We rescue, rehabilitate, and rehome dogs in need.",
+  openGraph: {
+    title: "Team Trainers Rescue Group — Rescue. Rehabilitate. Rehome. Repeat.",
+    description: "Nonprofit dog rescue in Cleveland, OH. We rescue, rehabilitate, and rehome dogs in need.",
+    type: "website",
+  },
+  twitter: {
+    title: "Team Trainers Rescue Group — Rescue. Rehabilitate. Rehome. Repeat.",
+    description: "Nonprofit dog rescue in Cleveland, OH. We rescue, rehabilitate, and rehome dogs in need.",
+  },
+};
 
 export default function TTRGLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/ttrg/admin");
-
-  if (isAdmin) {
-    return <>{children}</>;
-  }
-
-  return (
-    <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-      <TTRGNav />
-      <main className="flex-1 pt-[88px]">{children}</main>
-      <TTRGFooter />
-    </div>
-  );
+  return <TTRGShell>{children}</TTRGShell>;
 }
