@@ -10,35 +10,39 @@ import {
   Star, TrendingUp, Award, MapPin,
 } from "lucide-react";
 import { dogs as dogData } from "@/lib/dogs";
-import { getPublishedDogs } from "@/lib/admin-store";
+import { getPublishedDogs, getTickerItems, type TickerItem } from "@/lib/admin-store";
 import DogCard from "@/components/ttrg/DogCard";
 
 /* ─── HERO CAROUSEL DATA ─── */
 const heroSlides = [
   {
-    video: "/ttrg/video/lo-walkin.mov",
-    headline: <>Rescue.<br />Rehabilitate.<br /><span className="text-[#C41E2A]">Rehome.</span>{" "}<span className="text-white/40 italic font-light text-3xl sm:text-5xl">Repeat.</span></>,
+    video: "/ttrg/video/lo-walkin-web.mp4",
+    words: ["Rescue.", "Train.", "Rehome.", "Repeat."],
+    accentIdx: 2,
     subtitle: "Every dog deserves a second chance. Join our mission to rescue, heal, and find forever homes for dogs in need.",
     cta: { label: "DONATE NOW", href: "/ttrg/donate", icon: "heart" },
     cta2: { label: "MEET OUR DOGS", href: "/ttrg/sponsor" },
   },
   {
-    video: "/ttrg/video/hero.mp4",
-    headline: <>Every Dog Deserves<br />A Safe <span className="text-[#C41E2A]">Happy</span> Home.</>,
+    video: "/ttrg/video/hero-web.mp4",
+    words: ["Every", "Dog", "Deserves", "A", "Happy", "Home."],
+    accentIdx: 4,
     subtitle: "From shelters to forever families — we provide rescue, medical care, training, and love every step of the way.",
     cta: { label: "SPONSOR A DOG", href: "/ttrg/sponsor", icon: "paw" },
     cta2: { label: "GET INVOLVED", href: "/ttrg/get-involved" },
   },
   {
-    video: "/ttrg/video/lo-walkin.mov",
-    headline: <>Follow <span className="text-[#C41E2A]">Real</span><br />Rescue Journeys.</>,
+    video: "/ttrg/video/lo-walkin-web.mp4",
+    words: ["Follow", "Real", "Rescue", "Journeys."],
+    accentIdx: 1,
     subtitle: "Track every dog's transformation from rescue to rehome. Real stories, real impact, real results.",
     cta: { label: "VIEW JOURNEYS", href: "/ttrg/sponsor", icon: "paw" },
     cta2: { label: "WATCH STORIES", href: "/ttrg/stories" },
   },
   {
-    video: "/ttrg/video/hero.mp4",
-    headline: <>Support A Dog&apos;s<br /><span className="text-[#C41E2A]">Transformation.</span></>,
+    video: "/ttrg/video/hero-web.mp4",
+    words: ["Support", "A", "Dog's", "Transformation."],
+    accentIdx: 3,
     subtitle: "Your donation funds medical care, professional training, and safe shelter — giving every rescue dog the life they deserve.",
     cta: { label: "DONATE NOW", href: "/ttrg/donate", icon: "heart" },
     cta2: { label: "LEARN MORE", href: "/ttrg/about" },
@@ -66,9 +70,9 @@ const impactStats = [
 ];
 
 const testimonialVideos = [
-  { id: 1, src: "/ttrg/videos/britta-testimonial.mp4", title: "From Fear to Family", quote: "Luna's journey from heartbreak to thriving.", category: "Rescue Story", thumb: "/ttrg/dogs/luna.jpg" },
-  { id: 2, src: "/ttrg/videos/testimonial-2.mp4", title: "Second Chances Work", quote: "Max went from neglected to thriving.", category: "Training Story", thumb: "/ttrg/dogs/tucker.jpg" },
-  { id: 3, src: "/ttrg/videos/trefz-family.mp4", title: "A Bond That Heals", quote: "How Rex helped a family heal too.", category: "Client Testimonial", thumb: "/ttrg/dogs/shadow.jpg" },
+  { id: 1, src: "/ttrg/videos/britta-testimonial.mp4", title: "From Fear to Family", quote: "Luna's journey from heartbreak to thriving.", category: "Rescue Story", thumb: "/ttrg/videos/britta-testimonial-poster.jpg" },
+  { id: 2, src: "/ttrg/videos/testimonial-2.mp4", title: "Second Chances Work", quote: "Max went from neglected to thriving.", category: "Training Story", thumb: "/ttrg/videos/testimonial-2-poster.jpg" },
+  { id: 3, src: "/ttrg/videos/trefz-family.mp4", title: "A Bond That Heals", quote: "How Rex helped a family heal too.", category: "Client Testimonial", thumb: "/ttrg/videos/trefz-family-poster.jpg" },
 ];
 
 const journey = [
@@ -172,17 +176,15 @@ export default function TTRGHome() {
   const [popupEmail, setPopupEmail] = useState("");
   const [popupSubmitted, setPopupSubmitted] = useState(false);
   const [dogs, setDogs] = useState(dogData);
-  const [tickerIdx, setTickerIdx] = useState(0);
   const [boVideoOpen, setBoVideoOpen] = useState(false);
+  const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
+  const [flipKey, setFlipKey] = useState(0);
 
   useEffect(() => {
     const published = getPublishedDogs();
     if (published.length > 0) setDogs(published as unknown as typeof dogData);
-  }, []);
-
-  useEffect(() => {
-    const t = setInterval(() => setTickerIdx((i) => (i + 1) % missionUpdates.length), 8000);
-    return () => clearInterval(t);
+    const items = getTickerItems().filter((t) => t.active);
+    if (items.length > 0) setTickerItems(items);
   }, []);
 
   useEffect(() => {
@@ -208,6 +210,7 @@ export default function TTRGHome() {
     setHeroFading(true);
     setTimeout(() => {
       setHeroIdx((i) => (i + 1) % heroSlides.length);
+      setFlipKey((k) => k + 1);
       setHeroFading(false);
     }, 800);
   }, []);
@@ -234,15 +237,26 @@ export default function TTRGHome() {
   return (
     <div className="bg-[#FDFCFA]">
 
+      {/* ═══════ 0. PERSISTENT SLIDING TICKER ═══════ */}
+      <div className="bg-gradient-to-r from-[#1a3a2a] via-[#2d5a3d] to-[#1a3a2a] py-2 overflow-hidden relative z-50">
+        <div className="flex animate-marquee whitespace-nowrap" style={{ "--marquee-duration": "35s" } as React.CSSProperties}>
+          {[...((tickerItems.length > 0 ? tickerItems : missionUpdates.map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active)), ...((tickerItems.length > 0 ? tickerItems : missionUpdates.map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active))].map((item, i) => (
+            <span key={`${item.id}-${i}`} className="inline-flex items-center mx-8 sm:mx-12 text-white/90 text-xs sm:text-sm font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C41E2A] mr-3 ticker-glow flex-shrink-0" />
+              {item.text}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* ═══════ 1. HERO — VIDEO CAROUSEL ═══════ */}
       <section ref={heroSec.ref} className="relative min-h-[92vh] flex items-center overflow-hidden">
-        {/* Video layers */}
+        {/* Video layers — NO poster/image, pure video */}
         {heroSlides.map((slide, i) => (
           <video
             key={i}
             ref={(el) => { heroVideoRefs.current[i] = el; }}
             autoPlay={i === 0} muted loop playsInline
-            poster="/ttrg/hero-trainer.png"
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${i === heroIdx && !heroFading ? "opacity-100" : "opacity-0"}`}
           >
             <source src={slide.video} type="video/mp4" />
@@ -252,7 +266,7 @@ export default function TTRGHome() {
         {/* Overlays */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a1628]/90 via-[#0a1628]/60 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#2d5a3d]/10 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a3a2a]/15 via-transparent to-transparent" />
 
         {/* Content */}
         <div className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full ${heroSec.visible ? "animate-fade-up" : "opacity-0"}`}>
@@ -267,10 +281,14 @@ export default function TTRGHome() {
               </div>
             </div>
 
-            {/* Rotating headline */}
-            <div className={`transition-all duration-700 ${heroFading ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"}`}>
-              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-[0.95] mb-5 tracking-tight">
-                {heroSlides[heroIdx].headline}
+            {/* Flipping word headline */}
+            <div className={`transition-all duration-700 ${heroFading ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"}`} style={{ perspective: "800px" }}>
+              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-[0.95] mb-5 tracking-tight flex flex-wrap gap-x-4 gap-y-1">
+                {heroSlides[heroIdx].words.map((word, wi) => (
+                  <span key={`${flipKey}-${wi}`} className={`flip-letter ${wi === heroSlides[heroIdx].accentIdx ? "text-[#C41E2A]" : ""}`} style={{ animationDelay: `${wi * 0.08}s` }}>
+                    {word}
+                  </span>
+                ))}
               </h1>
               <p className="text-white/70 text-base sm:text-lg leading-relaxed max-w-xl mb-9">
                 {heroSlides[heroIdx].subtitle}
@@ -289,20 +307,8 @@ export default function TTRGHome() {
             {/* Slide indicators */}
             <div className="flex gap-2">
               {heroSlides.map((_, i) => (
-                <button key={i} onClick={() => { setHeroFading(true); setTimeout(() => { setHeroIdx(i); setHeroFading(false); }, 600); }} className={`h-1 rounded-full transition-all duration-500 ${i === heroIdx ? "w-10 bg-[#C41E2A]" : "w-4 bg-white/30 hover:bg-white/50"}`} />
+                <button key={i} onClick={() => { setHeroFading(true); setTimeout(() => { setHeroIdx(i); setFlipKey((k) => k + 1); setHeroFading(false); }, 600); }} className={`h-1 rounded-full transition-all duration-500 ${i === heroIdx ? "w-10 bg-[#C41E2A]" : "w-4 bg-white/30 hover:bg-white/50"}`} />
               ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════ 2. MISSION UPDATES TICKER ═══════ */}
-      <section className="bg-gradient-to-r from-[#1B2A4A] via-[#243656] to-[#1B2A4A] border-b border-white/5 py-3.5 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center gap-3 overflow-hidden h-6">
-            <TrendingUp className="w-4 h-4 text-[#C41E2A] flex-shrink-0 animate-pulse" />
-            <div key={tickerIdx} className="animate-fade-up text-white/80 text-xs sm:text-sm font-medium">
-              {missionUpdates[tickerIdx].text}
             </div>
           </div>
         </div>
@@ -310,7 +316,7 @@ export default function TTRGHome() {
 
 
       {/* ═══════ 2B. IMPACT STATS ═══════ */}
-      <section ref={statsSec.ref} className="py-16 sm:py-20 bg-gradient-to-br from-[#f7f5f0] via-[#f0ece4] to-[#e8f0e8]">
+      <section ref={statsSec.ref} className="py-16 sm:py-20 bg-gradient-to-br from-[#eef4ee] via-[#e8f0e4] to-[#f0f5ee]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-[#2d5a3d]/10 rounded-full px-4 py-1.5 mb-4">
@@ -419,7 +425,7 @@ export default function TTRGHome() {
       </section>
 
       {/* ═══════ 4. SUCCESS STORIES + BO & BRADY ═══════ */}
-      <section className="py-20 sm:py-24 bg-gradient-to-br from-[#f7f5f0] via-[#f0ece4] to-[#eef3ee]">
+      <section className="py-20 sm:py-24 bg-gradient-to-br from-[#eef4ee] via-[#e8f0e4] to-[#f0f5ee]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-[#1B2A4A]/10 rounded-full px-4 py-1.5 mb-4">
@@ -435,7 +441,7 @@ export default function TTRGHome() {
             <div className="flex flex-col md:flex-row">
               <div className="relative aspect-video md:w-1/2 overflow-hidden">
                 <video muted loop playsInline preload="metadata" poster="/ttrg/video/bo-brady-poster.jpg" className="w-full h-full object-cover brightness-75 group-hover:brightness-50 group-hover:scale-105 transition-all duration-700" onMouseOver={(e) => (e.target as HTMLVideoElement).play()} onMouseOut={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0; }}>
-                  <source src="/ttrg/video/bo-brady.mov" type="video/mp4" />
+                  <source src="/ttrg/video/bo-brady-web.mp4" type="video/mp4" />
                 </video>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   <div className="w-20 h-20 rounded-full bg-[#C41E2A]/90 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-all">
@@ -495,7 +501,7 @@ export default function TTRGHome() {
       </section>
 
       {/* ═══════ 5. FEATURED DOGS ═══════ */}
-      <section id="dogs-in-need" ref={dogsSec.ref} className="py-20 sm:py-24 bg-gradient-to-br from-white via-[#faf9f5] to-[#f0f5ee]">
+      <section id="dogs-in-need" ref={dogsSec.ref} className="py-20 sm:py-24 bg-gradient-to-br from-white via-[#f2f7f0] to-[#eef4ee]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`text-center mb-12 ${dogsSec.visible ? "animate-fade-up" : "opacity-0"}`}>
             <div className="inline-flex items-center gap-2 bg-[#C41E2A]/10 rounded-full px-4 py-1.5 mb-4">
@@ -524,7 +530,7 @@ export default function TTRGHome() {
       </section>
 
       {/* ═══════ 6. PARTNERS PREVIEW ═══════ */}
-      <section className="py-12 bg-gradient-to-r from-[#f7f5f0] via-white to-[#f7f5f0] border-y border-[#2d5a3d]/5">
+      <section className="py-12 bg-gradient-to-r from-[#eef4ee] via-white to-[#eef4ee] border-y border-[#2d5a3d]/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-xs font-bold text-[#1B2A4A]/30 uppercase tracking-[0.2em] mb-6">Trusted By Our Community Partners</p>
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-50 hover:opacity-80 transition-opacity">
@@ -546,7 +552,7 @@ export default function TTRGHome() {
       </section>
 
       {/* ═══════ 7. FOUNDER PREVIEW ═══════ */}
-      <section ref={founderSec.ref} className="py-20 sm:py-24 bg-gradient-to-br from-white via-[#faf9f5] to-[#eef3ee]">
+      <section ref={founderSec.ref} className="py-20 sm:py-24 bg-gradient-to-br from-white via-[#f2f7f0] to-[#eef4ee]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className={`relative ${founderSec.visible ? "animate-fade-up" : "opacity-0"}`}>
@@ -594,7 +600,7 @@ export default function TTRGHome() {
       </section>
 
       {/* ═══════ 8. GET INVOLVED ═══════ */}
-      <section className="py-20 sm:py-24 bg-gradient-to-br from-[#f7f5f0] via-[#f0ece4] to-[#eef3ee]">
+      <section className="py-20 sm:py-24 bg-gradient-to-br from-[#eef4ee] via-[#e8f0e4] to-[#f0f5ee]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-[#C41E2A]/10 rounded-full px-4 py-1.5 mb-4">

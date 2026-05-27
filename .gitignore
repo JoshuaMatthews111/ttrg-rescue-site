@@ -40,14 +40,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Large video files (served externally)
+# Original large video files (keep web-optimized versions)
 public/ttrg/video/bo-brady.mov
-
-# All video files - too large for GitHub (use external hosting)
-public/ttrg/video/*.mov
-public/ttrg/video/*.mp4
-public/ttrg/videos/*.mp4
-public/ttrg/videos/*.mov
+public/ttrg/video/lo-walkin.mov
+public/ttrg/video/hero.mp4
+public/ttrg/videos/britta-testimonial.mp4
+public/ttrg/videos/testimonial-2.mp4
+public/ttrg/videos/trefz-family.mp4
+public/ttrg/videos/just-the-2-of-us.mov
 public/lorenzo/videos/*.mp4
 public/lorenzo/videos/*.mov
 

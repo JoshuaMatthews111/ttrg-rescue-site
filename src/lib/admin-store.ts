@@ -270,3 +270,108 @@ export function addSponsorInterest(interest: SponsorInterest) {
   interests.unshift(interest);
   setStore("ttrg-sponsor-interests", interests);
 }
+
+// ─── SITE SETTINGS (admin-editable ticker, hero, announcements) ───
+export interface TickerItem {
+  id: string;
+  text: string;
+  active: boolean;
+  createdAt: string;
+  type: "manual" | "auto";
+}
+
+export interface Donation {
+  id: string;
+  name: string;
+  email: string;
+  amount: number;
+  frequency: "one-time" | "monthly";
+  dogName?: string;
+  date: string;
+  status: "completed" | "failed" | "pending";
+  last4?: string;
+}
+
+export interface SiteSettings {
+  heroHeadlines: string[];
+  heroSubtitles: string[];
+  tickerSpeed: number;
+  announcementBar: string;
+  announcementActive: boolean;
+}
+
+const defaultTicker: TickerItem[] = [
+  { id: "t1", text: "🐾 3 Dogs Rescued This Week — Your Support Saves Lives", active: true, createdAt: new Date().toISOString(), type: "manual" },
+  { id: "t2", text: "🐾 127 Dogs Successfully Trained, Rehabilitated & Rehomed", active: true, createdAt: new Date().toISOString(), type: "manual" },
+  { id: "t3", text: "🐾 New Rescue Story Added — Follow Bailey's Journey", active: true, createdAt: new Date().toISOString(), type: "manual" },
+  { id: "t4", text: "🐾 Thank You To Our Amazing Donors & Foster Families", active: true, createdAt: new Date().toISOString(), type: "manual" },
+  { id: "t5", text: "🐾 Emergency Foster Placements Helping Dogs in Critical Need", active: true, createdAt: new Date().toISOString(), type: "manual" },
+  { id: "t6", text: "🐾 Every Adoption Opens Space for the Next Dog Waiting", active: true, createdAt: new Date().toISOString(), type: "manual" },
+];
+
+const defaultSettings: SiteSettings = {
+  heroHeadlines: ["Rescue.", "Train.", "Rehome.", "Repeat."],
+  heroSubtitles: [
+    "Every dog deserves a second chance. Join our mission to rescue, heal, and find forever homes.",
+    "From shelters to forever families — we provide rescue, medical care, training, and love.",
+    "Track every dog's transformation. Real stories, real impact, real results.",
+    "Your donation funds medical care, professional training, and safe shelter.",
+  ],
+  tickerSpeed: 30,
+  announcementBar: "",
+  announcementActive: false,
+};
+
+export function getTickerItems(): TickerItem[] {
+  return getStore<TickerItem>("ttrg-ticker", defaultTicker);
+}
+
+export function saveTickerItems(items: TickerItem[]) {
+  setStore("ttrg-ticker", items);
+}
+
+export function addTickerItem(item: TickerItem) {
+  const items = getTickerItems();
+  items.unshift(item);
+  saveTickerItems(items);
+}
+
+export function getSiteSettings(): SiteSettings {
+  if (typeof window === "undefined") return defaultSettings;
+  const raw = localStorage.getItem("ttrg-site-settings");
+  if (!raw) return defaultSettings;
+  try { return JSON.parse(raw); } catch { return defaultSettings; }
+}
+
+export function saveSiteSettings(settings: SiteSettings) {
+  localStorage.setItem("ttrg-site-settings", JSON.stringify(settings));
+}
+
+export function getDonations(): Donation[] {
+  return getStore<Donation>("ttrg-donations", []);
+}
+
+export function saveDonations(donations: Donation[]) {
+  setStore("ttrg-donations", donations);
+}
+
+export function addDonation(donation: Donation) {
+  const donations = getDonations();
+  donations.unshift(donation);
+  saveDonations(donations);
+}
+
+// Auto-generate ticker from dog journey progress
+export function generateJourneyTicker(dogName: string, fromStage: string, toStage: string): TickerItem {
+  const stageLabels: Record<string, string> = {
+    rescue: "Rescue", medical: "Medical Care", rehab: "Training & Rehab",
+    foster: "Foster Placement", adopt: "Adoption Ready", home: "Forever Home",
+  };
+  return {
+    id: `auto-${Date.now()}`,
+    text: `🎉 ${dogName} just advanced from ${stageLabels[fromStage] || fromStage} to ${stageLabels[toStage] || toStage}!`,
+    active: true,
+    createdAt: new Date().toISOString(),
+    type: "auto",
+  };
+}

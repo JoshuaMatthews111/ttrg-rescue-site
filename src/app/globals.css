@@ -188,3 +188,44 @@ img {
   box-shadow: 0 0 20px rgba(27, 42, 74, 0.2);
   transform: translateY(-1px);
 }
+
+/* ─── Flipping / Rotating Letter Animation ─── */
+@keyframes flipIn {
+  0% { opacity: 0; transform: rotateX(90deg) translateY(-10px); }
+  60% { transform: rotateX(-10deg); }
+  100% { opacity: 1; transform: rotateX(0deg) translateY(0); }
+}
+@keyframes flipOut {
+  0% { opacity: 1; transform: rotateX(0deg); }
+  100% { opacity: 0; transform: rotateX(-90deg) translateY(10px); }
+}
+.flip-letter {
+  display: inline-block;
+  animation: flipIn 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+  perspective: 800px;
+}
+.flip-out-letter {
+  display: inline-block;
+  animation: flipOut 0.35s cubic-bezier(0.55, 0, 1, 0.45) both;
+}
+
+/* ─── Continuous Marquee Ticker ─── */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee var(--marquee-duration, 30s) linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ─── Ticker glow bar ─── */
+@keyframes tickerGlow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.ticker-glow {
+  animation: tickerGlow 3s ease-in-out infinite;
+}

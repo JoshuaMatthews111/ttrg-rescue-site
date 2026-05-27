@@ -8,6 +8,7 @@ import {
   Phone, Mail, Truck, Sparkles, Utensils, Activity, AlertTriangle, Award,
   Building2, ArrowRight, DollarSign, CreditCard, Lock, Loader2, XCircle,
 } from "lucide-react";
+import { addDonation } from "@/lib/admin-store";
 
 const donationOptions = [
   { amount: 25, label: "Feed a Rescue", desc: "Provides nutritious meals for one dog for a week", icon: PawPrint },
@@ -128,6 +129,17 @@ function DonateInner() {
       });
       const data = await res.json();
       if (data.success) {
+        addDonation({
+          id: data.transactionId || `don-${Date.now()}`,
+          name: `${firstName} ${lastName}`,
+          email,
+          amount: finalAmount,
+          frequency: donationType === "monthly" ? "monthly" : "one-time",
+          dogName: dogName || undefined,
+          date: new Date().toISOString(),
+          status: "completed",
+          last4: cardNumber.replace(/\s/g, "").slice(-4),
+        });
         setSuccess(data);
       } else {
         setError(data.error || "Payment failed. Please try again.");

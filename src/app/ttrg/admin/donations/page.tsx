@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DollarSign, Heart, TrendingUp, Search, Building2, Repeat, Filter } from "lucide-react";
+import { getDonations as getRealDonations } from "@/lib/admin-store";
 
 type DonationType = "one_time" | "monthly" | "infrastructure" | "corporate" | "dog_sponsor";
 
@@ -47,8 +48,28 @@ const typeColors: Record<DonationType, string> = {
 export default function DonationsPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<DonationType | "all">("all");
+  const [allDonations, setAllDonations] = useState(donations);
 
-  const filtered = donations.filter((d) => {
+  useEffect(() => {
+    const real = getRealDonations();
+    if (real.length > 0) {
+      const mapped: Donation[] = real.map((r) => ({
+        id: r.id,
+        donor: r.name,
+        email: r.email,
+        amount: r.amount,
+        type: r.frequency === "monthly" ? "monthly" as DonationType : "one_time" as DonationType,
+        category: r.dogName ? `Dog Sponsor – ${r.dogName}` : "General Donation",
+        dog: r.dogName,
+        date: r.date.split("T")[0],
+        status: r.status === "completed" ? "paid" as const : "pending" as const,
+        receipt: false,
+      }));
+      setAllDonations([...mapped, ...donations]);
+    }
+  }, []);
+
+  const filtered = allDonations.filter((d) => {
     if (filter !== "all" && d.type !== filter) return false;
     if (search && !`${d.donor} ${d.email} ${d.category}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
