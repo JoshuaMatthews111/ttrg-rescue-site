@@ -38,8 +38,8 @@ export default function AdminLoginPage() {
           <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4 border border-white/10">
             <img src="/ttrg/ttrg-logo.jpeg" alt="TTRG" className="w-16 h-16 rounded-full object-cover" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1">TTRG Admin Portal</h1>
-          <p className="text-white/40 text-sm">Team Trainers Rescue Group</p>
+          <h1 className="text-2xl font-bold text-white mb-1">Staff Login</h1>
+          <p className="text-white/40 text-sm">Team Trainers Rescue Group — Staff Portal</p>
         </div>
 
         {/* Login Card */}

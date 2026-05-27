@@ -1,4 +1,4 @@
-/* ─── JOURNEY STAGES ─── */
+ /* ─── JOURNEY STAGES ─── */
 export const journeyStages = [
   { key: "rescue", label: "Rescue Intake", num: 1 },
   { key: "medical", label: "Medical Stabilization", num: 2 },

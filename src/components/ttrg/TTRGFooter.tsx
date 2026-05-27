@@ -141,10 +141,13 @@ export default function TTRGFooter() {
             </div>
           </div>
 
-          <div className="border-t border-white/5 mt-10 pt-8 text-center">
+          <div className="border-t border-white/5 mt-10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-white/20 text-xs">
               © {new Date().getFullYear()} Team Trainers Rescue Group. All rights reserved.
             </p>
+            <Link href="/ttrg/admin/login" className="text-white/30 hover:text-white/60 text-xs font-medium transition-colors">
+              Staff Login
+            </Link>
           </div>
         </div>
       </footer>

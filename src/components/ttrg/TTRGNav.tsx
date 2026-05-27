@@ -28,10 +28,14 @@ const aboutDropdown = [
 function Dropdown({ label, items, open, onToggle, onClose }: { label: string; items: typeof dogsDropdown; open: boolean; onToggle: () => void; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [onClose]);
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    // Use click (not mousedown) so Link clicks register first
+    document.addEventListener("click", handler, true);
+    return () => document.removeEventListener("click", handler, true);
+  }, [onClose, open]);
 
   return (
     <div ref={ref} className="relative">
@@ -50,7 +54,7 @@ function Dropdown({ label, items, open, onToggle, onClose }: { label: string; it
               <Link
                 key={item.label}
                 href={item.href}
-                onClick={onClose}
+                onClick={() => { onClose(); }}
                 className="relative z-10 flex items-center gap-3 px-4 py-2.5 text-[#1B2A4A] text-sm hover:bg-[#FFF0F0] hover:text-[#C41E2A] transition-colors"
               >
                 <item.icon className="w-4 h-4 text-[#C41E2A]/60" />

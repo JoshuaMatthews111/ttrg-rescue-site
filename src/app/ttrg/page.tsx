@@ -13,50 +13,29 @@ import { dogs as dogData } from "@/lib/dogs";
 import { getPublishedDogs, getTickerItems, type TickerItem } from "@/lib/admin-store";
 import DogCard from "@/components/ttrg/DogCard";
 
-/* ─── HERO CAROUSEL DATA ─── */
-const heroSlides = [
-  {
-    video: "/ttrg/video/lo-walkin-web.mp4",
-    words: ["Rescue.", "Train.", "Rehome.", "Repeat."],
-    accentIdx: 2,
-    subtitle: "Every dog deserves a second chance. Join our mission to rescue, heal, and find forever homes for dogs in need.",
-    cta: { label: "DONATE NOW", href: "/ttrg/donate", icon: "heart" },
-    cta2: { label: "MEET OUR DOGS", href: "/ttrg/sponsor" },
-  },
-  {
-    video: "/ttrg/video/hero-web.mp4",
-    words: ["Every", "Dog", "Deserves", "A", "Happy", "Home."],
-    accentIdx: 4,
-    subtitle: "From shelters to forever families — we provide rescue, medical care, training, and love every step of the way.",
-    cta: { label: "SPONSOR A DOG", href: "/ttrg/sponsor", icon: "paw" },
-    cta2: { label: "GET INVOLVED", href: "/ttrg/get-involved" },
-  },
-  {
-    video: "/ttrg/video/lo-walkin-web.mp4",
-    words: ["Follow", "Real", "Rescue", "Journeys."],
-    accentIdx: 1,
-    subtitle: "Track every dog's transformation from rescue to rehome. Real stories, real impact, real results.",
-    cta: { label: "VIEW JOURNEYS", href: "/ttrg/sponsor", icon: "paw" },
-    cta2: { label: "WATCH STORIES", href: "/ttrg/stories" },
-  },
-  {
-    video: "/ttrg/video/hero-web.mp4",
-    words: ["Support", "A", "Dog's", "Transformation."],
-    accentIdx: 3,
-    subtitle: "Your donation funds medical care, professional training, and safe shelter — giving every rescue dog the life they deserve.",
-    cta: { label: "DONATE NOW", href: "/ttrg/donate", icon: "heart" },
-    cta2: { label: "LEARN MORE", href: "/ttrg/about" },
-  },
+/* ─── HERO DATA — single video, rotating headlines ─── */
+const heroVideo = "/ttrg/video/lo-walkin-web.mp4";
+const heroHeadlines = [
+  { words: ["Rescue.", "Train.", "Rehome.", "Repeat."], accentIdx: 2 },
+  { words: ["Every", "Dog", "Deserves", "A", "Happy", "Home."], accentIdx: 4 },
+  { words: ["Follow", "Real", "Rescue", "Journeys."], accentIdx: 1 },
+  { words: ["Support", "A", "Dog's", "Transformation."], accentIdx: 3 },
+];
+const heroSubtitles = [
+  "Every dog deserves a second chance. Join our mission to rescue, heal, and find forever homes for dogs in need.",
+  "From shelters to forever families — we provide rescue, medical care, training, and love every step of the way.",
+  "Track every dog's transformation from rescue to rehome. Real stories, real impact, real results.",
+  "Your donation funds medical care, professional training, and safe shelter — giving every rescue dog the life they deserve.",
 ];
 
 /* ─── TICKER DATA ─── */
 const missionUpdates = [
-  { text: "🐾 3 Dogs Rescued This Week — Your Support Saves Lives" },
-  { text: "🐾 127 Dogs Successfully Rehabilitated & Rehomed" },
-  { text: "🐾 New Rescue Story Added — Follow Bailey's Journey" },
-  { text: "🐾 Thank You To Our Amazing Donors & Foster Families" },
-  { text: "🐾 Emergency Foster Placements Helping Dogs in Critical Need" },
-  { text: "🐾 Every Adoption Opens Space for the Next Dog Waiting" },
+  { text: "NEW: 3 Dogs Rescued This Week — Your Support Saves Lives!" },
+  { text: "MILESTONE: 127 Dogs Successfully Trained & Rehomed This Year" },
+  { text: "FOLLOW: Bailey Just Advanced to Foster Placement — Watch the Journey" },
+  { text: "THANK YOU: Incredible Donors & Foster Families Making It Possible" },
+  { text: "URGENT: Emergency Foster Placements Needed — Can You Help?" },
+  { text: "IMPACT: Every Adoption Opens Space for the Next Dog Waiting" },
 ];
 
 /* ─── IMPACT STATS ─── */
@@ -179,12 +158,15 @@ export default function TTRGHome() {
   const [boVideoOpen, setBoVideoOpen] = useState(false);
   const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
   const [flipKey, setFlipKey] = useState(0);
+  const [tickerColor, setTickerColor] = useState({ from: "#1e6b3a", via: "#28a745", to: "#1e6b3a" });
 
   useEffect(() => {
     const published = getPublishedDogs();
     if (published.length > 0) setDogs(published as unknown as typeof dogData);
     const items = getTickerItems().filter((t) => t.active);
     if (items.length > 0) setTickerItems(items);
+    const savedColor = localStorage.getItem("ttrg-ticker-color");
+    if (savedColor) { try { setTickerColor(JSON.parse(savedColor)); } catch {} }
   }, []);
 
   useEffect(() => {
@@ -201,32 +183,23 @@ export default function TTRGHome() {
 
   const closePopup = () => { setPopupOpen(false); setPopupDismissed(true); sessionStorage.setItem("ttrg-popup-closed", "1"); };
 
-  /* ─── Hero carousel ─── */
+  /* ─── Hero text rotation (video plays continuously) ─── */
   const [heroIdx, setHeroIdx] = useState(0);
   const [heroFading, setHeroFading] = useState(false);
-  const heroVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   const advanceHero = useCallback(() => {
     setHeroFading(true);
     setTimeout(() => {
-      setHeroIdx((i) => (i + 1) % heroSlides.length);
+      setHeroIdx((i) => (i + 1) % heroHeadlines.length);
       setFlipKey((k) => k + 1);
       setHeroFading(false);
     }, 800);
   }, []);
 
   useEffect(() => {
-    const t = setInterval(advanceHero, 5000);
+    const t = setInterval(advanceHero, 7000);
     return () => clearInterval(t);
   }, [advanceHero]);
-
-  useEffect(() => {
-    heroVideoRefs.current.forEach((v, i) => {
-      if (!v) return;
-      if (i === heroIdx) { v.currentTime = 0; v.play().catch(() => {}); }
-      else v.pause();
-    });
-  }, [heroIdx]);
 
   const heroSec = useInView();
   const journeySec = useInView();
@@ -238,30 +211,23 @@ export default function TTRGHome() {
     <div className="bg-[#FDFCFA]">
 
       {/* ═══════ 0. PERSISTENT SLIDING TICKER ═══════ */}
-      <div className="bg-gradient-to-r from-[#1a3a2a] via-[#2d5a3d] to-[#1a3a2a] py-2 overflow-hidden relative z-50">
+      <div className="py-2.5 overflow-hidden relative z-50 shadow-md" style={{ background: `linear-gradient(to right, ${tickerColor.from}, ${tickerColor.via}, ${tickerColor.to})` }}>
         <div className="flex animate-marquee whitespace-nowrap" style={{ "--marquee-duration": "35s" } as React.CSSProperties}>
           {[...((tickerItems.length > 0 ? tickerItems : missionUpdates.map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active)), ...((tickerItems.length > 0 ? tickerItems : missionUpdates.map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active))].map((item, i) => (
-            <span key={`${item.id}-${i}`} className="inline-flex items-center mx-8 sm:mx-12 text-white/90 text-xs sm:text-sm font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C41E2A] mr-3 ticker-glow flex-shrink-0" />
+            <span key={`${item.id}-${i}`} className="inline-flex items-center mx-8 sm:mx-12 text-white text-xs sm:text-sm font-semibold tracking-wide">
+              <span className="w-2 h-2 rounded-full bg-white/80 mr-3 ticker-glow flex-shrink-0" />
               {item.text}
             </span>
           ))}
         </div>
       </div>
 
-      {/* ═══════ 1. HERO — VIDEO CAROUSEL ═══════ */}
-      <section ref={heroSec.ref} className="relative min-h-[92vh] flex items-center overflow-hidden">
-        {/* Video layers — NO poster/image, pure video */}
-        {heroSlides.map((slide, i) => (
-          <video
-            key={i}
-            ref={(el) => { heroVideoRefs.current[i] = el; }}
-            autoPlay={i === 0} muted loop playsInline
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${i === heroIdx && !heroFading ? "opacity-100" : "opacity-0"}`}
-          >
-            <source src={slide.video} type="video/mp4" />
-          </video>
-        ))}
+      {/* ═══════ 1. HERO — SINGLE VIDEO + ROTATING TEXT ═══════ */}
+      <section ref={heroSec.ref} className="relative min-h-[80vh] sm:min-h-[92vh] flex items-center overflow-hidden">
+        {/* Single continuous video — Lo Walkin */}
+        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover">
+          <source src={heroVideo} type="video/mp4" />
+        </video>
 
         {/* Overlays */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a1628]/90 via-[#0a1628]/60 to-transparent" />
@@ -272,41 +238,41 @@ export default function TTRGHome() {
         <div className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full ${heroSec.visible ? "animate-fade-up" : "opacity-0"}`}>
           <div className="max-w-3xl py-12 sm:py-16">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl bg-white/10 backdrop-blur-md flex-shrink-0">
+              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl bg-white/10 backdrop-blur-md flex-shrink-0">
                 <img src="/ttrg/ttrg-logo.jpeg" alt="TTRG" className="w-full h-full object-cover" />
               </div>
               <div>
-                <p className="text-white/60 text-[11px] sm:text-xs font-bold tracking-[0.2em] uppercase">501(c)(3) Nonprofit Rescue Mission</p>
-                <p className="text-white font-black text-xl sm:text-2xl tracking-tight">TEAM TRAINERS RESCUE GROUP</p>
+                <p className="text-white/60 text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase">501(c)(3) Nonprofit Rescue Mission</p>
+                <p className="text-white font-black text-lg sm:text-2xl tracking-tight">TEAM TRAINERS RESCUE GROUP</p>
               </div>
             </div>
 
             {/* Flipping word headline */}
             <div className={`transition-all duration-700 ${heroFading ? "opacity-0 translate-y-4" : "opacity-100 translate-y-0"}`} style={{ perspective: "800px" }}>
-              <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-white leading-[0.95] mb-5 tracking-tight flex flex-wrap gap-x-4 gap-y-1">
-                {heroSlides[heroIdx].words.map((word, wi) => (
-                  <span key={`${flipKey}-${wi}`} className={`flip-letter ${wi === heroSlides[heroIdx].accentIdx ? "text-[#C41E2A]" : ""}`} style={{ animationDelay: `${wi * 0.08}s` }}>
+              <h1 className="text-3xl sm:text-5xl md:text-7xl font-black text-white leading-[0.95] mb-5 tracking-tight flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1">
+                {heroHeadlines[heroIdx].words.map((word, wi) => (
+                  <span key={`${flipKey}-${wi}`} className={`flip-letter ${wi === heroHeadlines[heroIdx].accentIdx ? "text-[#C41E2A]" : ""}`} style={{ animationDelay: `${wi * 0.08}s` }}>
                     {word}
                   </span>
                 ))}
               </h1>
-              <p className="text-white/70 text-base sm:text-lg leading-relaxed max-w-xl mb-9">
-                {heroSlides[heroIdx].subtitle}
+              <p className="text-white/70 text-sm sm:text-lg leading-relaxed max-w-xl mb-9">
+                {heroSubtitles[heroIdx]}
               </p>
             </div>
 
             <div className={`flex flex-col sm:flex-row gap-3 mb-8 transition-all duration-700 ${heroFading ? "opacity-0" : "opacity-100"}`}>
-              <Link href={heroSlides[heroIdx].cta.href} className="inline-flex items-center justify-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-7 py-4 rounded-full text-sm font-bold transition-all shadow-2xl shadow-red-900/40">
-                {heroSlides[heroIdx].cta.icon === "heart" ? <Heart className="w-4 h-4 fill-white" /> : <PawPrint className="w-4 h-4" />} {heroSlides[heroIdx].cta.label}
+              <Link href="/ttrg/donate" className="inline-flex items-center justify-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-6 sm:px-7 py-3.5 sm:py-4 rounded-full text-sm font-bold transition-all shadow-2xl shadow-red-900/40">
+                <Heart className="w-4 h-4 fill-white" /> DONATE NOW
               </Link>
-              <Link href={heroSlides[heroIdx].cta2.href} className="inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white px-7 py-4 rounded-full text-sm font-bold hover:bg-white/10 backdrop-blur-sm transition-all">
-                {heroSlides[heroIdx].cta2.label}
+              <Link href="/ttrg/sponsor" className="inline-flex items-center justify-center gap-2 border-2 border-white/30 text-white px-6 sm:px-7 py-3.5 sm:py-4 rounded-full text-sm font-bold hover:bg-white/10 backdrop-blur-sm transition-all">
+                MEET OUR DOGS
               </Link>
             </div>
 
             {/* Slide indicators */}
             <div className="flex gap-2">
-              {heroSlides.map((_, i) => (
+              {heroHeadlines.map((_, i) => (
                 <button key={i} onClick={() => { setHeroFading(true); setTimeout(() => { setHeroIdx(i); setFlipKey((k) => k + 1); setHeroFading(false); }, 600); }} className={`h-1 rounded-full transition-all duration-500 ${i === heroIdx ? "w-10 bg-[#C41E2A]" : "w-4 bg-white/30 hover:bg-white/50"}`} />
               ))}
             </div>
