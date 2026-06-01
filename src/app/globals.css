@@ -11,8 +11,10 @@
   --color-warm-white: #FAFAF9;
   --color-gold: #D4A853;
   --color-gold-light: #E8C97A;
+  --color-forest: #1B6B3A;
   --font-heading: "Poppins", sans-serif;
   --font-body: "Inter", sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
 }
 
 html {

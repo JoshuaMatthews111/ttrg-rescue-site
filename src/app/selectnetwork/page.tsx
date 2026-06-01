@@ -1,362 +1,399 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
-import { Globe, Users, TrendingUp, Briefcase, ArrowRight, Star, ChevronRight, Phone, Mail, MapPin, Shield, Zap, Target, Award, LayoutDashboard, ExternalLink, X, BarChart3 } from "lucide-react";
+import { ArrowRight, ArrowDown, Phone, Clock, Heart, PawPrint, TrendingUp, ShieldCheck, EyeOff, BadgeCheck, Building2, Plus, Minus } from "lucide-react";
+import SNNav from "./components/SNNav";
+import SNFooter from "./components/SNFooter";
+import Reveal from "./components/Reveal";
 
-const features = [
-  {
-    icon: Globe,
-    title: "Global Network",
-    desc: "Connect with entrepreneurs, investors, and professionals across industries worldwide.",
-  },
-  {
-    icon: Briefcase,
-    title: "Business Opportunities",
-    desc: "Access exclusive deals, partnerships, and investment opportunities curated for members.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Growth Accelerator",
-    desc: "Tools, mentorship, and resources designed to scale your business to the next level.",
-  },
-  {
-    icon: Shield,
-    title: "Vetted Members",
-    desc: "Every member is verified and approved, ensuring quality connections and trusted partnerships.",
-  },
+const NAVY = "#071a33";
+const GOLD = "#bd8e28";
+const GREEN = "#075933";
+
+/* ─── FAQ Data ─── */
+const FAQ_ITEMS = [
+  { q: "Who is eligible to apply for membership?", a: "Membership is open to qualified investors and strategic partners who share our mission of long-term value creation and impact in the pet industry." },
+  { q: "What types of investment opportunities are available?", a: "Members gain access to carefully selected opportunities connected to Lorenzo's Dog Training Team and future growth initiatives within the expanding pet industry." },
+  { q: "How is my information protected?", a: "All member information is protected with the highest standard of privacy and security protocols. We are confidential by design." },
+  { q: "How long does the application process take?", a: "The application process typically takes 3–5 business days. After submitting your application, our team will review and schedule an investor call." },
 ];
 
-const networkStats = [
-  { label: "Active Members", value: "2,400+", icon: Users },
-  { label: "Businesses Connected", value: "850+", icon: Briefcase },
-  { label: "Deals Closed", value: "$14M+", icon: TrendingUp },
-  { label: "Industries", value: "40+", icon: Globe },
-];
-
-const testimonials = [
-  {
-    name: "Marcus Chen",
-    role: "CEO, TechVenture Capital",
-    quote: "Select Network connected me with three key partners who helped scale my portfolio by 300%.",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80",
-  },
-  {
-    name: "Sarah Williams",
-    role: "Founder, GreenScale Industries",
-    quote: "The quality of connections here is unmatched. Every introduction has led to meaningful business.",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80",
-  },
-  {
-    name: "David Park",
-    role: "Managing Partner, Apex Holdings",
-    quote: "This isn't just networking — it's an ecosystem built for serious growth and real results.",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80",
-  },
-];
-
-const membershipTiers = [
-  {
-    name: "Connect",
-    price: "$49",
-    period: "/month",
-    desc: "For professionals looking to expand their network",
-    features: ["Member directory access", "Monthly virtual events", "Basic profile listing", "Community forums", "Email newsletter"],
-    cta: "Get Started",
-    featured: false,
-  },
-  {
-    name: "Collaborate",
-    price: "$149",
-    period: "/month",
-    desc: "For entrepreneurs ready to accelerate growth",
-    features: ["Everything in Connect", "Priority introductions", "Quarterly masterminds", "Business listing spotlight", "Investor access", "1-on-1 strategy sessions"],
-    cta: "Join Now",
-    featured: true,
-  },
-  {
-    name: "Elevate",
-    price: "$499",
-    period: "/month",
-    desc: "For leaders building industry-changing ventures",
-    features: ["Everything in Collaborate", "Executive roundtables", "Deal flow access", "White-glove concierge", "Annual summit VIP", "Board placement support", "Custom introductions"],
-    cta: "Apply Now",
-    featured: false,
-  },
-];
-
-export default function SelectNetworkPage() {
-  const [adminOpen, setAdminOpen] = useState(false);
+export default function Home() {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]" style={{ fontFamily: "'Inter', sans-serif" }}>
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#1a1a2e]/95 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full border-2 border-[#C9A84C] flex items-center justify-center">
-              <Globe className="w-5 h-5 text-[#C9A84C]" />
+    <div style={{ fontFamily: "Inter, Arial, sans-serif", color: NAVY, background: "#fff" }}>
+      <SNNav />
+
+      {/* ══════════════════════════════════════════════════════
+          1. HERO SECTION
+      ══════════════════════════════════════════════════════ */}
+      <section
+        className="sn-hero-home"
+        style={{
+          position: "relative",
+          background: "linear-gradient(105deg, #fff 0%, #fff 45%, #f7f5ef 60%, #eef3ee 100%)",
+          overflow: "hidden",
+          padding: "60px 0 50px",
+        }}
+      >
+        {/* Background hero image */}
+        <Image
+          className="sn-hero-dog"
+          src="/hero-dog.jpg"
+          alt=""
+          width={1400}
+          height={900}
+          priority
+          style={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            width: "55%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center",
+            zIndex: 0,
+            opacity: 0.85,
+          }}
+        />
+        {/* Gradient overlay */}
+        <div
+          className="sn-hero-overlay"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(90deg, #fff 0%, rgba(255,255,255,.98) 42%, rgba(255,255,255,.7) 62%, rgba(255,255,255,.15) 100%)",
+            zIndex: 1,
+          }}
+        />
+
+        <div className="sn-shell sn-hero-inner" style={{ position: "relative", zIndex: 2, display: "grid", gridTemplateColumns: "1fr auto", gap: 40, alignItems: "center" }}>
+          {/* Left: text */}
+          <div style={{ maxWidth: 620 }}>
+            <div style={{ color: GOLD, fontSize: 11.5, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 16 }}>
+              Private Access Into a Growing Pet Industry Opportunity
             </div>
-            <div>
-              <p className="text-white font-bold text-sm tracking-wider">SELECT NETWORK</p>
-              <p className="text-white/40 text-[9px] tracking-[0.25em] uppercase">Connect · Collaborate · Elevate</p>
+            <h1 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 44, lineHeight: 1.12, margin: "0 0 20px", letterSpacing: "-.01em" }}>
+              Your Opportunity to Invest in{" "}
+              <span style={{ color: GREEN }}>Dog Training</span>,{" "}
+              <span style={{ color: GREEN }}>Dog Rescue</span>, and the Future of the Pet Industry
+            </h1>
+            <p style={{ fontSize: 15, lineHeight: 1.75, color: "#3d4a57", margin: "0 0 28px", maxWidth: 540 }}>
+              The Select Network opens the door for qualified investors to participate in selected opportunities connected to Lorenzo&apos;s Dog Training Team, and future businesses created to serve families, rescue dogs, train dogs, and grow within the expanding pet industry.
+            </p>
+            {/* 2. TWO CTA BUTTONS */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              <Link
+                href="/selectnetwork/join"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 10,
+                  background: `linear-gradient(135deg, ${GREEN}, #064a28)`,
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  padding: "15px 26px",
+                  fontWeight: 800,
+                  fontSize: 12.5,
+                  textTransform: "uppercase",
+                  letterSpacing: ".04em",
+                  textDecoration: "none",
+                  boxShadow: "0 6px 18px rgba(7,89,51,.25)",
+                }}
+              >
+                Begin Enrollment <ArrowRight size={15} />
+              </Link>
+              <Link
+                href="/selectnetwork/contact"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 10,
+                  background: "#fff",
+                  color: NAVY,
+                  border: "1.5px solid #d4cdbf",
+                  borderRadius: 6,
+                  padding: "15px 26px",
+                  fontWeight: 800,
+                  fontSize: 12.5,
+                  textTransform: "uppercase",
+                  letterSpacing: ".04em",
+                  textDecoration: "none",
+                }}
+              >
+                <Phone size={15} /> Speak With Our Team
+              </Link>
             </div>
           </div>
-          <div className="hidden md:flex items-center gap-8">
-            {["About", "Membership", "Events", "Directory", "Resources", "Contact"].map((link) => (
-              <a key={link} href="#" className="text-white/60 hover:text-white text-sm font-medium transition-colors">
-                {link}
-              </a>
-            ))}
-          </div>
-          <div className="flex items-center gap-3">
-            <a href="#" className="hidden sm:block text-white/60 hover:text-white text-sm font-medium transition-colors">
-              Sign In
-            </a>
-            <a href="#" className="bg-[#C9A84C] hover:bg-[#d4b65e] text-[#1a1a2e] px-5 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105">
-              Apply for Membership
-            </a>
-          </div>
-        </div>
-      </nav>
 
-      {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-        <div className="absolute inset-0 bg-[#1a1a2e]">
-          <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(ellipse at 30% 50%, #C9A84C, transparent 50%), radial-gradient(ellipse at 70% 60%, #4A90D9, transparent 50%)" }} />
-          {/* Grid pattern */}
-          <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
-        </div>
-        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 mb-8 backdrop-blur-sm">
-            <Star className="w-4 h-4 text-[#C9A84C]" />
-            <span className="text-white/60 text-sm">The Premier Business Network</span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
-            Where Ambition Meets
-            <br />
-            <span className="bg-gradient-to-r from-[#C9A84C] to-[#4A90D9] bg-clip-text text-transparent">
-              Opportunity
-            </span>
-          </h1>
-          <p className="text-white/50 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed mb-10">
-            An exclusive network connecting entrepreneurs, investors, and visionaries. Built for growth. Designed for impact.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="#" className="group bg-[#C9A84C] hover:bg-[#d4b65e] text-[#1a1a2e] px-10 py-4 rounded-full text-lg font-bold transition-all hover:scale-105 flex items-center gap-3">
-              Apply for Membership
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </a>
-            <a href="#" className="bg-white/5 hover:bg-white/10 text-white px-8 py-4 rounded-full text-lg font-medium border border-white/10 transition-all flex items-center gap-3">
-              <Globe className="w-5 h-5" />
-              Explore Network
-            </a>
-          </div>
-          {/* Trust bar */}
-          <div className="flex flex-wrap items-center justify-center gap-8 mt-16 text-white/30 text-sm">
-            <span>Forbes Featured</span>
-            <span className="w-1 h-1 rounded-full bg-white/20" />
-            <span>Inc. 5000 Network</span>
-            <span className="w-1 h-1 rounded-full bg-white/20" />
-            <span>500+ Five-Star Reviews</span>
+          {/* Right: LDTT Logo */}
+          <div className="sn-hero-logo-right" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+            <Image
+              src="/assets/select-network/lorenzos-dog-training-team-logo.png"
+              alt="Lorenzo's Dog Training Team"
+              width={320}
+              height={320}
+              style={{ width: 260, height: "auto" }}
+            />
+            <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: NAVY }}>Serious Training. Serious Results. ™</span>
           </div>
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {networkStats.map((stat) => (
-              <div key={stat.label} className="text-center p-6 rounded-2xl bg-[#F5F5F7] border border-slate-200">
-                <div className="w-12 h-12 rounded-xl bg-[#1a1a2e]/5 flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="w-6 h-6 text-[#1a1a2e]" />
-                </div>
-                <p className="text-3xl font-bold text-[#1a1a2e]">{stat.value}</p>
-                <p className="text-sm text-[#1a1a2e]/50 mt-1">{stat.label}</p>
+      {/* ══════════════════════════════════════════════════════
+          3. METRICS STRIP
+      ══════════════════════════════════════════════════════ */}
+      <section style={{ background: "#fff", borderTop: "1px solid #ece6da", borderBottom: "1px solid #ece6da" }}>
+        <div className="sn-shell sn-metrics-strip" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0, padding: "28px 40px" }}>
+          {[
+            { icon: <Clock size={24} color={GOLD} />, value: "21+", label: "Years of Dog Training Experience" },
+            { icon: <Heart size={24} color={GOLD} />, value: "Hundreds", label: "of Dogs Trained" },
+            { icon: <PawPrint size={24} color={GOLD} />, value: "Rescue, Rehabilitation,", label: " and Rehoming Mission" },
+            { icon: <TrendingUp size={24} color={GOLD} />, value: "Built Around a", label: "Growing Pet Industry" },
+          ].map((m, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                padding: "6px 20px",
+                borderRight: i < 3 ? "1px solid #eee7d8" : "none",
+              }}
+            >
+              <div style={{ width: 50, height: 50, borderRadius: "50%", border: `1.5px solid ${GOLD}`, display: "grid", placeItems: "center", flexShrink: 0 }}>
+                {m.icon}
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24 bg-[#F5F5F7]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="text-[#C9A84C] text-sm font-semibold tracking-[0.2em] uppercase mb-4 block">Why Select Network</span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#1a1a2e] leading-tight">
-              Built for <span className="text-[#4A90D9]">Serious Growth</span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {features.map((feature) => (
-              <div key={feature.title} className="bg-white rounded-2xl p-8 border border-slate-200 hover:shadow-xl transition-all group">
-                <div className="w-12 h-12 rounded-xl bg-[#1a1a2e] flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
-                  <feature.icon className="w-6 h-6 text-[#C9A84C]" />
-                </div>
-                <h3 className="text-xl font-bold text-[#1a1a2e] mb-3">{feature.title}</h3>
-                <p className="text-[#1a1a2e]/60 leading-relaxed">{feature.desc}</p>
+              <div>
+                <b style={{ display: "block", fontSize: 17, color: NAVY, lineHeight: 1.2 }}>{m.value}</b>
+                <small style={{ color: "#667085", fontSize: 12 }}>{m.label}</small>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          4. INVESTMENT OPPORTUNITIES
+      ══════════════════════════════════════════════════════ */}
+      <section style={{ padding: "60px 0 50px", background: "#fbf9f4", borderBottom: "1px solid #ece6da" }}>
+        <div className="sn-shell">
+          {/* Section title */}
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: 32 }}>
+              <h2 style={{ fontSize: 13, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: NAVY, margin: "0 0 8px" }}>
+                Investment Opportunities Within The Select Network
+              </h2>
+              <p style={{ color: "#5b6675", fontSize: 14.5, margin: 0 }}>Members gain access to carefully selected growth opportunities inside The Select Network.</p>
+            </div>
+          </Reveal>
+
+          {/* Cards row */}
+          <div className="sn-opps-row" style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr 1fr 1fr", gap: 18, alignItems: "start" }}>
+            {/* 5. SELECT NETWORK CARD */}
+            <Reveal>
+              <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: "26px 22px", boxShadow: "0 8px 24px rgba(5,20,45,.05)", height: "100%" }}>
+                <Image
+                  src="/assets/select-network/select-network-logo.png"
+                  alt="The Select Network"
+                  width={200}
+                  height={80}
+                  style={{ width: 150, height: "auto", marginBottom: 16 }}
+                />
+                <p style={{ fontSize: 14, lineHeight: 1.7, color: "#3d4a57", margin: 0 }}>
+                  Here at The Select Network, we <b>Identify Opportunity, Build Systems, and Create Value.</b>
+                </p>
+                <p style={{ fontSize: 13.5, lineHeight: 1.7, color: "#5b6675", margin: "12px 0 0" }}>
+                  Through strategic initiatives designed to strengthen operations, expand impact, and support sustainable long-term growth.
+                </p>
+              </div>
+            </Reveal>
+
+            {/* 6. FLOATING ARROW */}
+            <Reveal delay={100}>
+              <div className="sn-arrow-col" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "20px 10px", minHeight: 200, transform: "translateY(35px)" }}>
+                <div className="sn-arrow-pulse" style={{ width: 44, height: 44, borderRadius: "50%", background: `linear-gradient(135deg, ${GOLD}, #a07520)`, display: "grid", placeItems: "center", boxShadow: "0 6px 18px rgba(189,142,40,.35)", marginBottom: 14 }}>
+                  <ArrowRight size={22} color="#fff" />
+                </div>
+                <p style={{ fontSize: 12.5, lineHeight: 1.65, color: "#5b6675", textAlign: "center", fontStyle: "italic", maxWidth: 180, margin: 0 }}>
+                  Lorenzo&apos;s Dog Training Team is one of the leading companies in the dog training industry, with over 11 locations. This is your opportunity to invest in a growing and proven brand.
+                </p>
+              </div>
+            </Reveal>
+
+            {/* Mobile vertical connector */}
+            <div className="sn-mobile-arrow" style={{ display: "none", justifyContent: "center", padding: "10px 0" }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg, ${GOLD}, #a07520)`, display: "grid", placeItems: "center", boxShadow: "0 4px 14px rgba(189,142,40,.3)" }}><ArrowDown size={18} color="#fff" /></div>
+            </div>
+
+            {/* 7. LORENZO'S DOG TRAINING TEAM CARD */}
+            <Reveal delay={150}>
+              <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: "26px 22px", boxShadow: "0 8px 24px rgba(5,20,45,.05)", height: "100%" }}>
+                <Image
+                  src="/assets/select-network/lorenzos-dog-training-team-logo.png"
+                  alt="Lorenzo's Dog Training Team"
+                  width={200}
+                  height={200}
+                  style={{ width: 120, height: "auto", marginBottom: 14 }}
+                />
+                <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 10px" }}>Lorenzo&apos;s Dog Training Team</h3>
+                <p style={{ fontSize: 13.5, lineHeight: 1.65, color: "#4b5563", margin: "0 0 18px" }}>
+                  Lorenzo&apos;s Dog Training Team is a proven professional dog training brand with a strong operating history, loyal clients, and scalable growth potential.
+                </p>
+                <Link
+                  href="/selectnetwork/investment-focus"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: `linear-gradient(135deg, ${GREEN}, #064a28)`,
+                    color: "#fff",
+                    borderRadius: 6,
+                    padding: "11px 18px",
+                    fontWeight: 800,
+                    fontSize: 11.5,
+                    textTransform: "uppercase",
+                    letterSpacing: ".04em",
+                    textDecoration: "none",
+                  }}
+                >
+                  What We Offer <ArrowRight size={14} />
+                </Link>
+              </div>
+            </Reveal>
+
+            {/* Mobile vertical connector */}
+            <div className="sn-mobile-arrow" style={{ display: "none", justifyContent: "center", padding: "10px 0" }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg, ${GOLD}, #a07520)`, display: "grid", placeItems: "center", boxShadow: "0 4px 14px rgba(189,142,40,.3)" }}><ArrowDown size={18} color="#fff" /></div>
+            </div>
+
+            {/* 8. FOUNDER SPOTLIGHT CARD */}
+            <Reveal delay={200}>
+              <div className="sn-founder-card" style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: "22px 20px", boxShadow: "0 8px 24px rgba(5,20,45,.05)", height: "100%", display: "flex", gap: 18, alignItems: "flex-start" }}>
+                <Image
+                  src="/assets/select-network/IMG_9919.png"
+                  alt="Lorenzo Miller"
+                  width={340}
+                  height={470}
+                  style={{ width: 170, height: 235, borderRadius: 10, objectFit: "cover", objectPosition: "center 20%", flexShrink: 0, display: "block" }}
+                />
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minHeight: 235 }}>
+                  <h3 style={{ fontFamily: "'Great Vibes', cursive", fontWeight: 400, fontSize: 42, lineHeight: 1, margin: "0 0 8px", color: "#b87522", whiteSpace: "nowrap" }}>Lorenzo Miller</h3>
+                  <span style={{ fontFamily: "'Montserrat', 'Inter', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: "1.4px", textTransform: "uppercase", color: "#001b5d", display: "block", marginBottom: 10 }}>Founder &amp; CEO</span>
+                  <p style={{ fontSize: 12, lineHeight: 1.55, color: "#4b5563", margin: "0 0 14px", fontStyle: "italic" }}>
+                    &ldquo;At The Select Network, we believe wealth is more than numbers—it&apos;s impact, legacy, and freedom of choice. Our mission is to connect exceptional investors with exceptional opportunities.&rdquo;
+                  </p>
+                  <Link
+                    href="/selectnetwork/about"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "10px 18px",
+                      borderRadius: 8,
+                      background: "#005c2f",
+                      color: "#fff",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      letterSpacing: "0.8px",
+                      textTransform: "uppercase",
+                      textDecoration: "none",
+                      marginTop: 0,
+                    }}
+                  >
+                    Learn More
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Mobile vertical connector */}
+            <div className="sn-mobile-arrow" style={{ display: "none", justifyContent: "center", padding: "10px 0" }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: `linear-gradient(135deg, ${GOLD}, #a07520)`, display: "grid", placeItems: "center", boxShadow: "0 4px 14px rgba(189,142,40,.3)" }}><ArrowDown size={18} color="#fff" /></div>
+            </div>
+
+            {/* 9. FAQ CARD */}
+            <Reveal delay={250}>
+              <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: "24px 20px", boxShadow: "0 8px 24px rgba(5,20,45,.05)", height: "100%" }}>
+                <h3 style={{ fontSize: 12.5, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: NAVY, margin: "0 0 16px" }}>Frequently Asked Questions</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                  {FAQ_ITEMS.map((faq, i) => {
+                    const isOpen = openFaq === i;
+                    return (
+                      <div key={i} style={{ borderBottom: i < FAQ_ITEMS.length - 1 ? "1px solid #eee7d8" : "none" }}>
+                        <button
+                          onClick={() => setOpenFaq(isOpen ? null : i)}
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "flex-start",
+                            justifyContent: "space-between",
+                            gap: 10,
+                            padding: "13px 0",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            textAlign: "left",
+                          }}
+                        >
+                          <span style={{ fontSize: 13, fontWeight: 600, color: NAVY, lineHeight: 1.4 }}>{faq.q}</span>
+                          {isOpen ? <Minus size={16} color={GOLD} style={{ flexShrink: 0, marginTop: 2 }} /> : <Plus size={16} color={GOLD} style={{ flexShrink: 0, marginTop: 2 }} />}
+                        </button>
+                        {isOpen && (
+                          <p style={{ fontSize: 12.5, lineHeight: 1.6, color: "#5b6675", margin: "0 0 12px", paddingRight: 20 }}>{faq.a}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="text-[#C9A84C] text-sm font-semibold tracking-[0.2em] uppercase mb-4 block">Testimonials</span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#1a1a2e] leading-tight">
-              Trusted by <span className="text-[#C9A84C]">Leaders</span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t) => (
-              <div key={t.name} className="bg-[#F5F5F7] rounded-2xl p-8 border border-slate-200 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-[#C9A84C] fill-[#C9A84C]" />
-                  ))}
-                </div>
-                <p className="text-[#1a1a2e]/70 leading-relaxed mb-6 italic">&ldquo;{t.quote}&rdquo;</p>
-                <div className="flex items-center gap-3">
-                  <img src={t.image} alt={t.name} className="w-10 h-10 rounded-full object-cover" />
+      {/* ══════════════════════════════════════════════════════
+          10. TRUST / PRIVACY / EXCELLENCE
+      ══════════════════════════════════════════════════════ */}
+      <section style={{ padding: "50px 0", background: "#fff" }}>
+        <div className="sn-shell">
+          <Reveal>
+            <div style={{ marginBottom: 30 }}>
+              <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 26, margin: "0 0 6px", letterSpacing: ".02em" }}>Trust. Privacy. Excellence.</h2>
+              <p style={{ color: "#8a7a52", fontFamily: "Georgia, serif", fontStyle: "italic", margin: 0, fontSize: 14.5 }}>Built for discerning investors who value impact and integrity.</p>
+            </div>
+          </Reveal>
+          <div className="sn-grid-4m" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18 }}>
+            {[
+              { icon: <BadgeCheck size={24} />, title: "Invitation-Only Membership", desc: "Access is reserved for qualified investors and strategic partners who share our mission." },
+              { icon: <EyeOff size={24} />, title: "Confidential By Design", desc: "Your information and investments are protected with the highest standard of privacy." },
+              { icon: <ShieldCheck size={24} />, title: "Vetted Opportunities", desc: "We conduct rigorous due diligence to ensure every opportunity meets our high standards." },
+              { icon: <Building2 size={24} />, title: "Aligned for Long-Term Value", desc: "We focus on sustainable growth, meaningful impact, and generational value creation." },
+            ].map((t, i) => (
+              <Reveal key={i} delay={i * 70}>
+                <div style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
+                  <div style={{ width: 48, height: 48, borderRadius: "50%", border: `1.5px solid ${GOLD}`, display: "grid", placeItems: "center", flexShrink: 0, color: GREEN }}>
+                    {t.icon}
+                  </div>
                   <div>
-                    <p className="text-sm font-bold text-[#1a1a2e]">{t.name}</p>
-                    <p className="text-xs text-[#1a1a2e]/50">{t.role}</p>
+                    <b style={{ display: "block", fontSize: 14, color: NAVY, marginBottom: 5 }}>{t.title}</b>
+                    <small style={{ color: "#5b6675", fontSize: 12.5, lineHeight: 1.55, display: "block" }}>{t.desc}</small>
                   </div>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Membership Tiers */}
-      <section className="py-24 bg-[#1a1a2e]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="text-[#C9A84C] text-sm font-semibold tracking-[0.2em] uppercase mb-4 block">Membership</span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
-              Choose Your <span className="text-[#C9A84C]">Path</span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {membershipTiers.map((tier) => (
-              <div key={tier.name} className={`rounded-2xl p-8 border ${tier.featured ? "bg-[#C9A84C]/10 border-[#C9A84C]/30 scale-105" : "bg-white/5 border-white/10"} transition-all hover:scale-105`}>
-                {tier.featured && (
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-[#C9A84C] text-[#1a1a2e] px-3 py-1 rounded-full mb-4">
-                    Most Popular
-                  </span>
-                )}
-                <h3 className="text-2xl font-bold text-white mb-2">{tier.name}</h3>
-                <p className="text-white/40 text-sm mb-4">{tier.desc}</p>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-4xl font-bold text-white">{tier.price}</span>
-                  <span className="text-white/40 text-sm">{tier.period}</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-white/60 text-sm">
-                      <ChevronRight className="w-4 h-4 text-[#C9A84C] flex-shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button className={`w-full py-3 rounded-xl text-sm font-bold transition-all ${tier.featured ? "bg-[#C9A84C] text-[#1a1a2e] hover:bg-[#d4b65e]" : "bg-white/10 text-white hover:bg-white/20 border border-white/10"}`}>
-                  {tier.cta}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-24 bg-[#F5F5F7]">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#1a1a2e] leading-tight mb-6">
-            Ready to <span className="bg-gradient-to-r from-[#C9A84C] to-[#4A90D9] bg-clip-text text-transparent">Elevate</span>?
-          </h2>
-          <p className="text-[#1a1a2e]/60 text-lg max-w-2xl mx-auto mb-10">
-            Join a network of leaders who are building the future. Applications are reviewed within 48 hours.
-          </p>
-          <a href="#" className="inline-flex items-center gap-3 bg-[#1a1a2e] hover:bg-[#2a2a3e] text-white px-10 py-4 rounded-full text-lg font-bold transition-all hover:scale-105">
-            Apply for Membership
-            <ArrowRight className="w-5 h-5" />
-          </a>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-[#0f0f1a] py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <Globe className="w-8 h-8 text-[#C9A84C]" />
-                <div>
-                  <p className="text-white font-bold text-sm tracking-wider">SELECT NETWORK</p>
-                  <p className="text-white/30 text-[9px] tracking-[0.2em]">Connect · Collaborate · Elevate</p>
-                </div>
-              </div>
-              <p className="text-white/30 text-sm leading-relaxed">
-                A premium business network built for growth and opportunity.
-              </p>
-            </div>
-            <div>
-              <p className="text-white font-semibold text-sm mb-4">Network</p>
-              {["About", "Membership", "Events", "Directory", "Resources"].map((link) => (
-                <a key={link} href="#" className="block text-white/30 hover:text-white text-sm py-1.5 transition-colors">{link}</a>
-              ))}
-            </div>
-            <div>
-              <p className="text-white font-semibold text-sm mb-4">Resources</p>
-              {["Blog", "Podcast", "Case Studies", "Partnerships", "Press"].map((link) => (
-                <a key={link} href="#" className="block text-white/30 hover:text-white text-sm py-1.5 transition-colors">{link}</a>
-              ))}
-            </div>
-            <div>
-              <p className="text-white font-semibold text-sm mb-4">Contact</p>
-              <div className="space-y-3 text-white/30 text-sm">
-                <p className="flex items-center gap-2"><Phone className="w-4 h-4" /> (800) 555-0199</p>
-                <p className="flex items-center gap-2"><Mail className="w-4 h-4" /> hello@selectnetwork.com</p>
-                <p className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Global</p>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-white/5 mt-12 pt-8 text-center">
-            <p className="text-white/20 text-xs">© 2026 Select Network. All rights reserved. A TLM Enterprises Organization.</p>
-          </div>
-        </div>
-      </footer>
-
-      {/* Admin Toggle */}
-      <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-3">
-        {adminOpen && (
-          <div className="bg-[#0f172a] rounded-2xl shadow-2xl border border-white/10 p-4 w-64">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold text-white tracking-wide">TLM Enterprises</p>
-              <button onClick={() => setAdminOpen(false)} className="text-white/40 hover:text-white"><X className="w-4 h-4" /></button>
-            </div>
-            <div className="space-y-1.5">
-              <a href="/dashboard" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all text-sm">
-                <LayoutDashboard className="w-4 h-4" /> Master Dashboard
-              </a>
-              <a href="/" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all text-sm">
-                <ExternalLink className="w-4 h-4" /> Lorenzo&apos;s Site
-              </a>
-              <a href="/ttrg" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all text-sm">
-                <ExternalLink className="w-4 h-4" /> TTRG Site
-              </a>
-            </div>
-          </div>
-        )}
-        <button onClick={() => setAdminOpen(!adminOpen)} className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110 ${adminOpen ? "bg-white text-[#0f172a]" : "bg-[#0f172a] text-white border border-white/10"}`}>
-          {adminOpen ? <X className="w-5 h-5" /> : <LayoutDashboard className="w-5 h-5" />}
-        </button>
-      </div>
+      {/* ══════════════════════════════════════════════════════
+          11. FOOTER
+      ══════════════════════════════════════════════════════ */}
+      <SNFooter />
     </div>
   );
 }
