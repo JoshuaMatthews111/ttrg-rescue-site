@@ -38,7 +38,7 @@ export default function ContactPage() {
               <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 26, margin: "0 0 22px" }}>Contact Details</h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {[
-                  { icon: <Phone size={22} />, label: "Phone", value: "(888) 55-SELECT", href: "tel:+18885573532" },
+                  { icon: <Phone size={22} />, label: "Phone", value: "(216) 865-1165", href: "tel:+12168651165" },
                   { icon: <Mail size={22} />, label: "Email", value: "Selectprofits@gmail.com", href: "mailto:Selectprofits@gmail.com" },
                   { icon: <MapPin size={22} />, label: "Address", value: "123 Legacy Way, Suite 100, Atlanta, GA 30309", href: null },
                 ].map((c, i) => (
@@ -55,7 +55,7 @@ export default function ContactPage() {
                   </div>
                 ))}
               </div>
-              <a href="tel:+18885573532" style={{ marginTop: 18, display: "inline-flex", alignItems: "center", gap: 10, background: "linear-gradient(135deg,#d1a645,#bc8b25)", color: "#fff", borderRadius: 10, padding: "14px 22px", fontWeight: 800, fontSize: 13, textTransform: "uppercase", letterSpacing: ".03em", textDecoration: "none" }}>
+              <a href="tel:+12168651165" style={{ marginTop: 18, display: "inline-flex", alignItems: "center", gap: 10, background: "linear-gradient(135deg,#d1a645,#bc8b25)", color: "#fff", borderRadius: 10, padding: "14px 22px", fontWeight: 800, fontSize: 13, textTransform: "uppercase", letterSpacing: ".03em", textDecoration: "none" }}>
                 <CalendarClock size={16} /> Schedule a Call
               </a>
             </div>

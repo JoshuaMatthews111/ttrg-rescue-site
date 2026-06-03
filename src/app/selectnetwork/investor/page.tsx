@@ -386,7 +386,7 @@ export default function InvestorPortal() {
           {activeTab === "matrix" && (
             <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
               <div className="sn-kpi-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }}>
-                {[{ ico: <Network size={20} />, label: "My Network", value: String(referrals) }, { ico: <Network size={20} />, label: "Direct Referrals", value: "3" }, { ico: <CheckCircle size={20} />, label: "Active Members", value: String(referrals) }, { ico: <TrendingUp size={20} />, label: "Network Investment", value: "$1M" }].map((k, i) => (
+                {[{ ico: <Network size={20} />, label: "My Network", value: String(referrals) }, { ico: <Network size={20} />, label: "Direct Referrals", value: "3" }, { ico: <CheckCircle size={20} />, label: "Active Members", value: String(referrals) }, { ico: <Network size={20} />, label: "Downline Capacity", value: `${referrals} / 40` }].map((k, i) => (
                   <div key={i} style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: "18px 16px", boxShadow: "0 8px 24px rgba(5,20,45,.06)", display: "flex", alignItems: "center", gap: 14 }}>
                     <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#edf6ef", border: "1px solid #c7e2d0", display: "grid", placeItems: "center", color: "#c48817" }}>{k.ico}</div>
                     <div><small style={{ fontSize: 11, color: "#667085", fontWeight: 700, textTransform: "uppercase" }}>{k.label}</small><br /><b style={{ fontSize: 18 }}>{k.value}</b></div>
@@ -405,7 +405,18 @@ export default function InvestorPortal() {
               {/* Matrix Board */}
               <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: 24, boxShadow: "0 8px 24px rgba(5,20,45,.06)", overflow: "auto" }}>
                 <h2 className="serif" style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 22, margin: "0 0 6px" }}>My Referral Network</h2>
-                <p style={{ margin: "0 0 18px", fontSize: 12.5, color: "#667085", lineHeight: 1.5 }}>The Select Network investor referral matrix. Your network grows without a fixed cap — the structure below expands in depth and width as your team grows. This is separate from Lorenzo&apos;s Dog Training Team trainer hierarchy shown under Investment Reports.</p>
+                <p style={{ margin: "0 0 14px", fontSize: 12.5, color: "#667085", lineHeight: 1.5 }}>The Select Network investor referral matrix. As an individual member, your personal downline participation is capped at <b>40 members</b>. The structure below expands in depth and width as your team grows, up to your personal cap. This is separate from Lorenzo&apos;s Dog Training Team trainer hierarchy shown under Investment Reports.</p>
+                {/* Downline Capacity Tracker */}
+                <div style={{ background: "#fbf9f4", border: "1px solid #eee7d8", borderRadius: 12, padding: "14px 18px", marginBottom: 18 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <small style={{ fontSize: 11.5, fontWeight: 900, color: "#075933", textTransform: "uppercase", letterSpacing: ".04em" }}>Personal Downline Capacity</small>
+                    <b style={{ fontSize: 13, color: "#075933" }}>{referrals} / 40 used</b>
+                  </div>
+                  <div style={{ height: 10, borderRadius: 99, background: "#e7e2d8", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.min(100, (referrals / 40) * 100)}%`, borderRadius: 99, background: "linear-gradient(90deg,#0d6d42,#bd8e28)", transition: "width .8s ease" }} />
+                  </div>
+                  <p style={{ margin: "8px 0 0", fontSize: 11.5, color: "#667085" }}>{40 - referrals} participation slots remaining in your personal downline. Once your cap is reached, new members are placed in your extended organization but no longer count toward your personal participation limit.</p>
+                </div>
                 {/* Self */}
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 16, opacity: matrixAnimated ? 1 : 0, transform: matrixAnimated ? "translateY(0)" : "translateY(20px)", transition: "all .6s ease" }}>
                   <div onClick={() => openDrawer(matrixMembers.self as any)} style={{ background: "#fff", border: "2px solid #bd8e28", borderRadius: 14, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", boxShadow: "0 8px 24px rgba(5,20,45,.06)", transition: ".3s" }} className="hover:translate-y-[-3px] hover:shadow-[0_0_22px_rgba(213,168,61,.55)]">
@@ -583,9 +594,9 @@ export default function InvestorPortal() {
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 400, margin: 0 }}>Full Referral Matrix</h2>
             <button onClick={() => setMatrixFull(false)} style={{ background: "linear-gradient(135deg,#075933,#0b7346)", color: "#fff", border: 0, borderRadius: 8, padding: "12px 20px", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>✕ Close</button>
           </div>
-          <p style={{ color: "#667085", marginBottom: 24 }}>Your network expands as your team grows — there is no fixed cap on depth or width. The view below is your starting structure; deeper levels appear as your organization expands.</p>
+          <p style={{ color: "#667085", marginBottom: 24 }}>Your personal downline participation is capped at <b>40 members</b> ({referrals} of 40 currently used). The view below is your starting structure; deeper levels appear as your organization expands, up to your personal cap.</p>
           <div style={{ textAlign: "center" }}>
-            <p style={{ color: "#667085" }}>Full interactive matrix view — connects to live data for unlimited-depth visualization as your network grows.</p>
+            <p style={{ color: "#667085" }}>Full interactive matrix view — connects to live data and reflects your 40-member personal participation cap.</p>
           </div>
         </div>
       )}
