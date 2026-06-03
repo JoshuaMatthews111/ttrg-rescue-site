@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { LayoutDashboard, ClipboardList, Users, Star, CreditCard, BarChart3, FolderOpen, Network, Megaphone, Contact, CalendarDays, Settings, ShieldCheck, Bell, Mail, CheckCircle, CircleDot, TrendingUp, Wallet, Menu, LogOut, UserCircle } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Users, Star, CreditCard, BarChart3, FolderOpen, Network, Megaphone, Contact, CalendarDays, Settings, ShieldCheck, Bell, Mail, CheckCircle, CircleDot, TrendingUp, Wallet, Menu, LogOut, UserCircle, MessageSquare, Award, FileText } from "lucide-react";
 
 function useCountUp(target: number, duration = 1200) {
   const [count, setCount] = useState(0);
@@ -22,6 +22,9 @@ const adminTabs = [
   { id: "docs", label: "Documents", ico: "folder" },
   { id: "matrix", label: "Referral Matrix", ico: "network" },
   { id: "announcements", label: "Announcements", ico: "megaphone" },
+  { id: "chat", label: "Chat / Support", ico: "chat" },
+  { id: "milestones", label: "Milestones", ico: "award" },
+  { id: "certificates", label: "Certificates", ico: "filetext" },
   { id: "crm", label: "Prospects CRM", ico: "contact" },
   { id: "scheduler", label: "Scheduler", ico: "calendar" },
   { id: "settings", label: "Settings", ico: "settings" },
@@ -137,7 +140,7 @@ export default function AdminPortal() {
     setTimeout(() => setMeetingCreated(false), 3000);
   };
 
-  const icoMap: Record<string, React.ReactNode> = { dashboard: <LayoutDashboard size={18} />, clipboard: <ClipboardList size={18} />, users: <Users size={18} />, star: <Star size={18} />, credit: <CreditCard size={18} />, chart: <BarChart3 size={18} />, folder: <FolderOpen size={18} />, network: <Network size={18} />, megaphone: <Megaphone size={18} />, contact: <Contact size={18} />, calendar: <CalendarDays size={18} />, settings: <Settings size={18} />, shield: <ShieldCheck size={18} /> };
+  const icoMap: Record<string, React.ReactNode> = { dashboard: <LayoutDashboard size={18} />, clipboard: <ClipboardList size={18} />, users: <Users size={18} />, star: <Star size={18} />, credit: <CreditCard size={18} />, chart: <BarChart3 size={18} />, folder: <FolderOpen size={18} />, network: <Network size={18} />, megaphone: <Megaphone size={18} />, chat: <MessageSquare size={18} />, award: <Award size={18} />, filetext: <FileText size={18} />, contact: <Contact size={18} />, calendar: <CalendarDays size={18} />, settings: <Settings size={18} />, shield: <ShieldCheck size={18} /> };
 
   return (
     <div style={{ fontFamily: "Inter, Arial, sans-serif", color: "#071a33", background: "#fcfbf8" }}>
@@ -627,6 +630,98 @@ export default function AdminPortal() {
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #eef2f6", flexWrap: "wrap", gap: 8 }}><span style={{ fontWeight: 700, fontSize: 14 }}>{n}</span><span style={statusBadge("Pending")}>Ready</span></div>
                 ))}
                 <button style={{ ...btnGreen, marginTop: 16 }}>Save Settings</button>
+              </div>
+            </div>
+          )}
+
+          {/* CHAT / SUPPORT */}
+          {activeTab === "chat" && (
+            <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
+              <div style={card}>
+                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 6px" }}>Chat / Member Support</h2>
+                <p style={{ color: "#667085", fontSize: 13, margin: "0 0 16px" }}>View and respond to member support messages. Chat is a controlled channel between members and admin only.</p>
+                <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, minHeight: 340, border: "1px solid #e7e2d8", borderRadius: 12, overflow: "hidden" }}>
+                  <div style={{ background: "#f9f6ef", borderRight: "1px solid #e7e2d8", padding: "12px 0" }}>
+                    <div style={{ padding: "0 12px 12px", borderBottom: "1px solid #e7e2d8" }}><input placeholder="Search members..." style={{ ...fieldInput, padding: "10px 12px", fontSize: 13 }} /></div>
+                    {[{ name: "Maria Santos", msg: "When is the Q2 report?", unread: 2 }, { name: "David Chen", msg: "Application status?", unread: 1 }, { name: "James Wilson", msg: "Thanks!", unread: 0 }].map((c, i) => (
+                      <div key={i} style={{ padding: "12px 14px", borderBottom: "1px solid #eef2f6", cursor: "pointer", background: i === 0 ? "#fff" : "transparent" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <b style={{ fontSize: 13 }}>{c.name}</b>
+                          {c.unread > 0 && <span style={{ background: "#dc2626", color: "#fff", fontSize: 10, fontWeight: 900, padding: "2px 6px", borderRadius: 99 }}>{c.unread}</span>}
+                        </div>
+                        <p style={{ fontSize: 12, color: "#667085", margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.msg}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", padding: 14 }}>
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto", marginBottom: 12 }}>
+                      <div style={{ alignSelf: "flex-start", background: "#f0f2f5", borderRadius: "12px 12px 12px 2px", padding: "10px 14px", maxWidth: "80%", fontSize: 13 }}><b>Maria Santos:</b> Hi, when will the Q2 report be published?</div>
+                      <div style={{ alignSelf: "flex-end", background: "linear-gradient(135deg,#075933,#0b7346)", color: "#fff", borderRadius: "12px 12px 2px 12px", padding: "10px 14px", maxWidth: "80%", fontSize: 13 }}>The Q2 report is being finalized. It will be published by end of week.</div>
+                      <div style={{ alignSelf: "flex-start", background: "#f0f2f5", borderRadius: "12px 12px 12px 2px", padding: "10px 14px", maxWidth: "80%", fontSize: 13 }}><b>Maria Santos:</b> Thank you for the update!</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <input placeholder="Type a reply..." style={{ flex: 1, ...fieldInput, padding: "10px 14px" }} />
+                      <button style={btnGreen}>Send</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MILESTONES */}
+          {activeTab === "milestones" && (
+            <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
+              <div style={card}>
+                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 6px" }}>Member Milestones</h2>
+                <p style={{ color: "#667085", fontSize: 13, margin: "0 0 16px" }}>Track and manage milestone achievements across the network.</p>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 600 }}>
+                    <thead><tr>{["Milestone", "Required", "Members Achieved", "Status"].map(h => <th key={h} style={thS}>{h}</th>)}</tr></thead>
+                    <tbody>
+                      {[
+                        { name: "Application Approved", req: "Admin approval", achieved: 48, status: "Active" },
+                        { name: "First Investment", req: "1+ units purchased", achieved: 42, status: "Active" },
+                        { name: "10 Referrals", req: "10 active referrals", achieved: 12, status: "Active" },
+                        { name: "25 Referrals", req: "25 active referrals", achieved: 4, status: "Active" },
+                        { name: "40 Member Cap", req: "Full downline (40)", achieved: 1, status: "Active" },
+                        { name: "$1,000 Incentive Earned", req: "Qualified sharing incentive", achieved: 8, status: "Active" },
+                        { name: "First 125 Member", req: "Among first 125 approved", achieved: 48, status: "Active" },
+                      ].map((m, i) => (
+                        <tr key={i}><td style={tdS}><b>{m.name}</b></td><td style={{ ...tdS, color: "#667085" }}>{m.req}</td><td style={tdS}>{m.achieved}</td><td style={tdS}><span style={statusBadge(m.status)}>{m.status}</span></td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* CERTIFICATES */}
+          {activeTab === "certificates" && (
+            <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
+              <div style={card}>
+                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 6px" }}>Certificates</h2>
+                <p style={{ color: "#667085", fontSize: 13, margin: "0 0 16px" }}>Manage and issue certificates for member achievements.</p>
+                <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+                  <button style={btnGreen}>+ Issue New Certificate</button>
+                  <button style={btnOutline}>Download Template</button>
+                </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 600 }}>
+                    <thead><tr>{["Certificate", "Member", "Issue Date", "Status", "Action"].map(h => <th key={h} style={thS}>{h}</th>)}</tr></thead>
+                    <tbody>
+                      {[
+                        { cert: "Foundation Partner", member: "Maria Santos", date: "May 20, 2025", status: "Issued" },
+                        { cert: "First 125 Member", member: "David Chen", date: "May 22, 2025", status: "Pending" },
+                        { cert: "Builder Achievement — 10 Referrals", member: "James Wilson", date: "Jun 5, 2025", status: "Issued" },
+                        { cert: "Top Builder Q2", member: "Maria Santos", date: "Pending", status: "Draft" },
+                      ].map((c, i) => (
+                        <tr key={i}><td style={tdS}><b>{c.cert}</b></td><td style={tdS}>{c.member}</td><td style={{ ...tdS, color: "#667085" }}>{c.date}</td><td style={tdS}><span style={statusBadge(c.status === "Issued" ? "Active" : c.status === "Pending" ? "Pending" : "Pending")}>{c.status}</span></td><td style={tdS}><button style={btnOutline}>{c.status === "Issued" ? "View" : "Issue"}</button></td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}

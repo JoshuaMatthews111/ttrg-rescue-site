@@ -158,22 +158,34 @@ export default function ReportsPage() {
         <div className="sn-shell" style={{ maxWidth: 800 }}>
           <Reveal>
             <div style={{ background: "#fbf9f4", border: "1px solid #e7e2d8", borderRadius: 16, padding: "32px 28px" }}>
-              <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 24, margin: "0 0 12px" }}>Our Tax Reports</h2>
+              <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 24, margin: "0 0 12px" }}>Tax Reports</h2>
               <p style={{ color: "#3d4a57", lineHeight: 1.7, fontSize: 14.5, margin: "0 0 20px" }}>
                 View and download available tax reports, IRS documentation, and supporting financial records connected to the current investment focus.
               </p>
-              <div style={{ background: "#fff", border: "1px solid #e7d9b6", borderLeft: `4px solid ${GOLD}`, borderRadius: "0 12px 12px 0", padding: "16px 18px", marginBottom: 20 }}>
-                <p style={{ margin: 0, color: "#604b17", fontSize: 13, lineHeight: 1.6, fontStyle: "italic" }}>
-                  Tax reports and supporting documents will be uploaded once provided by the client.
-                </p>
+
+              {/* Scoped downloads */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12, marginBottom: 20 }}>
+                {[
+                  { label: "2024 Annual Tax Report", scope: "FY 2024" },
+                  { label: "Q1 2025 Tax Summary", scope: "Q1 2025" },
+                  { label: "Q2 2025 Tax Summary", scope: "Q2 2025" },
+                  { label: "IRS Supporting Docs", scope: "All Years" },
+                ].map((r, i) => (
+                  <div key={i} style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 10, padding: "14px 16px" }}>
+                    <b style={{ fontSize: 13, display: "block", marginBottom: 4 }}>{r.label}</b>
+                    <span style={{ fontSize: 11, color: "#667085", display: "block", marginBottom: 10 }}>{r.scope}</span>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button style={{ ...btnBase, padding: "6px 10px", fontSize: 11, background: `linear-gradient(135deg,${GREEN},#064a28)`, color: "#fff" }}><Eye size={12} /> View</button>
+                      <button style={{ ...btnBase, padding: "6px 10px", fontSize: 11, background: `linear-gradient(135deg,${GOLD},#a07520)`, color: "#fff" }}><Download size={12} /> PDF</button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                <button style={{ display: "inline-flex", alignItems: "center", gap: 7, borderRadius: 8, padding: "12px 18px", fontWeight: 800, fontSize: 12, textTransform: "uppercase", letterSpacing: ".03em", cursor: "pointer", background: `linear-gradient(135deg, ${GREEN}, #064a28)`, color: "#fff", border: 0 }}>
-                  <Eye size={15} /> View Reports
-                </button>
-                <button style={{ display: "inline-flex", alignItems: "center", gap: 7, borderRadius: 8, padding: "12px 18px", fontWeight: 800, fontSize: 12, textTransform: "uppercase", letterSpacing: ".03em", cursor: "pointer", background: `linear-gradient(135deg, ${GOLD}, #a07520)`, color: "#fff", border: 0 }}>
-                  <Download size={15} /> Download Reports
-                </button>
+
+              <div style={{ background: "#fff", border: "1px solid #e7d9b6", borderLeft: `4px solid ${GOLD}`, borderRadius: "0 12px 12px 0", padding: "16px 18px" }}>
+                <p style={{ margin: 0, color: "#604b17", fontSize: 13, lineHeight: 1.6, fontStyle: "italic" }}>
+                  Tax reports and supporting documents will be uploaded once provided by the client. Additional scoped documents may be added as they become available.
+                </p>
               </div>
             </div>
           </Reveal>

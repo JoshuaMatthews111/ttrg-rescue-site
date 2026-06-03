@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { LayoutDashboard, Star, TrendingUp, FolderOpen, Wallet, Network, Megaphone, Settings, Bell, Mail, Diamond, CheckCircle, FileText, CircleDot, Menu, LogOut } from "lucide-react";
+import { LayoutDashboard, Star, TrendingUp, FolderOpen, Wallet, Network, Megaphone, Settings, Bell, Mail, Diamond, CheckCircle, FileText, CircleDot, Menu, LogOut, MessageSquare, Award, Target } from "lucide-react";
 
 /* ─── Count-up hook ─── */
 function useCountUp(target: number, duration = 1200) {
@@ -50,6 +50,9 @@ const tabs = [
   { id: "withdrawals", label: "Withdrawals", ico: <Wallet size={20} /> },
   { id: "matrix", label: "Referral Matrix", ico: <Network size={20} /> },
   { id: "announcements", label: "Investor Communications", ico: <Megaphone size={20} /> },
+  { id: "chat", label: "Chat", ico: <MessageSquare size={20} /> },
+  { id: "milestones", label: "Milestones", ico: <Award size={20} /> },
+  { id: "certificates", label: "Certificates", ico: <FileText size={20} /> },
   { id: "settings", label: "Settings", ico: <Settings size={20} /> },
 ];
 
@@ -531,6 +534,83 @@ export default function InvestorPortal() {
                       <button style={{ fontSize: 16, background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 99, padding: "4px 10px", cursor: "pointer" }}>❤️</button>
                       <button style={{ fontSize: 16, background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 99, padding: "4px 10px", cursor: "pointer" }}>🎉</button>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ─── CHAT ─── */}
+          {activeTab === "chat" && (
+            <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
+              <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: 24, boxShadow: "0 8px 24px rgba(5,20,45,.06)" }}>
+                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 6px" }}>Chat</h2>
+                <div style={{ borderLeft: "4px solid #bd8e28", background: "#fffaf0", color: "#604b17", padding: "12px 14px", fontSize: 12.5, borderRadius: "0 6px 6px 0", marginBottom: 16, lineHeight: 1.6 }}>
+                  Chat is a controlled communication channel. Use it to message the Select Network support team directly. Member-to-member messaging is not available.
+                </div>
+                <div style={{ background: "#f9f6ef", borderRadius: 12, border: "1px solid #e7e2d8", padding: 20, minHeight: 200, display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ alignSelf: "flex-end", background: "linear-gradient(135deg,#075933,#0b7346)", color: "#fff", borderRadius: "12px 12px 2px 12px", padding: "10px 14px", maxWidth: "80%", fontSize: 13 }}>Hi, when will the Q2 report be published?</div>
+                  <div style={{ alignSelf: "flex-start", background: "#fff", border: "1px solid #e7e2d8", borderRadius: "12px 12px 12px 2px", padding: "10px 14px", maxWidth: "80%", fontSize: 13 }}><b>Support:</b> The Q2 report is being finalized. It will be published by end of week.</div>
+                  <div style={{ alignSelf: "flex-end", background: "linear-gradient(135deg,#075933,#0b7346)", color: "#fff", borderRadius: "12px 12px 2px 12px", padding: "10px 14px", maxWidth: "80%", fontSize: 13 }}>Thank you for the update!</div>
+                </div>
+                <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                  <input placeholder="Type a message..." style={{ flex: 1, background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 8, padding: "12px 16px", fontSize: 14, outline: "none" }} />
+                  <button style={{ background: "linear-gradient(135deg,#075933,#0b7346)", color: "#fff", border: 0, borderRadius: 8, padding: "12px 18px", fontWeight: 900, fontSize: 12, textTransform: "uppercase", cursor: "pointer" }}>Send</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ─── MILESTONES ─── */}
+          {activeTab === "milestones" && (
+            <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
+              <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: 24, boxShadow: "0 8px 24px rgba(5,20,45,.06)" }}>
+                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 22, margin: "0 0 14px" }}>Milestones & Progress</h2>
+                <p style={{ color: "#667085", fontSize: 13, marginBottom: 18 }}>Track your journey through Select Network achievements.</p>
+                {[
+                  { title: "Application Approved", desc: "Your application has been reviewed and approved.", done: true },
+                  { title: "First Investment Completed", desc: "Successfully purchased your first founder units.", done: true },
+                  { title: "First Referral Made", desc: "Referred your first member to the network.", done: true },
+                  { title: "10 Active Referrals", desc: "Built a team of 10 active members in your downline.", done: true },
+                  { title: "25 Active Referrals", desc: "Reached 25 active members — growing strong.", done: true },
+                  { title: "$1,000 Sharing Incentive", desc: "Qualified for the sharing incentive program.", done: false },
+                  { title: "40 Member Downline Cap", desc: "Maximum personal downline achieved.", done: false },
+                ].map((m, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderBottom: "1px solid #eef2f6" }}>
+                    <div style={{ width: 36, height: 36, borderRadius: "50%", background: m.done ? "#e3f5eb" : "#f0f2f5", display: "grid", placeItems: "center", color: m.done ? "#087345" : "#9aa0ab", flexShrink: 0 }}>{m.done ? <CheckCircle size={18} /> : <Target size={18} />}</div>
+                    <div style={{ flex: 1 }}>
+                      <b style={{ fontSize: 14, color: m.done ? "#071a33" : "#9aa0ab" }}>{m.title}</b>
+                      <p style={{ fontSize: 12, color: "#667085", margin: "2px 0 0" }}>{m.desc}</p>
+                    </div>
+                    {m.done && <span style={{ padding: "4px 10px", borderRadius: 99, background: "#e3f5eb", color: "#087345", fontSize: 10, fontWeight: 900, flexShrink: 0 }}>Completed</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ─── CERTIFICATES ─── */}
+          {activeTab === "certificates" && (
+            <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
+              <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: 24, boxShadow: "0 8px 24px rgba(5,20,45,.06)" }}>
+                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 22, margin: "0 0 14px" }}>Certificates & Achievements</h2>
+                <p style={{ color: "#667085", fontSize: 13, marginBottom: 18 }}>Download your earned certificates and track pending achievements.</p>
+                {[
+                  { title: "Foundation Partner Certificate", date: "May 20, 2025", available: true },
+                  { title: "First 125 Approved Member", date: "May 20, 2025", available: true },
+                  { title: "Builder Achievement — 10 Referrals", date: "Jun 5, 2025", available: true },
+                  { title: "Top Builder Q2 2025", date: "Pending", available: false },
+                ].map((c, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: "1px solid #eef2f6", flexWrap: "wrap", gap: 8 }}>
+                    <div>
+                      <b style={{ fontSize: 14 }}>{c.title}</b>
+                      <div style={{ fontSize: 12, color: "#667085" }}>{c.date}</div>
+                    </div>
+                    {c.available ? (
+                      <button style={{ background: "linear-gradient(135deg,#075933,#0b7346)", color: "#fff", border: 0, borderRadius: 8, padding: "8px 16px", fontWeight: 900, fontSize: 11, textTransform: "uppercase", cursor: "pointer" }}>Download PDF</button>
+                    ) : (
+                      <span style={{ padding: "4px 10px", borderRadius: 99, background: "#f0f2f5", color: "#667085", fontSize: 11, fontWeight: 900 }}>Pending</span>
+                    )}
                   </div>
                 ))}
               </div>

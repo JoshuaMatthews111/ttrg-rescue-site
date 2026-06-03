@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { Users, Target, Building2, Leaf, Lock, TrendingUp, Sun, Settings, BarChart3, ShieldPlus, Star, ArrowRight } from "lucide-react";
+import { Users, Target, Building2, Leaf, Lock, TrendingUp, Sun, Settings, BarChart3, ShieldPlus, Star, ArrowRight, Menu, X } from "lucide-react";
 
 export default function SelectNetworkHomePage() {
   /* ─── Focus card rotation ─── */
   const [activeCard, setActiveCard] = useState(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
   useEffect(() => {
     const timer = setInterval(() => setActiveCard((i) => (i + 1) % 6), 1700);
     return () => clearInterval(timer);
@@ -31,9 +32,29 @@ export default function SelectNetworkHomePage() {
             <Link href="/selectnetwork/invest-now">Invest Now</Link>
             <Link href="/selectnetwork/contact">Contact</Link>
           </div>
-          <Link href="/selectnetwork/login" className="sn-portal-btn">🔒 Member Portal</Link>
+          <Link href="/selectnetwork/login" className="sn-portal-btn sn-hide-mobile">🔒 Member Portal</Link>
+          <button className="sn-hamburger" onClick={() => setMobileOpen(true)} aria-label="Open menu"><Menu size={24} /></button>
         </nav>
       </header>
+
+      {/* ═══ MOBILE DRAWER ═══ */}
+      {mobileOpen && (
+        <div className="sn-mobile-drawer-overlay">
+          <div className="sn-mobile-drawer-bg" onClick={() => setMobileOpen(false)} />
+          <div className="sn-mobile-drawer">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <Image src="/assets/select-network/select-network-logo.png" alt="Select Network" width={160} height={40} style={{ width: 160, height: "auto" }} />
+              <button onClick={() => setMobileOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#071a33" }}><X size={24} /></button>
+            </div>
+            <nav style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {[{ label: "About", href: "/selectnetwork/about" }, { label: "Investment Focus", href: "/selectnetwork/investment-focus" }, { label: "Investment Reports", href: "/selectnetwork/reports" }, { label: "Invest Now", href: "/selectnetwork/invest-now" }, { label: "Contact", href: "/selectnetwork/contact" }].map((l) => (
+                <Link key={l.href} href={l.href} onClick={() => setMobileOpen(false)} style={{ padding: "14px 16px", borderRadius: 10, fontSize: 14, fontWeight: 800, letterSpacing: ".03em", textTransform: "uppercase", color: "#0d2845", textDecoration: "none" }}>{l.label}</Link>
+              ))}
+            </nav>
+            <Link href="/selectnetwork/login" onClick={() => setMobileOpen(false)} style={{ marginTop: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, background: "linear-gradient(135deg,#d1a645,#bc8b25)", color: "#fff", borderRadius: 8, padding: "14px 18px", fontWeight: 900, fontSize: 13, textTransform: "uppercase", textDecoration: "none" }}><Lock size={14} /> Member Portal</Link>
+          </div>
+        </div>
+      )}
 
       {/* ═══ HERO ═══ */}
       <main className="sn-page">
@@ -41,11 +62,7 @@ export default function SelectNetworkHomePage() {
           {/* Left — Copy */}
           <div className="sn-hero-copy">
             <div className="sn-editorial-kicker">Private investors.<br />Strategic partners.<br />Lasting impact.</div>
-            <div className="sn-headline-rotator" aria-label="Changing Select Network headline">
-              <h1 className="sn-headline-slide sn-slide-1"><span className="sn-gold">Identifying</span><br />Opportunity.<br />Building Value.<br />Expanding the<br />Network.<span className="sn-headline-shine"></span></h1>
-              <h1 className="sn-headline-slide sn-slide-2"><span className="sn-gold">Strategic</span><br />Capital.<br />Strong Systems.<br />Lasting<br />Impact.<span className="sn-headline-shine"></span></h1>
-              <h1 className="sn-headline-slide sn-slide-3"><span className="sn-gold">Private</span><br />Access.<br />Selected Growth.<br />Future<br />Opportunities.<span className="sn-headline-shine"></span></h1>
-            </div>
+            <h1 className="sn-static-headline"><span className="sn-gold sn-shine">Private</span> Access.<br /><span className="sn-gold sn-shine">Identifying</span> Opportunity.<br />Building Value.</h1>
             <div className="sn-gold-rule"><span className="sn-rule-diamond">◇</span></div>
             <h2 className="sn-hero-subtitle">Building the Next Wave of Private Investment Opportunities</h2>
             <p className="sn-hero-paragraph">Select Network exists to connect capital with vision, strong company systems, and strategic private investment opportunities designed to create sustainable long-term growth.</p>
@@ -61,13 +78,12 @@ export default function SelectNetworkHomePage() {
                 muted
                 playsInline
                 preload="auto"
-                poster="/assets/select-network/select-network-logo.png"
                 aria-label="Select Network brand motion video"
               >
                 <source src="/assets/select-network/hero-video.mp4" type="video/mp4" />
               </video>
               <div className="sn-video-fallback" aria-hidden="true">
-                <Image src="/assets/select-network/select-network-logo.png" alt="The Select Network" width={320} height={80} priority style={{ width: "70%", maxWidth: 320, height: "auto" }} />
+                <Image src="/assets/select-network/select-network-logo.png" alt="The Select Network" width={320} height={80} priority style={{ width: "60%", maxWidth: 280, height: "auto", opacity: 0.85 }} />
               </div>
               <div className="sn-video-ring" aria-hidden="true"></div>
               <div className="sn-video-caption"><span>TRUST · PRIVACY · EXCELLENCE</span></div>
@@ -131,30 +147,28 @@ export default function SelectNetworkHomePage() {
             <Link href="/selectnetwork/investment-focus" className="sn-btn-gold">View Investment Focus <ArrowRight size={16} /></Link>
           </div>
           <div className="sn-chart" aria-label="Illustrative platform growth visualization">
-            <svg viewBox="0 0 360 190" preserveAspectRatio="none">
+            <svg viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet">
               <defs>
-                <linearGradient id="snbar" x1="0" x2="0" y1="0" y2="1"><stop stopColor="#64b9ff" /><stop offset="1" stopColor="#0d3c78" /></linearGradient>
-                <linearGradient id="snarea" x1="0" x2="0" y1="0" y2="1"><stop stopColor="#ffd36a" stopOpacity=".4" /><stop offset="1" stopColor="#ffd36a" stopOpacity="0" /></linearGradient>
+                <linearGradient id="snAreaFill" x1="0" y1="0" x2="0" y2="1"><stop stopColor="#d5a83d" stopOpacity=".25" /><stop offset="1" stopColor="#d5a83d" stopOpacity="0" /></linearGradient>
+                <linearGradient id="snArrowGrad" x1="0" y1="1" x2="0" y2="0"><stop stopColor="#d5a83d" /><stop offset="1" stopColor="#fff" /></linearGradient>
               </defs>
-              <g stroke="rgba(255,255,255,.08)" strokeWidth="1"><path d="M0 40H360M0 80H360M0 120H360M0 160H360" /><path d="M40 0V190M90 0V190M140 0V190M190 0V190M240 0V190M290 0V190" /></g>
-              <g className="sn-bars">
-                <rect x="38" y="148" width="12" height="25" fill="url(#snbar)" rx="2" />
-                <rect x="70" y="135" width="12" height="38" fill="url(#snbar)" rx="2" />
-                <rect x="102" y="118" width="12" height="55" fill="url(#snbar)" rx="2" />
-                <rect x="134" y="128" width="12" height="45" fill="url(#snbar)" rx="2" />
-                <rect x="166" y="105" width="12" height="68" fill="url(#snbar)" rx="2" />
-                <rect x="198" y="92" width="12" height="81" fill="url(#snbar)" rx="2" />
-                <rect x="230" y="76" width="12" height="97" fill="url(#snbar)" rx="2" />
-                <rect x="262" y="57" width="12" height="116" fill="url(#snbar)" rx="2" />
-                <rect x="294" y="32" width="12" height="141" fill="url(#snbar)" rx="2" />
-              </g>
-              <path className="sn-area" d="M25 150 C65 140, 95 120, 126 126 S185 87, 222 77 S270 42, 315 18 L315 190 L25 190 Z" fill="url(#snarea)" />
-              <path className="sn-growth-line" d="M25 150 C65 140, 95 120, 126 126 S185 87, 222 77 S270 42, 315 18" fill="none" stroke="#ffd36a" strokeWidth="4" strokeLinecap="round" />
-              <circle className="sn-spark" cx="315" cy="18" r="5" fill="#fff3a7" />
+              {/* Grid */}
+              <g stroke="rgba(255,255,255,.06)" strokeWidth="1"><path d="M30 40H340M30 80H340M30 120H340M30 160H340" /></g>
+              {/* Area under curve */}
+              <path className="sn-area" d="M30 168 C70 160,110 145,150 130 S220 100,260 80 S310 45,340 30 L340 180 L30 180Z" fill="url(#snAreaFill)" />
+              {/* Growth line */}
+              <path className="sn-growth-line" d="M30 168 C70 160,110 145,150 130 S220 100,260 80 S310 45,340 30" fill="none" stroke="#d5a83d" strokeWidth="3" strokeLinecap="round" />
+              {/* Data points */}
+              <g fill="#fff" stroke="#d5a83d" strokeWidth="3" className="sn-dots"><circle cx="30" cy="168" r="4" /><circle cx="110" cy="145" r="4" /><circle cx="190" cy="110" r="4" /><circle cx="270" cy="72" r="4" /><circle cx="340" cy="30" r="5" /></g>
+              {/* Upward arrow at tip */}
+              <polygon points="340,8 332,26 340,22 348,26" fill="url(#snArrowGrad)" className="sn-up-arrow" />
+              {/* Labels */}
+              <text x="34" y="18" fill="#9fb6d4" fontSize="9" fontWeight="700" fontFamily="Inter, sans-serif">GROWTH</text>
+              <text x="280" y="18" fill="#ffd46f" fontSize="9" fontWeight="700" fontFamily="Inter, sans-serif">↑ EXPANDING</text>
             </svg>
             <div className="sn-chart-legend">
-              <span><i style={{ background: "#ffd36a" }}></i>Network Expansion</span>
-              <span><i style={{ background: "#64b9ff" }}></i>Member Growth</span>
+              <span><i style={{ background: "#d5a83d" }}></i>Network Growth</span>
+              <span><i style={{ background: "#9fb6d4" }}></i>Member Activity</span>
             </div>
             <div className="sn-chart-caption">Illustrative platform overview · not a guarantee of returns</div>
           </div>
@@ -318,13 +332,13 @@ export default function SelectNetworkHomePage() {
         .sn-hero-copy { align-self: center; padding-top: 15px; }
 
         /* Headline */
-        .sn-home h1 {
+        .sn-static-headline {
           font-family: Georgia, 'Times New Roman', serif;
           font-size: clamp(42px, 4.2vw, 64px);
-          line-height: 1.0;
+          line-height: 1.05;
           letter-spacing: -.035em;
           color: var(--navy);
-          margin: 0;
+          margin: 0 0 14px;
           font-weight: 500;
           max-width: 520px;
         }
@@ -333,41 +347,32 @@ export default function SelectNetworkHomePage() {
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
-          text-shadow: 0 6px 18px rgba(196,134,40,.12);
           display: inline-block;
+          position: relative;
+        }
+        .sn-shine { overflow: hidden; }
+        .sn-shine::after {
+          content: "";
+          position: absolute;
+          top: 0; bottom: 0;
+          width: 40%;
+          left: -60%;
+          background: linear-gradient(100deg, transparent, rgba(255,228,148,.45) 45%, rgba(255,240,190,.7) 50%, rgba(255,228,148,.45) 55%, transparent);
+          animation: snShineSlide 4s ease-in-out infinite;
+          pointer-events: none;
+        }
+        @keyframes snShineSlide {
+          0%, 30% { left: -60%; opacity: 0; }
+          40% { opacity: 1; }
+          70%, 100% { left: 130%; opacity: 0; }
         }
 
-        /* Headline rotator */
-        .sn-headline-rotator { position: relative; height: 260px; perspective: 1100px; margin: 0 0 14px; overflow: hidden; max-width: 520px; }
-        .sn-headline-slide {
-          position: absolute;
-          inset: 0;
-          opacity: 0;
-          transform: rotateX(75deg) translateY(16px);
-          transform-origin: 50% 0%;
-          filter: blur(3px);
-          animation: snHeadlineFold 10.5s infinite;
-        }
-        .sn-slide-2 { animation-delay: 3.5s; }
-        .sn-slide-3 { animation-delay: 7s; }
-        .sn-headline-shine {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          background: linear-gradient(105deg, transparent 0 38%, rgba(255,228,148,.38) 47%, transparent 57%);
-          mix-blend-mode: multiply;
-          animation: snTextShine 3.5s ease-in-out infinite;
-        }
-        @keyframes snHeadlineFold {
-          0% { opacity: 0; transform: rotateX(78deg) translateY(18px); filter: blur(5px); }
-          8%, 27% { opacity: 1; transform: rotateX(0) translateY(0); filter: blur(0); }
-          31% { opacity: 0; transform: rotateX(-70deg) translateY(-18px); filter: blur(4px); }
-          100% { opacity: 0; transform: rotateX(-70deg) translateY(-18px); filter: blur(4px); }
-        }
-        @keyframes snTextShine {
-          0%, 40% { transform: translateX(-120%); }
-          68%, 100% { transform: translateX(120%); }
-        }
+        /* Hamburger */
+        .sn-hamburger { display: none; background: none; border: 1px solid rgba(196,134,40,.4); border-radius: 8px; padding: 8px; cursor: pointer; color: var(--navy); }
+        .sn-mobile-drawer-overlay { position: fixed; inset: 0; z-index: 99999; }
+        .sn-mobile-drawer-bg { position: absolute; inset: 0; background: rgba(7,26,51,.4); backdrop-filter: blur(3px); }
+        .sn-mobile-drawer { position: absolute; top: 0; right: 0; width: 300px; max-width: 85vw; height: 100vh; background: #fff; box-shadow: -10px 0 40px rgba(0,0,0,.15); padding: 24px; overflow: auto; animation: snDrawerIn .25s ease; }
+        @keyframes snDrawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
         .sn-hero-subtitle { color: #a76418; font-weight: 900; font-size: 18px; margin: 0 0 10px; line-height: 1.3; letter-spacing: .02em; max-width: 520px; }
         .sn-hero-paragraph { font-size: 15px; line-height: 1.6; color: #23354e; font-weight: 600; max-width: 480px; margin: 0; }
@@ -524,7 +529,9 @@ export default function SelectNetworkHomePage() {
         .sn-bars rect:nth-child(9) { animation-delay: .9s; }
         .sn-growth-line { stroke-dasharray: 520; stroke-dashoffset: 520; animation: snDrawLine 2.4s ease 1.1s forwards; filter: drop-shadow(0 0 7px #ffc55a); }
         .sn-area { opacity: 0; animation: snAreaFade 1.6s ease 1.8s forwards; }
-        .sn-spark { animation: snSparkMove 4s ease-in-out infinite; filter: drop-shadow(0 0 10px #ffd36a); }
+        .sn-dots { opacity: 0; animation: snAreaFade 1s ease 1.2s forwards; }
+        .sn-up-arrow { opacity: 0; animation: snUpArrow 2.5s ease 2s infinite; }
+        @keyframes snUpArrow { 0% { opacity: 0; transform: translateY(6px); } 20%,60% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-4px); } }
         .sn-chart-legend { position: absolute; top: 12px; left: 16px; z-index: 2; display: flex; flex-direction: column; gap: 5px; }
         .sn-chart-legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 9.5px; font-weight: 700; color: #cfe0f5; text-transform: uppercase; letter-spacing: .04em; }
         .sn-chart-legend i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
@@ -583,13 +590,14 @@ export default function SelectNetworkHomePage() {
         @media (max-width: 760px) {
           .sn-top-line { font-size: 10px; letter-spacing: .18em; }
           .sn-brand img { height: 56px !important; }
-          .sn-nav-links, .sn-portal-btn { display: none; }
+          .sn-nav-links, .sn-hide-mobile { display: none !important; }
+          .sn-hamburger { display: flex; }
           .sn-nav-bar { padding: 14px 16px; }
           .sn-page { padding: 0 16px 20px; }
           .sn-hero { padding-top: 10px; }
           .sn-editorial-kicker { font-size: 11px; }
           .sn-home h1 { font-size: 36px; }
-          .sn-headline-rotator { height: 200px; }
+          .sn-static-headline { font-size: 36px; }
           .sn-hero-subtitle { font-size: 17px; }
           .sn-showcase-wrap { padding: 6px 0 16px; }
           .sn-video-frame { width: 100%; max-width: 360px; }
