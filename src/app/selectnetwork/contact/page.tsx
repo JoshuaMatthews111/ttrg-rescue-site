@@ -39,7 +39,7 @@ export default function ContactPage() {
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {[
                   { icon: <Phone size={22} />, label: "Phone", value: "(888) 55-SELECT", href: "tel:+18885573532" },
-                  { icon: <Mail size={22} />, label: "Email", value: "info@theselectnetwork.com", href: "mailto:info@theselectnetwork.com" },
+                  { icon: <Mail size={22} />, label: "Email", value: "Selectprofits@gmail.com", href: "mailto:Selectprofits@gmail.com" },
                   { icon: <MapPin size={22} />, label: "Address", value: "123 Legacy Way, Suite 100, Atlanta, GA 30309", href: null },
                 ].map((c, i) => (
                   <div key={i} style={{ display: "flex", gap: 16, alignItems: "flex-start", background: "#fbf9f4", border: "1px solid #eee7d8", borderRadius: 14, padding: "20px 22px" }}>

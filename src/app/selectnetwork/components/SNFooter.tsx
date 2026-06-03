@@ -8,7 +8,7 @@ const LINKS = [
   { label: "About", href: "/selectnetwork/about" },
   { label: "Investment Focus", href: "/selectnetwork/investment-focus" },
   { label: "Investment Reports", href: "/selectnetwork/reports" },
-  { label: "Join The Network", href: "/selectnetwork/join" },
+  { label: "Invest Now", href: "/selectnetwork/invest-now" },
   { label: "Contact", href: "/selectnetwork/contact" },
   { label: "Member Portal", href: "/selectnetwork/login" },
 ];
@@ -66,7 +66,7 @@ export default function SNFooter() {
           <h4 style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", color: "#d5a83d", margin: "0 0 16px" }}>Contact</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 11, color: "#c6d2e1", fontSize: 13.5 }}>
             <span>(888) 55-SELECT</span>
-            <a href="mailto:info@theselectnetwork.com" style={{ color: "#c6d2e1", textDecoration: "none" }}>info@theselectnetwork.com</a>
+            <a href="mailto:Selectprofits@gmail.com" style={{ color: "#c6d2e1", textDecoration: "none" }}>Selectprofits@gmail.com</a>
             <span>123 Legacy Way, Suite 100<br />Atlanta, GA 30309</span>
             <Link
               href="/selectnetwork/login"

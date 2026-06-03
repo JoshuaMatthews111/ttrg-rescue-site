@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { BarChart3, TrendingUp, PieChart, Network, CalendarClock, Eye, Download, Info, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
+import { BarChart3, TrendingUp, PieChart, Network, CalendarClock, Eye, Download, Info, ArrowRight, FileText, X } from "lucide-react";
 import SNNav from "../components/SNNav";
 import SNFooter from "../components/SNFooter";
 import Reveal from "../components/Reveal";
@@ -17,6 +19,7 @@ const scrollToCharts = () => {
 };
 
 export default function ReportsPage() {
+  const [compOpen, setCompOpen] = useState(false);
   const reportCards = [
     { icon: <BarChart3 size={24} />, title: "Revenue Performance Overview", desc: "Total sales and category revenue from Lorenzo's Dog Training Team historical records, 2016–2025.", pdf: null },
     { icon: <TrendingUp size={24} />, title: "Profit & Margin Summary", desc: "Operating profit and margin by year from the client-provided LDTT record.", pdf: null },
@@ -71,6 +74,39 @@ export default function ReportsPage() {
         </div>
       </section>
 
+      {/* Official Compensation Plan Document */}
+      <section style={{ padding: "20px 0 50px", background: "#fff" }}>
+        <div className="sn-shell">
+          <Reveal>
+            <div style={{ background: "linear-gradient(135deg,#fbf9f4,#fff)", border: "1px solid #e7d9b6", borderRadius: 18, overflow: "hidden", boxShadow: "0 14px 40px rgba(5,20,45,.07)" }}>
+              <div className="sn-comp-doc" style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 0, alignItems: "stretch" }}>
+                {/* Thumbnail */}
+                <button onClick={() => setCompOpen(true)} style={{ position: "relative", border: 0, padding: 0, cursor: "pointer", background: "#0a2240", display: "block", minHeight: 220, overflow: "hidden" }} aria-label="Open compensation plan preview">
+                  <Image src="/assets/select-network/select-network-comp-plan.png" alt="Select Network Compensation Plan" width={640} height={400} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.96 }} />
+                  <span style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(7,26,51,.32)", color: "#fff", transition: ".25s" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(7,26,51,.7)", padding: "10px 16px", borderRadius: 99, fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".04em", border: "1px solid rgba(213,168,61,.5)" }}><Eye size={14} /> Click to View</span>
+                  </span>
+                </button>
+                {/* Details */}
+                <div style={{ padding: "30px 32px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 8, color: GOLD, fontSize: 11, fontWeight: 900, letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 12 }}>
+                    <FileText size={15} /> Official Select Network Document
+                  </div>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 28, margin: "0 0 10px" }}>Select Network Compensation Plan</h2>
+                  <p style={{ color: "#5b6675", lineHeight: 1.7, fontSize: 14.5, margin: "0 0 22px", maxWidth: 560 }}>
+                    Review the official unit investment and quarterly profit distribution overview. This document illustrates how units are purchased ($100 per unit) and how available quarterly profit is distributed equally across all units.
+                  </p>
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                    <button onClick={() => setCompOpen(true)} style={btnGreen}><Eye size={15} /> View Document</button>
+                    <a href="/assets/select-network/select-network-comp-plan.png" download="Select-Network-Compensation-Plan.png" style={btnGold}><Download size={15} /> Download</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* Snapshot intro */}
       <section id="live-charts" style={{ padding: "30px 0 20px", background: "#fbf9f4", scrollMarginTop: 100 }}>
         <div className="sn-shell">
@@ -117,18 +153,62 @@ export default function ReportsPage() {
         </div>
       </section>
 
+      {/* Our Tax Reports */}
+      <section style={{ padding: "50px 0", background: "#fff" }}>
+        <div className="sn-shell" style={{ maxWidth: 800 }}>
+          <Reveal>
+            <div style={{ background: "#fbf9f4", border: "1px solid #e7e2d8", borderRadius: 16, padding: "32px 28px" }}>
+              <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 24, margin: "0 0 12px" }}>Our Tax Reports</h2>
+              <p style={{ color: "#3d4a57", lineHeight: 1.7, fontSize: 14.5, margin: "0 0 20px" }}>
+                View and download available tax reports, IRS documentation, and supporting financial records connected to the current investment focus.
+              </p>
+              <div style={{ background: "#fff", border: "1px solid #e7d9b6", borderLeft: `4px solid ${GOLD}`, borderRadius: "0 12px 12px 0", padding: "16px 18px", marginBottom: 20 }}>
+                <p style={{ margin: 0, color: "#604b17", fontSize: 13, lineHeight: 1.6, fontStyle: "italic" }}>
+                  Tax reports and supporting documents will be uploaded once provided by the client.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <button style={{ display: "inline-flex", alignItems: "center", gap: 7, borderRadius: 8, padding: "12px 18px", fontWeight: 800, fontSize: 12, textTransform: "uppercase", letterSpacing: ".03em", cursor: "pointer", background: `linear-gradient(135deg, ${GREEN}, #064a28)`, color: "#fff", border: 0 }}>
+                  <Eye size={15} /> View Reports
+                </button>
+                <button style={{ display: "inline-flex", alignItems: "center", gap: 7, borderRadius: 8, padding: "12px 18px", fontWeight: 800, fontSize: 12, textTransform: "uppercase", letterSpacing: ".03em", cursor: "pointer", background: `linear-gradient(135deg, ${GOLD}, #a07520)`, color: "#fff", border: 0 }}>
+                  <Download size={15} /> Download Reports
+                </button>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="sn-section-pad" style={{ padding: "60px 0", background: "#fff", textAlign: "center" }}>
         <div className="sn-shell">
           <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 28, margin: "0 0 18px" }}>Review the full record inside the Member Portal.</h2>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <Link href="/selectnetwork/join" className="sn-btn" style={{ background: `linear-gradient(135deg,#0b5b34,#08431f)` }}>Apply For Membership <ArrowRight size={16} /></Link>
+            <Link href="/selectnetwork/invest-now" className="sn-btn" style={{ background: `linear-gradient(135deg,#0b5b34,#08431f)` }}>Invest Now <ArrowRight size={16} /></Link>
             <Link href="/selectnetwork/login" className="sn-btn sn-btn-outline">Member Portal</Link>
           </div>
         </div>
       </section>
 
+      {/* Compensation Plan Lightbox */}
+      {compOpen && (
+        <div onClick={() => setCompOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(7,26,51,.82)", backdropFilter: "blur(4px)", display: "grid", placeItems: "center", padding: 24, animation: "snFade .2s ease" }}>
+          <button onClick={() => setCompOpen(false)} style={{ position: "absolute", top: 20, right: 20, background: "#fff", border: 0, borderRadius: "50%", width: 44, height: 44, display: "grid", placeItems: "center", cursor: "pointer", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }} aria-label="Close"><X size={22} color={NAVY} /></button>
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1100, width: "100%", maxHeight: "88vh", overflow: "auto", borderRadius: 12, boxShadow: "0 30px 80px rgba(0,0,0,.4)" }}>
+            <Image src="/assets/select-network/select-network-comp-plan.png" alt="Select Network Compensation Plan" width={1024} height={640} style={{ width: "100%", height: "auto", display: "block", borderRadius: 12 }} />
+          </div>
+        </div>
+      )}
+
       <SNFooter />
+
+      <style jsx global>{`
+        @keyframes snFade { from { opacity: 0; } to { opacity: 1; } }
+        @media (max-width: 760px) {
+          .sn-comp-doc { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }

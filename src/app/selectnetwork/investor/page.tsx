@@ -26,18 +26,18 @@ function useCountUp(target: number, duration = 1200) {
 
 /* ─── Matrix member data ─── */
 const matrixMembers = {
-  self: { name: "Lorenzo", pic: "L", joined: "May 19, 2025", invested: "$50,000", units: 50, location: "Cleveland, OH", source: "Founder", status: "Active" },
+  self: { name: "Lorenzo", pic: "L", joined: "May 19, 2025", invested: "$50,000", units: 50, location: "Cleveland, OH", source: "Founder", status: "Active", label: "Founder Member" },
   l1: [
-    { name: "Maria Santos", pic: "M", joined: "May 20, 2025", invested: "$25,000", units: 25, location: "Miami, FL", source: "Lorenzo", status: "Active" },
-    { name: "David Chen", pic: "D", joined: "May 22, 2025", invested: "$10,000", units: 10, location: "New York, NY", source: "Lorenzo", status: "Pending" },
-    { name: "James Wilson", pic: "J", joined: "May 28, 2025", invested: "$15,000", units: 15, location: "Dallas, TX", source: "Lorenzo", status: "Active" },
+    { name: "Maria Santos", pic: "M", joined: "May 20, 2025", invested: "$25,000", units: 25, location: "Miami, FL", source: "Lorenzo", status: "Active", label: "Investor + Builder" },
+    { name: "David Chen", pic: "D", joined: "May 22, 2025", invested: "$10,000", units: 10, location: "New York, NY", source: "Lorenzo", status: "Pending", label: "Investor" },
+    { name: "James Wilson", pic: "J", joined: "May 28, 2025", invested: "$15,000", units: 15, location: "Dallas, TX", source: "Lorenzo", status: "Active", label: "Builder" },
   ],
   l2: [
-    { name: "Sophia Lee", pic: "S", status: "Active", invested: "$5,000", units: 5, joined: "Jun 1, 2025", location: "LA, CA", source: "Maria Santos" },
-    { name: "Michael Brown", pic: "M", status: "Active", invested: "$8,000", units: 8, joined: "Jun 5, 2025", location: "Chicago, IL", source: "Maria Santos" },
-    { name: "Emily Davis", pic: "E", status: "Pending", invested: "$3,000", units: 3, joined: "Jun 8, 2025", location: "Houston, TX", source: "Maria Santos" },
-    { name: "Chris Park", pic: "C", status: "Active", invested: "$12,000", units: 12, joined: "Jun 10, 2025", location: "Atlanta, GA", source: "David Chen" },
-    { name: "Ana Torres", pic: "A", status: "Active", invested: "$6,000", units: 6, joined: "Jun 12, 2025", location: "San Diego, CA", source: "David Chen" },
+    { name: "Sophia Lee", pic: "S", status: "Active", invested: "$5,000", units: 5, joined: "Jun 1, 2025", location: "LA, CA", source: "Maria Santos", label: "Investor" },
+    { name: "Michael Brown", pic: "M", status: "Active", invested: "$8,000", units: 8, joined: "Jun 5, 2025", location: "Chicago, IL", source: "Maria Santos", label: "Investor + Builder" },
+    { name: "Emily Davis", pic: "E", status: "Pending", invested: "$3,000", units: 3, joined: "Jun 8, 2025", location: "Houston, TX", source: "Maria Santos", label: "Early Access Member" },
+    { name: "Chris Park", pic: "C", status: "Active", invested: "$12,000", units: 12, joined: "Jun 10, 2025", location: "Atlanta, GA", source: "David Chen", label: "Investor" },
+    { name: "Ana Torres", pic: "A", status: "Active", invested: "$6,000", units: 6, joined: "Jun 12, 2025", location: "San Diego, CA", source: "David Chen", label: "Builder" },
     null, null, null, null,
   ],
 };
@@ -49,7 +49,7 @@ const tabs = [
   { id: "docs", label: "Documents", ico: <FolderOpen size={20} /> },
   { id: "withdrawals", label: "Withdrawals", ico: <Wallet size={20} /> },
   { id: "matrix", label: "Referral Matrix", ico: <Network size={20} /> },
-  { id: "announcements", label: "Announcements", ico: <Megaphone size={20} /> },
+  { id: "announcements", label: "Investor Communications", ico: <Megaphone size={20} /> },
   { id: "settings", label: "Settings", ico: <Settings size={20} /> },
 ];
 
@@ -58,6 +58,7 @@ export default function InvestorPortal() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawerMember, setDrawerMember] = useState<typeof matrixMembers.l1[0] | null>(null);
   const [matrixFull, setMatrixFull] = useState(false);
+  const [compOpen, setCompOpen] = useState(false);
   const [matrixAnimated, setMatrixAnimated] = useState(false);
   const [chartDraw, setChartDraw] = useState(false);
   const [donutAnim, setDonutAnim] = useState(false);
@@ -73,6 +74,18 @@ export default function InvestorPortal() {
   const referrals = useCountUp(28);
 
   const openDrawer = (m: typeof matrixMembers.l1[0]) => setDrawerMember(m);
+
+  const labelStyle = (label?: string): React.CSSProperties => {
+    const map: Record<string, { bg: string; fg: string }> = {
+      "Founder Member": { bg: "#fff3d6", fg: "#8a5a00" },
+      "Investor": { bg: "#e3f5eb", fg: "#087345" },
+      "Builder": { bg: "#e7f0ff", fg: "#1e4fa3" },
+      "Investor + Builder": { bg: "#efe7ff", fg: "#5b34a3" },
+      "Early Access Member": { bg: "#fde8f3", fg: "#a3346e" },
+    };
+    const c = map[label || ""] || { bg: "#f0f2f5", fg: "#667085" };
+    return { padding: "2px 8px", borderRadius: 99, background: c.bg, color: c.fg, fontSize: 9, fontWeight: 900, textTransform: "uppercase" as const, letterSpacing: ".03em" };
+  };
 
   return (
     <div style={{ fontFamily: "Inter, Arial, sans-serif", color: "#071a33", background: "#fcfbf8" }}>
@@ -129,7 +142,7 @@ export default function InvestorPortal() {
               <span style={{ position: "relative", cursor: "pointer" }}><Mail size={22} color="#667085" /><span style={{ position: "absolute", top: -4, right: -8, background: "#dc2626", color: "#fff", fontSize: 10, fontWeight: 900, padding: "2px 5px", borderRadius: 99 }}>1</span></span>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#075933,#0d6d42)", color: "#ffd46f", display: "grid", placeItems: "center", fontWeight: 900, fontSize: 16 }}>L</div>
-                <div className="sn-user-desktop"><b style={{ fontSize: 14 }}>Lorenzo</b><br /><small style={{ color: "#667085" }}>Member</small></div>
+                <div className="sn-user-desktop"><b style={{ fontSize: 14 }}>Lorenzo</b> <span style={{ background: "linear-gradient(135deg,#d1a645,#bc8b25)", color: "#fff", fontSize: 9, fontWeight: 900, padding: "2px 7px", borderRadius: 4, verticalAlign: "middle" }}>Foundation Partner</span><br /><small style={{ color: "#667085" }}>Founder · Investor + Builder</small></div>
               </div>
             </div>
           </div>
@@ -301,21 +314,42 @@ export default function InvestorPortal() {
 
           {/* ─── DOCUMENTS ─── */}
           {activeTab === "docs" && (
-            <div className="sn-mobile-content sn-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18, animation: "fadeIn .5s ease" }}>
-              {[
-                { title: "Signed Agreement", desc: "Member agreement and approval package." },
-                { title: "KYC Documents", desc: "Identity confirmation and compliance files." },
-                { title: "Investor Notices", desc: "Published notices and updates." },
-                { title: "Financial Documents", desc: "Approved financial summaries and reports." },
-                { title: "Legal Updates", desc: "Operating agreement amendments and legal notices." },
-                { title: "Tax Documents", desc: "W-9 forms and year-end tax documents." },
-              ].map((d, i) => (
-                <div key={i} style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: 24, boxShadow: "0 8px 24px rgba(5,20,45,.06)", transition: ".3s" }} className="hover:translate-y-[-3px] hover:shadow-[0_16px_40px_rgba(5,20,45,.10)]">
-                  <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>{d.title}</h3>
-                  <p style={{ color: "#667085", fontSize: 13, lineHeight: 1.5, margin: "0 0 16px" }}>{d.desc}</p>
-                  <button style={{ background: "#fff", color: "#a46a00", border: "1px solid #bd8e28", borderRadius: 8, padding: "8px 14px", fontWeight: 900, fontSize: 11, cursor: "pointer", transition: ".25s" }} className="hover:translate-y-[-2px] hover:shadow-[0_0_22px_rgba(213,168,61,.55)]">View</button>
+            <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
+              {/* Featured: Compensation Plan */}
+              <div style={{ background: "linear-gradient(135deg,#fbf9f4,#fff)", border: "1px solid #e7d9b6", borderRadius: 16, overflow: "hidden", boxShadow: "0 10px 30px rgba(5,20,45,.07)", marginBottom: 18 }}>
+                <div className="sn-grid-2" style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 0, alignItems: "stretch" }}>
+                  <button onClick={() => setCompOpen(true)} style={{ position: "relative", border: 0, padding: 0, cursor: "pointer", background: "#0a2240", minHeight: 180, overflow: "hidden" }} aria-label="Open compensation plan">
+                    <Image src="/assets/select-network/select-network-comp-plan.png" alt="Select Network Compensation Plan" width={520} height={340} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <span style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", background: "rgba(7,26,51,.3)" }}><span style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(7,26,51,.7)", color: "#fff", padding: "8px 14px", borderRadius: 99, fontSize: 11, fontWeight: 800, textTransform: "uppercase", border: "1px solid rgba(213,168,61,.5)" }}>View</span></span>
+                  </button>
+                  <div style={{ padding: "24px 26px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 7, color: "#bd8e28", fontSize: 10.5, fontWeight: 900, letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 10 }}><FileText size={14} /> Official Document</div>
+                    <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 22, margin: "0 0 8px" }}>Select Network Compensation Plan</h3>
+                    <p style={{ color: "#667085", fontSize: 13, lineHeight: 1.6, margin: "0 0 16px", maxWidth: 480 }}>Official unit investment and quarterly profit distribution overview. $100 per unit; available quarterly profit distributed equally across all units.</p>
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      <button onClick={() => setCompOpen(true)} style={{ background: "linear-gradient(135deg,#075933,#0b7346)", color: "#fff", border: 0, borderRadius: 8, padding: "10px 16px", fontWeight: 900, fontSize: 11, textTransform: "uppercase", letterSpacing: ".04em", cursor: "pointer" }}>View Document</button>
+                      <a href="/assets/select-network/select-network-comp-plan.png" download="Select-Network-Compensation-Plan.png" style={{ background: "linear-gradient(135deg,#d1a645,#bc8b25)", color: "#fff", borderRadius: 8, padding: "10px 16px", fontWeight: 900, fontSize: 11, textTransform: "uppercase", letterSpacing: ".04em", textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Download</a>
+                    </div>
+                  </div>
                 </div>
-              ))}
+              </div>
+              {/* Other documents */}
+              <div className="sn-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18 }}>
+                {[
+                  { title: "Signed Agreement", desc: "Member agreement and approval package." },
+                  { title: "KYC Documents", desc: "Identity confirmation and compliance files." },
+                  { title: "Investor Notices", desc: "Published notices and updates." },
+                  { title: "Financial Documents", desc: "Approved financial summaries and reports." },
+                  { title: "Legal Updates", desc: "Operating agreement amendments and legal notices." },
+                  { title: "Tax Documents", desc: "W-9 forms and year-end tax documents." },
+                ].map((d, i) => (
+                  <div key={i} style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: 24, boxShadow: "0 8px 24px rgba(5,20,45,.06)", transition: ".3s" }} className="hover:translate-y-[-3px] hover:shadow-[0_16px_40px_rgba(5,20,45,.10)]">
+                    <h3 style={{ margin: "0 0 8px", fontSize: 16 }}>{d.title}</h3>
+                    <p style={{ color: "#667085", fontSize: 13, lineHeight: 1.5, margin: "0 0 16px" }}>{d.desc}</p>
+                    <button style={{ background: "#fff", color: "#a46a00", border: "1px solid #bd8e28", borderRadius: 8, padding: "8px 14px", fontWeight: 900, fontSize: 11, cursor: "pointer", transition: ".25s" }} className="hover:translate-y-[-2px] hover:shadow-[0_0_22px_rgba(213,168,61,.55)]">View</button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -352,7 +386,7 @@ export default function InvestorPortal() {
           {activeTab === "matrix" && (
             <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
               <div className="sn-kpi-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }}>
-                {[{ ico: <Network size={20} />, label: "Current Network", value: `${referrals} / 39` }, { ico: <Network size={20} />, label: "Total Membership Slots", value: "40" }, { ico: <CheckCircle size={20} />, label: "Active Referrals", value: String(referrals) }, { ico: <TrendingUp size={20} />, label: "Referred Investment", value: "$1M" }].map((k, i) => (
+                {[{ ico: <Network size={20} />, label: "My Network", value: String(referrals) }, { ico: <Network size={20} />, label: "Direct Referrals", value: "3" }, { ico: <CheckCircle size={20} />, label: "Active Members", value: String(referrals) }, { ico: <TrendingUp size={20} />, label: "Network Investment", value: "$1M" }].map((k, i) => (
                   <div key={i} style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: "18px 16px", boxShadow: "0 8px 24px rgba(5,20,45,.06)", display: "flex", alignItems: "center", gap: 14 }}>
                     <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#edf6ef", border: "1px solid #c7e2d0", display: "grid", placeItems: "center", color: "#c48817" }}>{k.ico}</div>
                     <div><small style={{ fontSize: 11, color: "#667085", fontWeight: 700, textTransform: "uppercase" }}>{k.label}</small><br /><b style={{ fontSize: 18 }}>{k.value}</b></div>
@@ -371,7 +405,7 @@ export default function InvestorPortal() {
               {/* Matrix Board */}
               <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: 24, boxShadow: "0 8px 24px rgba(5,20,45,.06)", overflow: "auto" }}>
                 <h2 className="serif" style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 22, margin: "0 0 6px" }}>My Referral Network</h2>
-                <p style={{ margin: "0 0 18px", fontSize: 12.5, color: "#667085", lineHeight: 1.5 }}>The Select Network investor referral matrix. This is separate from Lorenzo&apos;s Dog Training Team trainer hierarchy shown under Investment Reports.</p>
+                <p style={{ margin: "0 0 18px", fontSize: 12.5, color: "#667085", lineHeight: 1.5 }}>The Select Network investor referral matrix. Your network grows without a fixed cap — the structure below expands in depth and width as your team grows. This is separate from Lorenzo&apos;s Dog Training Team trainer hierarchy shown under Investment Reports.</p>
                 {/* Self */}
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 16, opacity: matrixAnimated ? 1 : 0, transform: matrixAnimated ? "translateY(0)" : "translateY(20px)", transition: "all .6s ease" }}>
                   <div onClick={() => openDrawer(matrixMembers.self as any)} style={{ background: "#fff", border: "2px solid #bd8e28", borderRadius: 14, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, cursor: "pointer", boxShadow: "0 8px 24px rgba(5,20,45,.06)", transition: ".3s" }} className="hover:translate-y-[-3px] hover:shadow-[0_0_22px_rgba(213,168,61,.55)]">
@@ -452,22 +486,39 @@ export default function InvestorPortal() {
             </div>
           )}
 
-          {/* ─── ANNOUNCEMENTS ─── */}
+          {/* ─── INVESTOR COMMUNICATIONS ─── */}
           {activeTab === "announcements" && (
             <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
-              <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 14, padding: 24, boxShadow: "0 8px 24px rgba(5,20,45,.06)" }}>
-                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 14px" }}>Announcements</h2>
+              <div style={{ background: "linear-gradient(135deg,#071a33,#0d3366)", borderRadius: 14, padding: "20px 24px", color: "#fff", marginBottom: 18, display: "flex", alignItems: "center", gap: 14 }}>
+                <Megaphone size={26} color="#ffd46f" />
+                <div>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: 0 }}>Investor Communications</h2>
+                  <p style={{ margin: "4px 0 0", fontSize: 12.5, color: "#c6d2e1" }}>Official messages and broadcasts from the Select Network team. This is a one-way communication channel — replies are handled privately by the admin team.</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 {[
-                  { title: "Q2 Report is now available", type: "New Report", date: "May 28, 2025" },
-                  { title: "Upcoming Investor Webinar", type: "Event", date: "May 25, 2025" },
-                  { title: "New Expansion Milestone Reached", type: "Growth", date: "May 20, 2025" },
+                  { title: "Q2 2025 Investment Report is now available", body: "The Q2 report has been published to your Documents and Reports area. Review the latest operating snapshot and quarterly progress.", type: "New Report", date: "May 28, 2025", pinned: true },
+                  { title: "Upcoming Investor Webinar — Network Expansion", body: "Join the Select Network team for a live overview of platform progress and the path ahead. A calendar invite will follow.", type: "Event", date: "May 25, 2025", pinned: false },
+                  { title: "New Expansion Milestone Reached", body: "Thank you to our early members. We've reached an important milestone in building the foundation of the network.", type: "Growth", date: "May 20, 2025", pinned: false },
                 ].map((a, i) => (
-                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderBottom: "1px solid #eef2f6" }}>
-                    <div><b style={{ fontSize: 15 }}>{a.title}</b><br /><small style={{ color: "#667085" }}>{a.date} • {a.type}</small></div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button style={{ fontSize: 18, background: "none", border: "none", cursor: "pointer" }}>👍</button>
-                      <button style={{ fontSize: 18, background: "none", border: "none", cursor: "pointer" }}>❤️</button>
-                      <span style={{ padding: "4px 10px", borderRadius: 99, background: "#e3f5eb", color: "#087345", fontSize: 11, fontWeight: 900 }}>New</span>
+                  <div key={i} style={{ background: "#fff", border: "1px solid #e7e2d8", borderLeft: a.pinned ? "4px solid #bd8e28" : "1px solid #e7e2d8", borderRadius: 12, padding: "18px 20px", boxShadow: "0 8px 24px rgba(5,20,45,.06)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                        <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#075933,#0d6d42)", color: "#ffd46f", display: "grid", placeItems: "center", fontWeight: 900, fontSize: 13, flexShrink: 0 }}>SN</div>
+                        <div>
+                          <b style={{ fontSize: 15 }}>{a.title}</b>
+                          <div style={{ fontSize: 11.5, color: "#667085", margin: "2px 0 8px" }}>Select Network Team • {a.date}</div>
+                          <p style={{ margin: 0, fontSize: 13.5, color: "#3d4a57", lineHeight: 1.6, maxWidth: 640 }}>{a.body}</p>
+                        </div>
+                      </div>
+                      <span style={{ padding: "4px 10px", borderRadius: 99, background: a.type === "New Report" ? "#e3f5eb" : "#fffaf0", color: a.type === "New Report" ? "#087345" : "#bd8e28", fontSize: 10, fontWeight: 900, flexShrink: 0 }}>{a.type}</span>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginTop: 14, paddingTop: 12, borderTop: "1px solid #f0f2f5", alignItems: "center" }}>
+                      <span style={{ fontSize: 11, color: "#667085", fontWeight: 700, marginRight: 4 }}>React:</span>
+                      <button style={{ fontSize: 16, background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 99, padding: "4px 10px", cursor: "pointer" }}>👍</button>
+                      <button style={{ fontSize: 16, background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 99, padding: "4px 10px", cursor: "pointer" }}>❤️</button>
+                      <button style={{ fontSize: 16, background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 99, padding: "4px 10px", cursor: "pointer" }}>🎉</button>
                     </div>
                   </div>
                 ))}
@@ -502,7 +553,10 @@ export default function InvestorPortal() {
             <div style={{ textAlign: "center", marginBottom: 20 }}>
               <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#075933,#0d6d42)", color: "#ffd46f", display: "grid", placeItems: "center", fontWeight: 900, fontSize: 24, margin: "0 auto 12px" }}>{drawerMember.pic}</div>
               <b style={{ fontSize: 20 }}>{drawerMember.name}</b><br />
-              <span style={{ padding: "4px 10px", borderRadius: 99, background: drawerMember.status === "Active" ? "#e3f5eb" : "#fffaf0", color: drawerMember.status === "Active" ? "#087345" : "#bd8e28", fontSize: 11, fontWeight: 900 }}>{drawerMember.status}</span>
+              <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 6, flexWrap: "wrap" }}>
+                <span style={{ padding: "4px 10px", borderRadius: 99, background: drawerMember.status === "Active" ? "#e3f5eb" : "#fffaf0", color: drawerMember.status === "Active" ? "#087345" : "#bd8e28", fontSize: 11, fontWeight: 900 }}>{drawerMember.status}</span>
+                {drawerMember.label && <span style={labelStyle(drawerMember.label)}>{drawerMember.label}</span>}
+              </div>
             </div>
             {[
               ["Date Joined", drawerMember.joined],
@@ -510,6 +564,7 @@ export default function InvestorPortal() {
               ["Units", String(drawerMember.units)],
               ["Location", drawerMember.location],
               ["Referral Source", drawerMember.source],
+              ["Classification", drawerMember.label || "—"],
               ["Status", drawerMember.status],
             ].map(([label, value], i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #eef2f6", fontSize: 14 }}>
@@ -528,9 +583,19 @@ export default function InvestorPortal() {
             <h2 style={{ fontFamily: "Georgia, serif", fontSize: 28, fontWeight: 400, margin: 0 }}>Full Referral Matrix</h2>
             <button onClick={() => setMatrixFull(false)} style={{ background: "linear-gradient(135deg,#075933,#0b7346)", color: "#fff", border: 0, borderRadius: 8, padding: "12px 20px", fontWeight: 900, fontSize: 12, cursor: "pointer" }}>✕ Close</button>
           </div>
-          <p style={{ color: "#667085", marginBottom: 24 }}>Level 1: 3 • Level 2: 9 • Level 3: 27 • Max Downline: 39 • Total with Self: 40</p>
+          <p style={{ color: "#667085", marginBottom: 24 }}>Your network expands as your team grows — there is no fixed cap on depth or width. The view below is your starting structure; deeper levels appear as your organization expands.</p>
           <div style={{ textAlign: "center" }}>
-            <p style={{ color: "#667085" }}>Full interactive matrix view — connect to live data for full depth visualization.</p>
+            <p style={{ color: "#667085" }}>Full interactive matrix view — connects to live data for unlimited-depth visualization as your network grows.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Compensation Plan Lightbox */}
+      {compOpen && (
+        <div onClick={() => setCompOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(7,26,51,.82)", backdropFilter: "blur(4px)", display: "grid", placeItems: "center", padding: 24 }}>
+          <button onClick={() => setCompOpen(false)} style={{ position: "absolute", top: 20, right: 20, background: "#fff", border: 0, borderRadius: "50%", width: 44, height: 44, display: "grid", placeItems: "center", cursor: "pointer", fontSize: 22, color: "#071a33", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }} aria-label="Close">✕</button>
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1100, width: "100%", maxHeight: "88vh", overflow: "auto", borderRadius: 12 }}>
+            <Image src="/assets/select-network/select-network-comp-plan.png" alt="Select Network Compensation Plan" width={1024} height={640} style={{ width: "100%", height: "auto", display: "block", borderRadius: 12 }} />
           </div>
         </div>
       )}

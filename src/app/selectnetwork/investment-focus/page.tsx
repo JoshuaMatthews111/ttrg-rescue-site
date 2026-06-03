@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, GraduationCap, Users, BookOpen, Building2, Handshake, Home, TrendingUp, DollarSign, PawPrint, CheckCircle2 } from "lucide-react";
 import SNNav from "../components/SNNav";
@@ -20,16 +21,77 @@ export default function InvestmentFocusPage() {
         <div className="sn-shell" style={{ textAlign: "center" }}>
           <div style={{ color: GOLD, fontSize: 12, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 16 }}>Investment Focus</div>
           <h1 className="sn-page-hero-h1" style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 42, lineHeight: 1.15, margin: "0 auto", maxWidth: 760 }}>
-            Investing in the Future of the <span style={{ color: GOLD }}>Pet Industry</span>
+            Current Investment Opportunities
           </h1>
           <p style={{ color: "#c6d2e1", maxWidth: 660, margin: "20px auto 0", lineHeight: 1.7, fontSize: 16 }}>
-            We focus on high-impact, purpose-driven opportunities that address real needs in the pet industry while delivering strong potential for growth.
+            Select Network identifies and develops high-impact, purpose-driven opportunities designed to create sustainable long-term growth for our members.
           </p>
         </div>
       </section>
 
-      {/* Focus cards */}
-      <section style={{ padding: "78px 0", background: "#fff" }}>
+      {/* LDTT Opportunity Card — Primary Focus */}
+      <section style={{ padding: "78px 0", background: "#fbf9f4" }}>
+        <div className="sn-shell" style={{ maxWidth: 900 }}>
+          <Reveal>
+            <div style={{ textAlign: "center", marginBottom: 40 }}>
+              <div style={{ width: 40, height: 3, background: GOLD, margin: "0 auto 18px" }} />
+              <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 30, margin: "0 0 8px" }}>Current Investment Focus</h2>
+              <p style={{ color: "#5b6675", fontSize: 14.5, margin: 0 }}>Our first investment opportunity inside Select Network.</p>
+            </div>
+          </Reveal>
+
+          <Reveal delay={100}>
+            <Link href="/selectnetwork/investment-focus/ldtt" style={{ textDecoration: "none", display: "block" }}>
+              <div className="sn-ldtt-opportunity-card" style={{
+                background: "#fff",
+                border: "1px solid #e7e2d8",
+                borderRadius: 20,
+                padding: "44px 40px",
+                boxShadow: "0 12px 40px rgba(5,20,45,.08)",
+                display: "grid",
+                gridTemplateColumns: "auto 1fr",
+                gap: 36,
+                alignItems: "center",
+                transition: "all .3s ease",
+                cursor: "pointer",
+              }}>
+                <Image
+                  src="/assets/select-network/lorenzos-dog-training-team-logo.png"
+                  alt="Lorenzo's Dog Training Team"
+                  width={300}
+                  height={300}
+                  style={{ width: 200, height: "auto" }}
+                />
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: ".12em", textTransform: "uppercase", color: GOLD, marginBottom: 10, display: "block" }}>First Investment Focus</span>
+                  <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 28, margin: "0 0 14px", color: NAVY }}>Lorenzo&apos;s Dog Training Team</h3>
+                  <p style={{ fontSize: 15, lineHeight: 1.75, color: "#3d4a57", margin: "0 0 22px" }}>
+                    Lorenzo&apos;s Dog Training Team is the first current investment focus inside Select Network. This opportunity highlights a growing dog training brand connected to systems, expansion, service impact, and long-term business development.
+                  </p>
+                  <span style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    background: `linear-gradient(135deg, ${GREEN}, #064a28)`,
+                    color: "#fff",
+                    borderRadius: 8,
+                    padding: "14px 24px",
+                    fontWeight: 800,
+                    fontSize: 12.5,
+                    textTransform: "uppercase",
+                    letterSpacing: ".04em",
+                  }}>
+                    View Opportunity <ArrowRight size={15} />
+                  </span>
+                </div>
+              </div>
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Where We Invest */}
+      <section style={{ padding: "70px 0", background: "#fff" }}>
         <div className="sn-shell">
           <Reveal>
             <div style={{ textAlign: "center", marginBottom: 40 }}>
@@ -110,12 +172,23 @@ export default function InvestmentFocusPage() {
           <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 28, margin: "0 0 18px" }}>Review the operating record behind the opportunity.</h2>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/selectnetwork/reports" className="sn-btn" style={{ background: `linear-gradient(135deg,#0b5b34,#08431f)` }}>View Investment Reports <ArrowRight size={16} /></Link>
-            <Link href="/selectnetwork/join" className="sn-btn sn-btn-outline">Join The Network</Link>
+            <Link href="/selectnetwork/invest-now" className="sn-btn sn-btn-outline">Invest Now</Link>
           </div>
         </div>
       </section>
 
       <SNFooter />
+
+      <style jsx global>{`
+        .sn-ldtt-opportunity-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 20px 60px rgba(189,142,40,.15), 0 0 0 2px rgba(189,142,40,.2) !important;
+        }
+        @media (max-width: 768px) {
+          .sn-ldtt-opportunity-card { grid-template-columns: 1fr !important; text-align: center; padding: 28px 20px !important; }
+          .sn-ldtt-opportunity-card img { margin: 0 auto; }
+        }
+      `}</style>
     </div>
   );
 }

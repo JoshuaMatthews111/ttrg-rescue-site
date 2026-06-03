@@ -10,7 +10,7 @@ const NAV = [
   { label: "About", href: "/selectnetwork/about" },
   { label: "Investment Focus", href: "/selectnetwork/investment-focus" },
   { label: "Investment Reports", href: "/selectnetwork/reports" },
-  { label: "Join The Network", href: "/selectnetwork/join" },
+  { label: "Invest Now", href: "/selectnetwork/invest-now" },
   { label: "Contact", href: "/selectnetwork/contact" },
 ];
 

@@ -29,9 +29,9 @@ const adminTabs = [
 ];
 
 const matrixL1 = [
-  { name: "Maria Santos", pic: "M", invested: "$25,000", units: 25, status: "Active", joined: "May 20", location: "Miami, FL", source: "Lorenzo" },
-  { name: "David Chen", pic: "D", invested: "$10,000", units: 10, status: "Pending", joined: "May 22", location: "New York, NY", source: "Lorenzo" },
-  { name: "James Wilson", pic: "J", invested: "$15,000", units: 15, status: "Active", joined: "May 28", location: "Dallas, TX", source: "Lorenzo" },
+  { name: "Maria Santos", pic: "M", invested: "$25,000", units: 25, status: "Active", joined: "May 20", location: "Miami, FL", source: "Lorenzo", labels: ["Investor + Builder", "Founder Member", "Qualified for Incentive"] },
+  { name: "David Chen", pic: "D", invested: "$10,000", units: 10, status: "Pending", joined: "May 22", location: "New York, NY", source: "Lorenzo", labels: ["Investor", "Pending Review", "125th Investor Candidate"] },
+  { name: "James Wilson", pic: "J", invested: "$15,000", units: 15, status: "Active", joined: "May 28", location: "Dallas, TX", source: "Lorenzo", labels: ["Builder", "Top Builder", "Early Access Member"] },
 ];
 
 const calendarDays = (() => {
@@ -64,6 +64,15 @@ export default function AdminPortal() {
   const [chartDraw, setChartDraw] = useState(false);
   const [zoomLink, setZoomLink] = useState("");
   const [meetingCreated, setMeetingCreated] = useState(false);
+  const [compOpen, setCompOpen] = useState(false);
+  const [announcePosted, setAnnouncePosted] = useState(false);
+  const [annTitle, setAnnTitle] = useState("");
+  const [annMsg, setAnnMsg] = useState("");
+  const [annAudience, setAnnAudience] = useState("All Members");
+  const [broadcasts, setBroadcasts] = useState([
+    { title: "Q2 Investor Webinar", audience: "All Members", date: "May 25, 2025", status: "Published" },
+    { title: "Q2 2025 Report Published", audience: "All Investors", date: "May 28, 2025", status: "Published" },
+  ]);
 
   useEffect(() => { setTimeout(() => setChartDraw(true), 300); }, []);
   useEffect(() => { if (activeTab === "matrix") setTimeout(() => setMatrixAnimated(true), 100); }, [activeTab]);
@@ -84,7 +93,38 @@ export default function AdminPortal() {
   const fieldInput: React.CSSProperties = { width: "100%", background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 8, padding: "12px 16px", fontSize: 14, outline: "none" };
   const statusBadge = (s: string) => ({ padding: "4px 10px", borderRadius: 99, background: s === "Active" || s === "Published" || s === "Confirmed" ? "#e3f5eb" : s === "Pending" || s === "Review" ? "#fffaf0" : "#f5f7fb", color: s === "Active" || s === "Published" || s === "Confirmed" ? "#087345" : s === "Pending" || s === "Review" ? "#bd8e28" : "#667085", fontSize: 11, fontWeight: 900 as const, textTransform: "uppercase" as const });
 
+  const labelStyle = (label: string): React.CSSProperties => {
+    const map: Record<string, { bg: string; fg: string }> = {
+      "Investor": { bg: "#e3f5eb", fg: "#087345" },
+      "Builder": { bg: "#e7f0ff", fg: "#1e4fa3" },
+      "Investor + Builder": { bg: "#efe7ff", fg: "#5b34a3" },
+      "Founder Member": { bg: "#fff3d6", fg: "#8a5a00" },
+      "Early Access Member": { bg: "#fde8f3", fg: "#a3346e" },
+      "Pending Review": { bg: "#fffaf0", fg: "#bd8e28" },
+      "Active": { bg: "#e3f5eb", fg: "#087345" },
+      "Inactive": { bg: "#f0f2f5", fg: "#667085" },
+      "Needs Follow-Up": { bg: "#fff0e6", fg: "#b3541e" },
+      "Top Builder": { bg: "#e7f0ff", fg: "#1e4fa3" },
+      "Qualified for Incentive": { bg: "#e3f5eb", fg: "#076b40" },
+      "Not Yet Qualified": { bg: "#f0f2f5", fg: "#667085" },
+      "125th Investor Candidate": { bg: "#fff3d6", fg: "#8a5a00" },
+      "Special Benefits Eligible": { bg: "#efe7ff", fg: "#5b34a3" },
+    };
+    const c = map[label] || { bg: "#f0f2f5", fg: "#667085" };
+    return { padding: "2px 8px", borderRadius: 99, background: c.bg, color: c.fg, fontSize: 9, fontWeight: 900, textTransform: "uppercase" as const, letterSpacing: ".02em", display: "inline-block" };
+  };
+
+  const allLabels = ["Investor", "Builder", "Investor + Builder", "Founder Member", "Early Access Member", "Pending Review", "Active", "Inactive", "Needs Follow-Up", "Top Builder", "Qualified for Incentive", "Not Yet Qualified", "125th Investor Candidate", "Special Benefits Eligible"];
+
   const switchTab = (id: string) => { setActiveTab(id); setSidebarOpen(false); };
+
+  const handlePublishAnnouncement = () => {
+    if (!annTitle.trim()) return;
+    setBroadcasts([{ title: annTitle, audience: annAudience, date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), status: "Published" }, ...broadcasts]);
+    setAnnouncePosted(true);
+    setAnnTitle(""); setAnnMsg("");
+    setTimeout(() => setAnnouncePosted(false), 3000);
+  };
 
   const handleCreateZoom = () => {
     const id = Math.floor(100000000 + Math.random() * 900000000);
@@ -107,7 +147,7 @@ export default function AdminPortal() {
       <div className="sn-portal-grid" style={{ display: "grid", gridTemplateColumns: "296px 1fr", minHeight: "100vh" }}>
         {/* Sidebar */}
         <aside className={`sn-sidebar ${sidebarOpen ? "open" : ""}`} style={{ background: "linear-gradient(180deg,#fff 0%,#fbf8f1 54%,#edf6ef 100%)", borderRight: "1px solid #e7e2d8", padding: "24px 18px", position: "sticky", top: 0, height: "100vh", overflow: "auto" }}>
-          <div style={{ marginBottom: 28 }}><Link href="/selectnetwork"><Image src="/select-network-logo.png" alt="Select Network" width={245} height={60} style={{ width: 245, height: "auto" }} /></Link></div>
+          <div style={{ marginBottom: 28 }}><Link href="/selectnetwork"><Image src="/assets/select-network/select-network-logo.png" alt="Select Network" width={245} height={60} style={{ width: 245, height: "auto" }} /></Link></div>
           <nav style={{ display: "grid", gap: 7 }}>
             {adminTabs.map((t) => (
               <button key={t.id} onClick={() => switchTab(t.id)} style={{ display: "flex", alignItems: "center", gap: 14, textAlign: "left", padding: "14px 16px", border: 0, borderRadius: 12, background: activeTab === t.id ? "linear-gradient(135deg,#075933,#0d6d42)" : "transparent", color: activeTab === t.id ? "#fff" : "#10233b", fontWeight: 800, fontSize: 14, transition: ".25s", transform: activeTab === t.id ? "translateX(3px)" : "none", boxShadow: activeTab === t.id ? "0 0 22px rgba(213,168,61,.55)" : "none", cursor: "pointer" }}>
@@ -163,6 +203,37 @@ export default function AdminPortal() {
                   </div>
                 ))}
               </div>
+              {/* First 125 Member Tracker */}
+              <div style={{ ...card, marginBottom: 18, background: "linear-gradient(135deg,#071a33,#0d3366)", color: "#fff", border: "1px solid rgba(213,168,61,.5)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Star size={22} color="#ffd46f" />
+                    <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: 0, color: "#fff" }}>First 125 Member Tracker</h2>
+                  </div>
+                  <span style={{ fontSize: 12, color: "#c6d2e1" }}>Foundation Partner enrollment window</span>
+                </div>
+                {/* Progress bar */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}><span style={{ color: "#c6d2e1" }}>Approved Members</span><b style={{ color: "#ffd46f" }}>87 / 125</b></div>
+                  <div style={{ height: 12, background: "rgba(255,255,255,.12)", borderRadius: 99, overflow: "hidden" }}><div style={{ height: "100%", width: chartDraw ? "69.6%" : "0%", background: "linear-gradient(90deg,#d5a83d,#ffd46f)", borderRadius: 99, transition: "width 1.6s ease" }} /></div>
+                  <p style={{ fontSize: 11.5, color: "#9fb1c7", margin: "6px 0 0" }}>38 Foundation Partner slots remaining</p>
+                </div>
+                <div className="sn-kpi-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 12 }}>
+                  {[
+                    { label: "Approved", value: "87 / 125", c: "#ffd46f" },
+                    { label: "Pending Applications", value: "23", c: "#fff" },
+                    { label: "Qualified for Benefits", value: "64", c: "#9ff5c0" },
+                    { label: "Incentive Eligible", value: "41", c: "#9ff5c0" },
+                    { label: "Needs Review", value: "9", c: "#ffd0a0" },
+                  ].map((s, i) => (
+                    <div key={i} style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 10, padding: "12px 14px" }}>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: s.c }}>{s.value}</div>
+                      <small style={{ fontSize: 10.5, color: "#9fb1c7", textTransform: "uppercase", letterSpacing: ".04em", fontWeight: 700 }}>{s.label}</small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="sn-admin-grid" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr", gap: 18, marginBottom: 18 }}>
                 <div style={card}><h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 14px" }}>Platform Analytics</h2>
                   <svg viewBox="0 0 640 260" style={{ width: "100%", height: 180 }}>
@@ -228,16 +299,17 @@ export default function AdminPortal() {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 600 }}>
                   <thead><tr>{["Name", "Status", "Units", "Invested", "Joined", "Action"].map(h => <th key={h} style={thS}>{h}</th>)}</tr></thead>
                   <tbody>
-                    {[{ name: "Lorenzo", status: "Active", units: 50, invested: "$5,000", joined: "May 12" }, { name: "Maria Santos", status: "Active", units: 25, invested: "$2,500", joined: "May 20" }, { name: "David Chen", status: "Pending", units: 10, invested: "$1,000", joined: "May 22" }, { name: "James Wilson", status: "Active", units: 15, invested: "$1,500", joined: "May 28" }].map((m, i) => (
-                      <tr key={i}><td style={{ ...tdS, fontWeight: 700 }}>{m.name}</td><td style={tdS}><span style={statusBadge(m.status)}>{m.status}</span></td><td style={tdS}>{m.units}</td><td style={tdS}>{m.invested}</td><td style={{ ...tdS, color: "#667085" }}>{m.joined}</td><td style={tdS}><button style={btnOutline}>View</button></td></tr>
+                    {[{ name: "Lorenzo", status: "Active", units: 50, invested: "$5,000", joined: "May 12", role: "Founder", fp: true }, { name: "Maria Santos", status: "Active", units: 25, invested: "$2,500", joined: "May 20", role: "Investor + Builder", fp: true }, { name: "David Chen", status: "Pending", units: 10, invested: "$1,000", joined: "May 22", role: "Investor", fp: true }, { name: "James Wilson", status: "Active", units: 15, invested: "$1,500", joined: "May 28", role: "Builder", fp: true }].map((m, i) => (
+                      <tr key={i}><td style={{ ...tdS, fontWeight: 700 }}>{m.name}{m.fp && <span style={{ marginLeft: 6, background: "linear-gradient(135deg,#d1a645,#bc8b25)", color: "#fff", fontSize: 9, fontWeight: 900, padding: "2px 7px", borderRadius: 4, verticalAlign: "middle" }}>Foundation Partner</span>}</td><td style={tdS}><span style={statusBadge(m.status)}>{m.status}</span></td><td style={tdS}>{m.units}</td><td style={tdS}>{m.invested}</td><td style={{ ...tdS, color: "#667085" }}>{m.joined}</td><td style={tdS}><span style={labelStyle(m.role)}>{m.role}</span> <button style={{ ...btnOutline, marginLeft: 6 }}>View</button></td></tr>
                     ))}
                   </tbody>
                 </table>
                 </div>
                 <div className="sn-mobile-cards" style={{ display: "none" }}>
-                  {[{ name: "Lorenzo", status: "Active", units: 50, invested: "$5,000", joined: "May 12" }, { name: "Maria Santos", status: "Active", units: 25, invested: "$2,500", joined: "May 20" }, { name: "David Chen", status: "Pending", units: 10, invested: "$1,000", joined: "May 22" }, { name: "James Wilson", status: "Active", units: 15, invested: "$1,500", joined: "May 28" }].map((m, i) => (
+                  {[{ name: "Lorenzo", status: "Active", units: 50, invested: "$5,000", joined: "May 12", role: "Founder", fp: true }, { name: "Maria Santos", status: "Active", units: 25, invested: "$2,500", joined: "May 20", role: "Investor + Builder", fp: true }, { name: "David Chen", status: "Pending", units: 10, invested: "$1,000", joined: "May 22", role: "Investor", fp: true }, { name: "James Wilson", status: "Active", units: 15, invested: "$1,500", joined: "May 28", role: "Builder", fp: true }].map((m, i) => (
                     <div key={i}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}><b style={{ fontSize: 15 }}>{m.name}</b><span style={statusBadge(m.status)}>{m.status}</span></div>
+                      {m.fp && <div style={{ marginBottom: 8, display: "flex", gap: 5, flexWrap: "wrap" }}><span style={{ background: "linear-gradient(135deg,#d1a645,#bc8b25)", color: "#fff", fontSize: 9, fontWeight: 900, padding: "3px 8px", borderRadius: 4 }}>Foundation Partner</span> <span style={labelStyle(m.role)}>{m.role}</span></div>}
                       <div className="sn-m-card-row"><span className="sn-m-label">Units</span><span className="sn-m-value">{m.units}</span></div>
                       <div className="sn-m-card-row"><span className="sn-m-label">Invested</span><span className="sn-m-value">{m.invested}</span></div>
                       <div className="sn-m-card-row"><span className="sn-m-label">Joined</span><span className="sn-m-value">{m.joined}</span></div>
@@ -326,6 +398,23 @@ export default function AdminPortal() {
           {activeTab === "docs" && (
             <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
               <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}><button style={btnGreen}>+ Upload Document</button></div>
+              {/* Featured: Compensation Plan */}
+              <div style={{ background: "linear-gradient(135deg,#fbf9f4,#fff)", border: "1px solid #e7d9b6", borderRadius: 14, overflow: "hidden", boxShadow: "0 8px 24px rgba(5,20,45,.06)", marginBottom: 18 }}>
+                <div className="sn-grid-2" style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: 0, alignItems: "stretch" }}>
+                  <button onClick={() => setCompOpen(true)} style={{ position: "relative", border: 0, padding: 0, cursor: "pointer", background: "#0a2240", minHeight: 160, overflow: "hidden" }}>
+                    <Image src="/assets/select-network/select-network-comp-plan.png" alt="Compensation Plan" width={480} height={300} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </button>
+                  <div style={{ padding: "22px 24px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    <div style={{ color: "#bd8e28", fontSize: 10.5, fontWeight: 900, letterSpacing: ".12em", textTransform: "uppercase", marginBottom: 8 }}>Official Document · Shared with Members</div>
+                    <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 21, margin: "0 0 8px" }}>Select Network Compensation Plan</h3>
+                    <p style={{ color: "#667085", fontSize: 13, lineHeight: 1.6, margin: "0 0 14px", maxWidth: 460 }}>Unit investment and quarterly profit distribution overview. Visible in every investor back office under Documents.</p>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button onClick={() => setCompOpen(true)} style={btnGreen}>View</button>
+                      <a href="/assets/select-network/select-network-comp-plan.png" download="Select-Network-Compensation-Plan.png" style={{ ...btnOutline, textDecoration: "none", display: "inline-flex", alignItems: "center" }}>Download</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <div className="sn-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 18 }}>
                 {["Membership Agreement", "Operating Agreement", "Investment Disclosure", "Tax Form W-9", "Track Record", "Legal Updates"].map((d, i) => (
                   <div key={i} style={{ ...card, transition: ".3s" }} className="hover:translate-y-[-3px] hover:shadow-[0_16px_40px_rgba(5,20,45,.10)]">
@@ -342,7 +431,7 @@ export default function AdminPortal() {
           {activeTab === "matrix" && (
             <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
               <div className="sn-kpi-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }}>
-                {[{ ico: <Network size={20} />, label: "Current Network", value: "5 / 39" }, { ico: <Users size={20} />, label: "Total Slots", value: "40" }, { ico: <CheckCircle size={20} />, label: "Active", value: "28" }, { ico: <CircleDot size={20} />, label: "Pending", value: "3" }].map((k, i) => (
+                {[{ ico: <Network size={20} />, label: "Total Organization", value: "128" }, { ico: <Users size={20} />, label: "Max Depth", value: "Unlimited" }, { ico: <CheckCircle size={20} />, label: "Active", value: "117" }, { ico: <CircleDot size={20} />, label: "Pending", value: "11" }].map((k, i) => (
                   <div key={i} style={kpiBox}><div style={{ width: 42, height: 42, borderRadius: "50%", background: "#edf6ef", border: "1px solid #c7e2d0", display: "grid", placeItems: "center", color: "#c48817" }}>{k.ico}</div><div><small style={{ fontSize: 11, color: "#667085", fontWeight: 700, textTransform: "uppercase" }}>{k.label}</small><br /><b style={{ fontSize: 18 }}>{k.value}</b></div></div>
                 ))}
               </div>
@@ -352,7 +441,11 @@ export default function AdminPortal() {
                 <button style={btnGreen}>Add Member</button>
               </div>
               <div style={card}>
-                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 22, margin: "0 0 20px" }}>Admin Referral Matrix & Member Management</h2>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 22, margin: 0 }}>Admin Referral Matrix & Member Management</h2>
+                  <button style={btnOutline}>Export Organization CSV</button>
+                </div>
+                <p style={{ margin: "0 0 20px", fontSize: 12.5, color: "#667085", lineHeight: 1.5 }}>The investor organization expands with <b>no fixed cap</b> on depth or width. The 3-wide view below is the visual starting structure; use <b>Add Level</b> to extend the organization as it grows. This investor matrix is kept separate from Lorenzo&apos;s Dog Training Team trainer hierarchy.</p>
                 <div style={{ display: "flex", justifyContent: "center", marginBottom: 16, opacity: matrixAnimated ? 1 : 0, transform: matrixAnimated ? "translateY(0)" : "translateY(20px)", transition: "all .6s ease" }}>
                   <div style={{ background: "#fff", border: "2px solid #bd8e28", borderRadius: 14, padding: "14px 20px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 8px 24px rgba(5,20,45,.06)" }}>
                     <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#075933,#0d6d42)", color: "#ffd46f", display: "grid", placeItems: "center", fontWeight: 900, fontSize: 18 }}>L</div>
@@ -369,7 +462,10 @@ export default function AdminPortal() {
                           <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#edf6ef", border: "1px solid #c7e2d0", display: "grid", placeItems: "center", color: "#075933", fontWeight: 900, fontSize: 14 }}>{m.pic}</div>
                           <div><b style={{ fontSize: 13 }}>{m.name}</b><br /><small style={{ color: "#667085", fontSize: 11 }}>{m.invested} | {m.units} Units</small></div>
                         </div>
-                        <span style={{ ...statusBadge(m.status), marginTop: 8, display: "inline-block" }}>{m.status}</span>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 8 }}>
+                          <span style={statusBadge(m.status)}>{m.status}</span>
+                          {m.labels.slice(0, 2).map((lb) => <span key={lb} style={labelStyle(lb)}>{lb}</span>)}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -388,26 +484,51 @@ export default function AdminPortal() {
                     ))}
                   </div>
                 </div>
-                <div style={{ textAlign: "center", marginTop: 20, padding: 14, background: "#f9f6ef", borderRadius: 10, border: "1px solid #e7e2d8", opacity: matrixAnimated ? 1 : 0, transition: "opacity .5s ease 1.2s" }}>
-                  <small style={{ color: "#667085", fontWeight: 700 }}>Level 3 — 27 slots (placeholder)</small>
+                <div style={{ height: 20, width: 2, background: "linear-gradient(#bd8e28,#075933)", margin: "0 auto", opacity: matrixAnimated ? 1 : 0, transition: "opacity .4s ease 1s" }} />
+                <div style={{ opacity: matrixAnimated ? 1 : 0, transition: "opacity .5s ease 1.1s" }}>
+                  <div style={{ textAlign: "center", fontSize: 12, fontWeight: 900, color: "#075933", marginBottom: 8 }}>Level 3 — Expanding</div>
+                  <div className="sn-matrix-l3" style={{ display: "grid", gridTemplateColumns: "repeat(9,1fr)", gap: 6 }}>
+                    {["Tyler Reed", "Keisha Moore", "Ryan Scott"].map((n, i) => (
+                      <div key={i} style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 8, padding: "8px 4px", textAlign: "center", fontSize: 10 }}>
+                        <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#edf6ef", display: "grid", placeItems: "center", margin: "0 auto 3px", fontSize: 9, fontWeight: 900, color: "#075933" }}>{n.charAt(0)}</div>
+                        <b style={{ fontSize: 9 }}>{n.split(" ")[0]}</b>
+                      </div>
+                    ))}
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={`o${i}`} style={{ background: "#f9f6ef", border: "1px dashed #e7e2d8", borderRadius: 8, padding: "8px 4px", textAlign: "center" }}><div style={{ width: 24, height: 24, borderRadius: "50%", border: "1px dashed #c7e2d0", margin: "0 auto 3px", background: "#fff" }} /><span style={{ fontSize: 9, color: "#667085" }}>Open</span></div>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ textAlign: "center", marginTop: 20, display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", opacity: matrixAnimated ? 1 : 0, transition: "opacity .5s ease 1.2s" }}>
+                  <button style={btnGreen}>+ Add Level</button>
+                  <button style={btnOutline}>Expand Full Organization</button>
+                  <span style={{ alignSelf: "center", fontSize: 11.5, color: "#667085" }}>No cap — organization grows in depth and width as members enroll.</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ANNOUNCEMENTS */}
+          {/* ANNOUNCEMENTS / COMMUNICATIONS */}
           {activeTab === "announcements" && (
             <div className="sn-mobile-content sn-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, animation: "fadeIn .5s ease" }}>
-              <div style={card}><h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 14px" }}>Create Announcement</h2>
-                <div className="sn-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-                  <div><label style={fieldLabel}>Title</label><input style={fieldInput} /></div>
-                  <div><label style={fieldLabel}>Audience</label><select style={fieldInput}><option>All Members</option><option>Active Only</option></select></div>
-                </div>
-                <div style={{ marginBottom: 12 }}><label style={fieldLabel}>Message</label><textarea rows={4} style={{ ...fieldInput, resize: "none" as const }} /></div>
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><button style={btnGreen}>Publish Announcement</button><button style={btnOutline}>Save Draft</button></div>
+              {announcePosted && <div style={{ position: "fixed", top: 20, right: 20, zIndex: 99999, background: "#e3f5eb", border: "1px solid #87d4a5", borderRadius: 10, padding: "14px 20px", boxShadow: "0 10px 30px rgba(5,20,45,.15)" }}><b style={{ color: "#075933" }}>✓ Broadcast Published</b></div>}
+              <div style={card}>
+                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 6px" }}>Compose Broadcast</h2>
+                <p style={{ fontSize: 12.5, color: "#667085", margin: "0 0 14px", lineHeight: 1.5 }}>Send an official message to investors. Choose where it appears. Investors receive it in their Communications inbox.</p>
+                <div style={{ marginBottom: 12 }}><label style={fieldLabel}>Title</label><input value={annTitle} onChange={(e) => setAnnTitle(e.target.value)} placeholder="Message title" style={fieldInput} /></div>
+                <div style={{ marginBottom: 12 }}><label style={fieldLabel}>Audience</label><select value={annAudience} onChange={(e) => setAnnAudience(e.target.value)} style={fieldInput}><option>All Members</option><option>All Investors</option><option>Builders Only</option><option>Investor + Builder</option><option>Foundation Partners (First 125)</option><option>Specific Members</option><option>General Dashboard Announcement</option></select></div>
+                <div style={{ marginBottom: 12 }}><label style={fieldLabel}>Message</label><textarea value={annMsg} onChange={(e) => setAnnMsg(e.target.value)} rows={4} placeholder="Write your official broadcast message..." style={{ ...fieldInput, resize: "none" as const }} /></div>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><button onClick={handlePublishAnnouncement} style={btnGreen}>Publish Broadcast</button><button style={btnOutline}>Save Draft</button></div>
+                <div style={{ marginTop: 14, borderLeft: "4px solid #bd8e28", background: "#fffaf0", color: "#604b17", padding: "12px 14px", fontSize: 12, borderRadius: "0 6px 6px 0" }}>This is a controlled broadcast channel. Investors receive official messages and may react — they cannot message each other.</div>
               </div>
-              <div style={card}><h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>Recent Announcements</h2>
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #eef2f6" }}><b>Q2 Investor Webinar</b><span style={statusBadge("Active")}>Published</span></div>
+              <div style={card}>
+                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>Published Broadcasts</h2>
+                {broadcasts.map((b, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #eef2f6", gap: 10, flexWrap: "wrap" }}>
+                    <div><b style={{ fontSize: 14 }}>{b.title}</b><br /><small style={{ color: "#667085" }}>{b.date} • To: {b.audience}</small></div>
+                    <span style={statusBadge("Published")}>{b.status}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -549,6 +670,22 @@ export default function AdminPortal() {
               <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#075933,#0d6d42)", color: "#ffd46f", display: "grid", placeItems: "center", fontWeight: 900, fontSize: 24, margin: "0 auto 12px" }}>{drawerMember.pic}</div>
               <b style={{ fontSize: 20 }}>{drawerMember.name}</b><br /><span style={statusBadge(drawerMember.status)}>{drawerMember.status}</span>
             </div>
+            {/* Assigned Labels */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={fieldLabel}>Member Labels</div>
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 10 }}>
+                {drawerMember.labels.map((lb) => <span key={lb} style={{ ...labelStyle(lb), fontSize: 10, padding: "4px 9px" }}>{lb}</span>)}
+              </div>
+              <details>
+                <summary style={{ fontSize: 11.5, color: "#a46a00", fontWeight: 800, cursor: "pointer" }}>+ Assign / Edit Labels</summary>
+                <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 10 }}>
+                  {allLabels.map((lb) => {
+                    const active = drawerMember.labels.includes(lb);
+                    return <span key={lb} style={{ ...labelStyle(lb), fontSize: 9.5, padding: "4px 9px", cursor: "pointer", opacity: active ? 1 : 0.4, border: active ? "1px solid currentColor" : "1px solid transparent" }}>{lb}</span>;
+                  })}
+                </div>
+              </details>
+            </div>
             {[["Joined", drawerMember.joined], ["Amount Invested", drawerMember.invested], ["Units", String(drawerMember.units)], ["Location", drawerMember.location], ["Referral Source", drawerMember.source], ["Status", drawerMember.status]].map(([l, v], i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #eef2f6", fontSize: 14 }}><span style={{ color: "#667085" }}>{l}</span><b>{v}</b></div>
             ))}
@@ -586,6 +723,16 @@ export default function AdminPortal() {
             <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, margin: "0 0 14px" }}>Google Calendar</h2>
             <p style={{ color: "#667085", lineHeight: 1.7, marginBottom: 16 }}>Google Calendar connection placeholder. OAuth integration will be connected in production.</p>
             <button onClick={() => setShowGcal(false)} style={btnGreen}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Compensation Plan Lightbox */}
+      {compOpen && (
+        <div onClick={() => setCompOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(7,26,51,.82)", backdropFilter: "blur(4px)", display: "grid", placeItems: "center", padding: 24 }}>
+          <button onClick={() => setCompOpen(false)} style={{ position: "absolute", top: 20, right: 20, background: "#fff", border: 0, borderRadius: "50%", width: 44, height: 44, display: "grid", placeItems: "center", cursor: "pointer", fontSize: 22, color: "#071a33", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }} aria-label="Close">✕</button>
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 1100, width: "100%", maxHeight: "88vh", overflow: "auto", borderRadius: 12 }}>
+            <Image src="/assets/select-network/select-network-comp-plan.png" alt="Select Network Compensation Plan" width={1024} height={640} style={{ width: "100%", height: "auto", display: "block", borderRadius: 12 }} />
           </div>
         </div>
       )}
