@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Search, Edit, Eye, Trash2, CheckCircle2, X, Globe, EyeOff, Archive } from "lucide-react";
-import { getAdminDogs, upsertAdminDog, saveAdminDogs, type AdminDog, type DogStatus } from "@/lib/admin-store";
+import { getAdminDogs, upsertAdminDog, saveAdminDogs, deleteAdminDog, type AdminDog, type DogStatus } from "@/lib/admin-store";
 
 const stageLabels: Record<string, string> = { rescue: "Rescued", rehabilitate: "In Rehab", train: "In Training", recover: "Recovering", rehome: "Ready for Home" };
 const stageColors: Record<string, string> = { rescue: "bg-red-100 text-red-700", rehabilitate: "bg-amber-100 text-amber-700", train: "bg-emerald-100 text-emerald-700", recover: "bg-blue-100 text-blue-700", rehome: "bg-violet-100 text-violet-700" };
@@ -59,6 +59,12 @@ export default function AdminDogsPage() {
   };
 
   const archiveDog = (id: string) => { setStatus(id, "archived"); };
+
+  const deleteDog = (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this dog? This cannot be undone.")) return;
+    deleteAdminDog(id);
+    setDogs(getAdminDogs());
+  };
 
   const statusCounts = dogs.reduce((acc, d) => { acc[d.status] = (acc[d.status] || 0) + 1; return acc; }, {} as Record<string, number>);
 
@@ -152,8 +158,11 @@ export default function AdminDogsPage() {
                           <EyeOff className="w-4 h-4" />
                         </button>
                       )}
-                      <button onClick={() => archiveDog(dog.id)} className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-[#1B2A4A]/40 hover:text-red-500 transition-colors" title="Archive">
+                      <button onClick={() => archiveDog(dog.id)} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-[#1B2A4A]/40 hover:text-slate-600 transition-colors" title="Archive">
                         <Archive className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => deleteDog(dog.id)} className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-[#1B2A4A]/40 hover:text-red-500 transition-colors" title="Delete permanently">
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>

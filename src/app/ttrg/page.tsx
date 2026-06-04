@@ -10,7 +10,7 @@ import {
   Star, TrendingUp, Award, MapPin,
 } from "lucide-react";
 import { dogs as dogData } from "@/lib/dogs";
-import { getPublishedDogs, getTickerItems, type TickerItem } from "@/lib/admin-store";
+import { getPublishedDogs, isAdminDogsInitialized, getTickerItems, type TickerItem } from "@/lib/admin-store";
 import DogCard from "@/components/ttrg/DogCard";
 
 /* ─── HERO DATA — single video, rotating headlines ─── */
@@ -162,7 +162,7 @@ export default function TTRGHome() {
 
   useEffect(() => {
     const published = getPublishedDogs();
-    if (published.length > 0) setDogs(published as unknown as typeof dogData);
+    if (isAdminDogsInitialized()) setDogs(published as unknown as typeof dogData);
     const items = getTickerItems().filter((t) => t.active);
     if (items.length > 0) setTickerItems(items);
     const savedColor = localStorage.getItem("ttrg-ticker-color");

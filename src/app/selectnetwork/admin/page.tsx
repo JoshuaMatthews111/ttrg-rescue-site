@@ -16,7 +16,7 @@ const adminTabs = [
   { id: "overview", label: "Overview", ico: "dashboard" },
   { id: "applications", label: "Applications", ico: "clipboard" },
   { id: "members", label: "Members", ico: "users" },
-  { id: "units", label: "Founder Units", ico: "star" },
+  { id: "units", label: "Units", ico: "star" },
   { id: "payments", label: "Payments", ico: "credit" },
   { id: "reports", label: "Financial Reports", ico: "chart" },
   { id: "docs", label: "Documents", ico: "folder" },
@@ -76,6 +76,16 @@ export default function AdminPortal() {
     { title: "Q2 Investor Webinar", audience: "All Members", date: "May 25, 2025", status: "Published" },
     { title: "Q2 2025 Report Published", audience: "All Investors", date: "May 28, 2025", status: "Published" },
   ]);
+  const [viewCert, setViewCert] = useState<{cert:string;member:string;date:string}|null>(null);
+  const [prospects, setProspects] = useState([
+    { id: 1, name: "Anthony Carter", phone: "(440) 555-2180", email: "acarter@email.com", interest: "$10,000", source: "Referral - Maria", status: "Hot Lead", lastContact: "May 30, 2025", notes: "Very interested. Wants to schedule a Zoom call. Works in real estate development." },
+    { id: 2, name: "Jessica Moore", phone: "(216) 555-7744", email: "jmoore@email.com", interest: "$5,000", source: "Website", status: "Warm", lastContact: "May 28, 2025", notes: "Left voicemail. She asked about the compensation plan. Follow up Friday." },
+    { id: 3, name: "Robert Williams", phone: "(330) 555-9932", email: "rwilliams@email.com", interest: "$25,000", source: "Referral - Lorenzo", status: "Hot Lead", lastContact: "Jun 1, 2025", notes: "High net worth. Connected through chamber of commerce event. Wants onboarding call." },
+    { id: 4, name: "Tanya Brooks", phone: "(614) 555-0198", email: "tbrooks@email.com", interest: "$15,000", source: "LinkedIn", status: "New", lastContact: "Jun 2, 2025", notes: "Initial outreach sent. No response yet." },
+    { id: 5, name: "Marcus Johnson", phone: "(216) 555-3341", email: "mjohnson@email.com", interest: "$50,000", source: "Referral - James Wilson", status: "Warm", lastContact: "May 26, 2025", notes: "Scheduled call for next week. Owns a chain of gyms. Interested in builder role." },
+  ]);
+  const [crmNote, setCrmNote] = useState("");
+  const [selectedProspect, setSelectedProspect] = useState<number|null>(null);
 
   useEffect(() => { setTimeout(() => setChartDraw(true), 300); }, []);
   useEffect(() => { if (activeTab === "matrix") setTimeout(() => setMatrixAnimated(true), 100); }, [activeTab]);
@@ -198,14 +208,16 @@ export default function AdminPortal() {
           {/* OVERVIEW */}
           {activeTab === "overview" && (
             <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
+              {/* KPI Row */}
               <div className="sn-kpi-grid-6" style={{ display: "grid", gridTemplateColumns: "repeat(6,1fr)", gap: 14, marginBottom: 22 }}>
-                {[{ ico: <Users size={20} />, label: "Active Members", value: String(membersCount) }, { ico: <ClipboardList size={20} />, label: "Pending Apps", value: String(apps) }, { ico: <Star size={20} />, label: "Units Issued", value: issued.toLocaleString() }, { ico: <CircleDot size={20} />, label: "Remaining", value: remaining.toLocaleString() }, { ico: <CalendarDays size={20} />, label: "Meetings", value: "6" }, { ico: <BarChart3 size={20} />, label: "Reports Pending", value: "7" }].map((k, i) => (
+                {[{ ico: <Users size={20} />, label: "Active Members", value: String(membersCount) }, { ico: <ClipboardList size={20} />, label: "Pending Apps", value: String(apps) }, { ico: <Star size={20} />, label: "Units Issued", value: issued.toLocaleString() }, { ico: <CircleDot size={20} />, label: "Remaining", value: remaining.toLocaleString() }, { ico: <CreditCard size={20} />, label: "Revenue (MTD)", value: "$84,200" }, { ico: <TrendingUp size={20} />, label: "Growth", value: "+18.4%" }].map((k, i) => (
                   <div key={i} style={kpiBox} className="hover:translate-y-[-3px] hover:shadow-[0_16px_40px_rgba(5,20,45,.10)]">
                     <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#edf6ef", border: "1px solid #c7e2d0", display: "grid", placeItems: "center", color: "#c48817" }}>{k.ico}</div>
                     <div><small style={{ fontSize: 11, color: "#667085", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em" }}>{k.label}</small><br /><b style={{ fontSize: 18 }}>{k.value}</b></div>
                   </div>
                 ))}
               </div>
+
               {/* First 125 Member Tracker */}
               <div style={{ ...card, marginBottom: 18, background: "linear-gradient(135deg,#071a33,#0d3366)", color: "#fff", border: "1px solid rgba(213,168,61,.5)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
@@ -215,7 +227,6 @@ export default function AdminPortal() {
                   </div>
                   <span style={{ fontSize: 12, color: "#c6d2e1" }}>Foundation Partner enrollment window</span>
                 </div>
-                {/* Progress bar */}
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}><span style={{ color: "#c6d2e1" }}>Approved Members</span><b style={{ color: "#ffd46f" }}>87 / 125</b></div>
                   <div style={{ height: 12, background: "rgba(255,255,255,.12)", borderRadius: 99, overflow: "hidden" }}><div style={{ height: "100%", width: chartDraw ? "69.6%" : "0%", background: "linear-gradient(90deg,#d5a83d,#ffd46f)", borderRadius: 99, transition: "width 1.6s ease" }} /></div>
@@ -237,28 +248,144 @@ export default function AdminPortal() {
                 </div>
               </div>
 
-              <div className="sn-admin-grid" style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr 1fr", gap: 18, marginBottom: 18 }}>
-                <div style={card}><h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 14px" }}>Platform Analytics</h2>
-                  <svg viewBox="0 0 640 260" style={{ width: "100%", height: 180 }}>
-                    <polyline points="35,205 120,178 205,154 292,139 380,118 468,88 598,44" fill="none" stroke="#bd8e28" strokeWidth="5" style={{ strokeDasharray: 900, strokeDashoffset: chartDraw ? 0 : 900, transition: "stroke-dashoffset 2s ease" }} />
-                    <polyline points="35,220 120,198 205,181 292,169 380,151 468,139 598,118" fill="none" stroke="#075933" strokeWidth="4" style={{ strokeDasharray: 900, strokeDashoffset: chartDraw ? 0 : 900, transition: "stroke-dashoffset 2s ease .3s" }} />
-                    <g fill="#fff" stroke="#bd8e28" strokeWidth="4" style={{ opacity: chartDraw ? 1 : 0, transition: "opacity .5s ease 1.5s" }}><circle cx="120" cy="178" r="6" /><circle cx="292" cy="139" r="6" /><circle cx="468" cy="88" r="6" /><circle cx="598" cy="44" r="6" /></g>
-                  </svg>
+              {/* Platform Analytics — Real Data */}
+              <div style={{ ...card, marginBottom: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: 0 }}>Platform Analytics</h2>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <span style={{ padding: "4px 10px", borderRadius: 6, background: "#edf6ef", color: "#075933", fontSize: 11, fontWeight: 800 }}>Live</span>
+                    <span style={{ fontSize: 11, color: "#667085" }}>Last 6 months</span>
+                  </div>
                 </div>
-                <div style={card}><h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>Applications Queue</h2>
-                  {[{ name: "Michael Anderson", loc: "Miami, FL" }, { name: "Sophia Martinez", loc: "Austin, TX" }, { name: "David Thompson", loc: "Dallas, TX" }].map((a, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #eef2f6" }}>
-                      <div><b style={{ fontSize: 13 }}>{a.name}</b><br /><small style={{ color: "#667085" }}>{a.loc}</small></div>
-                      <button style={{ ...btnOutline, fontSize: 10, padding: "4px 10px" }}>Review</button>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 18 }}>
+                  {[
+                    { label: "Total Revenue", value: "$345,000", change: "+22%" },
+                    { label: "New Members (MTD)", value: "18", change: "+12%" },
+                    { label: "Units Sold (MTD)", value: "240", change: "+15%" },
+                    { label: "Avg Investment", value: "$8,625", change: "+8%" },
+                  ].map((d, i) => (
+                    <div key={i} style={{ background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 10, padding: "14px 16px" }}>
+                      <small style={{ fontSize: 11, color: "#667085", fontWeight: 700, textTransform: "uppercase" }}>{d.label}</small>
+                      <div style={{ fontSize: 22, fontWeight: 900, margin: "4px 0 2px" }}>{d.value}</div>
+                      <span style={{ fontSize: 11, color: "#087345", fontWeight: 800 }}>{d.change} ↑</span>
                     </div>
                   ))}
                 </div>
-                <div style={card}><h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>Quick Actions</h2>
+                {/* Animated Chart with Real Numbers */}
+                <div style={{ position: "relative" }}>
+                  <svg viewBox="0 0 640 220" style={{ width: "100%", height: 180 }}>
+                    {/* Y-axis labels */}
+                    <text x="0" y="30" fill="#667085" fontSize="10">$80K</text>
+                    <text x="0" y="70" fill="#667085" fontSize="10">$60K</text>
+                    <text x="0" y="110" fill="#667085" fontSize="10">$40K</text>
+                    <text x="0" y="150" fill="#667085" fontSize="10">$20K</text>
+                    <text x="0" y="190" fill="#667085" fontSize="10">$0</text>
+                    {/* Grid */}
+                    <g stroke="#e7e2d8" strokeWidth="0.5"><path d="M40 28H620M40 68H620M40 108H620M40 148H620M40 188H620" /></g>
+                    {/* Revenue line (gold) */}
+                    <polyline points="70,168 170,148 270,128 370,108 470,78 570,38" fill="none" stroke="#bd8e28" strokeWidth="3" strokeLinecap="round" style={{ strokeDasharray: 900, strokeDashoffset: chartDraw ? 0 : 900, transition: "stroke-dashoffset 2s ease" }} />
+                    {/* Members line (green) */}
+                    <polyline points="70,178 170,168 270,158 370,148 470,128 570,98" fill="none" stroke="#075933" strokeWidth="3" strokeLinecap="round" style={{ strokeDasharray: 900, strokeDashoffset: chartDraw ? 0 : 900, transition: "stroke-dashoffset 2s ease .3s" }} />
+                    {/* Data points with values */}
+                    <g style={{ opacity: chartDraw ? 1 : 0, transition: "opacity .5s ease 1.5s" }}>
+                      <circle cx="70" cy="168" r="5" fill="#fff" stroke="#bd8e28" strokeWidth="3" />
+                      <circle cx="170" cy="148" r="5" fill="#fff" stroke="#bd8e28" strokeWidth="3" />
+                      <circle cx="270" cy="128" r="5" fill="#fff" stroke="#bd8e28" strokeWidth="3" />
+                      <circle cx="370" cy="108" r="5" fill="#fff" stroke="#bd8e28" strokeWidth="3" />
+                      <circle cx="470" cy="78" r="5" fill="#fff" stroke="#bd8e28" strokeWidth="3" />
+                      <circle cx="570" cy="38" r="5" fill="#fff" stroke="#bd8e28" strokeWidth="3" />
+                      <text x="60" y="160" fill="#bd8e28" fontSize="9" fontWeight="700">$22K</text>
+                      <text x="160" y="140" fill="#bd8e28" fontSize="9" fontWeight="700">$38K</text>
+                      <text x="260" y="120" fill="#bd8e28" fontSize="9" fontWeight="700">$52K</text>
+                      <text x="360" y="100" fill="#bd8e28" fontSize="9" fontWeight="700">$61K</text>
+                      <text x="460" y="70" fill="#bd8e28" fontSize="9" fontWeight="700">$72K</text>
+                      <text x="556" y="30" fill="#bd8e28" fontSize="9" fontWeight="700">$84K</text>
+                    </g>
+                    {/* X-axis labels */}
+                    <text x="60" y="210" fill="#667085" fontSize="10">Jan</text>
+                    <text x="160" y="210" fill="#667085" fontSize="10">Feb</text>
+                    <text x="260" y="210" fill="#667085" fontSize="10">Mar</text>
+                    <text x="360" y="210" fill="#667085" fontSize="10">Apr</text>
+                    <text x="460" y="210" fill="#667085" fontSize="10">May</text>
+                    <text x="560" y="210" fill="#667085" fontSize="10">Jun</text>
+                  </svg>
+                  <div style={{ display: "flex", gap: 18, marginTop: 8 }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}><span style={{ width: 12, height: 3, background: "#bd8e28", borderRadius: 2 }} />Revenue</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}><span style={{ width: 12, height: 3, background: "#075933", borderRadius: 2 }} />Member Growth</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Briefing Grid */}
+              <div className="sn-admin-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 18, marginBottom: 18 }}>
+                {/* Recent Activity */}
+                <div style={card}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>Recent Activity</h2>
+                  {[
+                    { action: "Application Approved", who: "Michael Anderson", time: "2 hours ago", color: "#087345" },
+                    { action: "Payment Received", who: "$10,000 — Maria Santos", time: "5 hours ago", color: "#bd8e28" },
+                    { action: "New Application", who: "Jessica Moore", time: "8 hours ago", color: "#1e4fa3" },
+                    { action: "Certificate Issued", who: "James Wilson — Builder 10", time: "1 day ago", color: "#5b34a3" },
+                    { action: "Units Assigned", who: "25 units → David Chen", time: "1 day ago", color: "#075933" },
+                  ].map((a, i) => (
+                    <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "10px 0", borderBottom: "1px solid #eef2f6" }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: a.color, marginTop: 6, flexShrink: 0 }} />
+                      <div><b style={{ fontSize: 12.5 }}>{a.action}</b><br /><small style={{ color: "#667085", fontSize: 11.5 }}>{a.who} · {a.time}</small></div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Applications Queue */}
+                <div style={card}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>Applications Queue</h2>
+                  {[{ name: "Michael Anderson", loc: "Miami, FL", amt: "$10,000" }, { name: "Sophia Martinez", loc: "Austin, TX", amt: "$25,000" }, { name: "David Thompson", loc: "Dallas, TX", amt: "$50,000" }, { name: "Jessica Moore", loc: "Cleveland, OH", amt: "$5,000" }].map((a, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #eef2f6" }}>
+                      <div><b style={{ fontSize: 13 }}>{a.name}</b><br /><small style={{ color: "#667085" }}>{a.loc} · {a.amt}</small></div>
+                      <button onClick={() => switchTab("applications")} style={{ ...btnOutline, fontSize: 10, padding: "4px 10px" }}>Review</button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Quick Actions */}
+                <div style={card}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>Quick Actions</h2>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     {["Review Apps", "Approve Reports", "Schedule Meeting", "Export Data", "Add Member", "Upload CSV", "Send Update", "Open Matrix"].map((a, i) => (
                       <button key={i} onClick={() => { if (a === "Review Apps") switchTab("applications"); if (a === "Approve Reports") switchTab("reports"); if (a === "Schedule Meeting") switchTab("scheduler"); if (a === "Open Matrix") switchTab("matrix"); }} style={{ padding: "10px 8px", background: i % 2 === 0 ? "#f9f6ef" : "#edf6ef", border: "1px solid #e7e2d8", borderRadius: 8, fontSize: 11, fontWeight: 800, cursor: "pointer", transition: ".25s", color: "#071a33" }} className="hover:translate-y-[-2px] hover:shadow-[0_0_22px_rgba(213,168,61,.55)]">{a} →</button>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* Financial Summary + Prospects + Upcoming */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+                <div style={card}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>Financial Summary</h2>
+                  {[
+                    { label: "Total Raised (All Time)", value: "$345,000" },
+                    { label: "Total Disbursed", value: "$42,300" },
+                    { label: "Operating Account Balance", value: "$302,700" },
+                    { label: "Monthly Burn Rate", value: "$18,400" },
+                    { label: "Projected Q3 Revenue", value: "$125,000" },
+                  ].map((f, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #eef2f6", fontSize: 14 }}>
+                      <span style={{ color: "#667085" }}>{f.label}</span><b>{f.value}</b>
+                    </div>
+                  ))}
+                </div>
+                <div style={card}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>Upcoming This Week</h2>
+                  {[
+                    { title: "Investor Call — Michael Anderson", time: "Today, 10:00 AM", type: "Zoom" },
+                    { title: "Onboarding — Sophia Martinez", time: "Wed, 2:00 PM", type: "Zoom" },
+                    { title: "Follow-up — David Thompson", time: "Fri, 11:30 AM", type: "Call" },
+                    { title: "Q2 Report Publish Deadline", time: "Fri, EOD", type: "Task" },
+                  ].map((m, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #eef2f6" }}>
+                      <div><b style={{ fontSize: 13 }}>{m.title}</b><br /><small style={{ color: "#667085" }}>{m.time}</small></div>
+                      <span style={{ padding: "4px 8px", borderRadius: 6, background: m.type === "Zoom" ? "#e7f0ff" : m.type === "Call" ? "#edf6ef" : "#fffaf0", color: m.type === "Zoom" ? "#1e4fa3" : m.type === "Call" ? "#075933" : "#bd8e28", fontSize: 10, fontWeight: 800 }}>{m.type}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -333,7 +460,7 @@ export default function AdminPortal() {
                 ))}
               </div>
               <div style={{ ...card, marginBottom: 16 }}>
-                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 14px" }}>Founder Unit Management</h2>
+                <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 14px" }}>Unit Management</h2>
                 <div className="sn-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
                   <div><label style={fieldLabel}>Issue Units</label><input placeholder="Number of units" style={fieldInput} /></div>
                   <div><label style={fieldLabel}>Assign To Member</label><input placeholder="Search member" style={fieldInput} /></div>
@@ -538,19 +665,93 @@ export default function AdminPortal() {
 
           {/* PROSPECTS CRM */}
           {activeTab === "crm" && (
-            <div className="sn-mobile-content sn-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, animation: "fadeIn .5s ease" }}>
-              <div style={card}><h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 14px" }}>Prospects CRM</h2>
-                <div className="sn-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-                  {[["Name", ""], ["Phone", ""], ["Email", ""], ["Interest", "$5,000"], ["Home Address", ""], ["Occupation", ""], ["Referred By", ""], ["Last Contact", ""]].map(([l, p], i) => (
-                    <div key={i}><label style={fieldLabel}>{l}</label><input placeholder={p} style={fieldInput} /></div>
-                  ))}
+            <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 18 }}>
+                {/* Add New Prospect Form */}
+                <div style={card}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 14px" }}>Add New Prospect</h2>
+                  <div className="sn-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+                    {[["Name", "Full name"], ["Phone", "(555) 000-0000"], ["Email", "email@example.com"], ["Interest", "$5,000"], ["Home Address", "Address"], ["Occupation", "Job title"], ["Referred By", "Source"], ["Last Contact", "Date"]].map(([l, p], i) => (
+                      <div key={i}><label style={fieldLabel}>{l}</label><input placeholder={p} style={fieldInput} /></div>
+                    ))}
+                  </div>
+                  <div style={{ marginBottom: 12 }}><label style={fieldLabel}>Notes</label><textarea placeholder="Initial notes about this prospect..." rows={3} style={{ ...fieldInput, resize: "none" as const }} /></div>
+                  <button style={btnGreen}>Add Prospect</button>
                 </div>
-                <div style={{ marginBottom: 12 }}><label style={fieldLabel}>Notes</label><textarea placeholder="Left voicemail, referred by, follow-up..." rows={3} style={{ ...fieldInput, resize: "none" as const }} /></div>
-                <button style={btnGreen}>Add Prospect</button>
+                {/* CRM Summary */}
+                <div style={card}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>CRM Summary</h2>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 18 }}>
+                    {[{ label: "Total Prospects", value: String(prospects.length), color: "#071a33" }, { label: "Hot Leads", value: String(prospects.filter(p => p.status === "Hot Lead").length), color: "#dc2626" }, { label: "Warm", value: String(prospects.filter(p => p.status === "Warm").length), color: "#bd8e28" }, { label: "New", value: String(prospects.filter(p => p.status === "New").length), color: "#1e4fa3" }].map((s, i) => (
+                      <div key={i} style={{ background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 10, padding: "14px 16px", textAlign: "center" }}>
+                        <div style={{ fontSize: 28, fontWeight: 900, color: s.color }}>{s.value}</div>
+                        <small style={{ fontSize: 11, color: "#667085", fontWeight: 700, textTransform: "uppercase" }}>{s.label}</small>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ color: "#667085", fontSize: 13, lineHeight: 1.6 }}>All prospect data is stored in the CRM. Click any prospect below to view details and manage notes. Data is private and only visible to admin users.</p>
+                </div>
               </div>
-              <div style={card}><h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 18, margin: "0 0 14px" }}>CRM Summary</h2>
-                <div style={{ width: 180, height: 180, border: "30px solid #075933", borderTopColor: "#bd8e28", borderRadius: "50%", display: "grid", placeItems: "center", margin: "20px auto" }}><b style={{ fontSize: 36 }}>194</b></div>
-                <p style={{ textAlign: "center", color: "#667085", fontSize: 13 }}>Total prospects tracked</p>
+
+              {/* Prospects List */}
+              <div style={card}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                  <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: 0 }}>All Prospects</h2>
+                  <input placeholder="Search prospects..." style={{ ...fieldInput, width: 240, padding: "10px 14px" }} />
+                </div>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 700 }}>
+                    <thead><tr>{["Name", "Phone", "Interest", "Source", "Status", "Last Contact", "Actions"].map(h => <th key={h} style={thS}>{h}</th>)}</tr></thead>
+                    <tbody>
+                      {prospects.map((p) => (
+                        <tr key={p.id} style={{ background: selectedProspect === p.id ? "#f9f6ef" : "transparent", cursor: "pointer" }} onClick={() => setSelectedProspect(selectedProspect === p.id ? null : p.id)}>
+                          <td style={{ ...tdS, fontWeight: 700 }}>{p.name}</td>
+                          <td style={tdS}>{p.phone}</td>
+                          <td style={{ ...tdS, color: "#bd8e28", fontWeight: 700 }}>{p.interest}</td>
+                          <td style={{ ...tdS, color: "#667085" }}>{p.source}</td>
+                          <td style={tdS}><span style={{ padding: "4px 10px", borderRadius: 99, background: p.status === "Hot Lead" ? "#fde8e8" : p.status === "Warm" ? "#fffaf0" : "#e7f0ff", color: p.status === "Hot Lead" ? "#dc2626" : p.status === "Warm" ? "#bd8e28" : "#1e4fa3", fontSize: 11, fontWeight: 900 }}>{p.status}</span></td>
+                          <td style={{ ...tdS, color: "#667085" }}>{p.lastContact}</td>
+                          <td style={tdS}><button style={btnOutline} onClick={(e) => { e.stopPropagation(); setSelectedProspect(p.id); }}>View</button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Expanded Prospect Detail */}
+                {selectedProspect && (() => {
+                  const p = prospects.find(pr => pr.id === selectedProspect);
+                  if (!p) return null;
+                  return (
+                    <div style={{ marginTop: 18, background: "#f9f6ef", border: "1px solid #e7e2d8", borderRadius: 12, padding: 20, animation: "fadeIn .3s ease" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
+                        <div>
+                          <h3 style={{ margin: "0 0 4px", fontSize: 18, fontFamily: "Georgia, serif", fontWeight: 400 }}>{p.name}</h3>
+                          <span style={{ padding: "4px 10px", borderRadius: 99, background: p.status === "Hot Lead" ? "#fde8e8" : p.status === "Warm" ? "#fffaf0" : "#e7f0ff", color: p.status === "Hot Lead" ? "#dc2626" : p.status === "Warm" ? "#bd8e28" : "#1e4fa3", fontSize: 11, fontWeight: 900 }}>{p.status}</span>
+                        </div>
+                        <button onClick={() => setSelectedProspect(null)} style={{ background: "none", border: "none", fontSize: 18, cursor: "pointer", color: "#667085" }}>✕</button>
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 14 }}>
+                        {[["Phone", p.phone], ["Email", p.email], ["Interest", p.interest], ["Source", p.source], ["Last Contact", p.lastContact], ["Status", p.status]].map(([l, v], i) => (
+                          <div key={i}><small style={{ fontSize: 10, color: "#667085", fontWeight: 800, textTransform: "uppercase" }}>{l}</small><div style={{ fontSize: 14, fontWeight: 600 }}>{v}</div></div>
+                        ))}
+                      </div>
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={fieldLabel}>Notes & Follow-up</label>
+                        <div style={{ background: "#fff", border: "1px solid #e7e2d8", borderRadius: 8, padding: "12px 14px", fontSize: 13.5, lineHeight: 1.6, marginBottom: 10, color: "#3d4a57" }}>{p.notes}</div>
+                        <div style={{ display: "flex", gap: 10 }}>
+                          <textarea value={crmNote} onChange={(e) => setCrmNote(e.target.value)} placeholder="Add a new note..." rows={2} style={{ flex: 1, ...fieldInput, resize: "none" as const }} />
+                          <button onClick={() => { if (crmNote.trim()) { setProspects(prospects.map(pr => pr.id === p.id ? { ...pr, notes: pr.notes + " | " + crmNote, lastContact: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) } : pr)); setCrmNote(""); } }} style={{ ...btnGreen, alignSelf: "flex-end" }}>Save Note</button>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                        <button onClick={() => switchTab("scheduler")} style={btnGold}>Schedule Meeting</button>
+                        <button style={btnOutline}>Convert to Member</button>
+                        <button style={{ ...btnOutline, borderColor: "#dc2626", color: "#dc2626" }}>Remove</button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
@@ -702,7 +903,7 @@ export default function AdminPortal() {
             <div className="sn-mobile-content" style={{ animation: "fadeIn .5s ease" }}>
               <div style={card}>
                 <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, fontSize: 20, margin: "0 0 6px" }}>Certificates</h2>
-                <p style={{ color: "#667085", fontSize: 13, margin: "0 0 16px" }}>Manage and issue certificates for member achievements.</p>
+                <p style={{ color: "#667085", fontSize: 13, margin: "0 0 16px" }}>Manage and issue certificates for member achievements. Click &quot;View&quot; to preview a certificate.</p>
                 <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
                   <button style={btnGreen}>+ Issue New Certificate</button>
                   <button style={btnOutline}>Download Template</button>
@@ -713,11 +914,11 @@ export default function AdminPortal() {
                     <tbody>
                       {[
                         { cert: "Foundation Partner", member: "Maria Santos", date: "May 20, 2025", status: "Issued" },
-                        { cert: "First 125 Member", member: "David Chen", date: "May 22, 2025", status: "Pending" },
+                        { cert: "First 125 Member", member: "David Chen", date: "May 22, 2025", status: "Issued" },
                         { cert: "Builder Achievement — 10 Referrals", member: "James Wilson", date: "Jun 5, 2025", status: "Issued" },
                         { cert: "Top Builder Q2", member: "Maria Santos", date: "Pending", status: "Draft" },
                       ].map((c, i) => (
-                        <tr key={i}><td style={tdS}><b>{c.cert}</b></td><td style={tdS}>{c.member}</td><td style={{ ...tdS, color: "#667085" }}>{c.date}</td><td style={tdS}><span style={statusBadge(c.status === "Issued" ? "Active" : c.status === "Pending" ? "Pending" : "Pending")}>{c.status}</span></td><td style={tdS}><button style={btnOutline}>{c.status === "Issued" ? "View" : "Issue"}</button></td></tr>
+                        <tr key={i}><td style={tdS}><b>{c.cert}</b></td><td style={tdS}>{c.member}</td><td style={{ ...tdS, color: "#667085" }}>{c.date}</td><td style={tdS}><span style={statusBadge(c.status === "Issued" ? "Active" : c.status === "Pending" ? "Pending" : "Pending")}>{c.status}</span></td><td style={tdS}>{c.status === "Issued" ? <button style={btnOutline} onClick={() => setViewCert({ cert: c.cert, member: c.member, date: c.date })}>View</button> : <button style={btnOutline}>Issue</button>}</td></tr>
                       ))}
                     </tbody>
                   </table>
@@ -818,6 +1019,56 @@ export default function AdminPortal() {
             <h2 style={{ fontFamily: "Georgia, serif", fontWeight: 400, margin: "0 0 14px" }}>Google Calendar</h2>
             <p style={{ color: "#667085", lineHeight: 1.7, marginBottom: 16 }}>Google Calendar connection placeholder. OAuth integration will be connected in production.</p>
             <button onClick={() => setShowGcal(false)} style={btnGreen}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Certificate Viewer */}
+      {viewCert && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 99999, background: "rgba(7,26,51,.82)", backdropFilter: "blur(4px)", display: "grid", placeItems: "center", padding: 24, animation: "fadeIn .3s ease" }}>
+          <button onClick={() => setViewCert(null)} style={{ position: "absolute", top: 20, right: 20, background: "#fff", border: 0, borderRadius: "50%", width: 44, height: 44, display: "grid", placeItems: "center", cursor: "pointer", fontSize: 22, color: "#071a33", boxShadow: "0 6px 20px rgba(0,0,0,.25)" }} aria-label="Close">✕</button>
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: 800, width: "100%", background: "#fff", borderRadius: 16, padding: 0, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,.4)" }}>
+            {/* Certificate Body */}
+            <div style={{ background: "linear-gradient(135deg,#fbf9f4 0%,#fff9ec 50%,#fbf9f4 100%)", padding: "50px 60px", textAlign: "center", position: "relative", border: "12px solid transparent", borderImage: "linear-gradient(135deg, #d5a83d 0%, #f5e4a8 25%, #d5a83d 50%, #f5e4a8 75%, #d5a83d 100%) 1" }}>
+              {/* Corner ornaments */}
+              <div style={{ position: "absolute", top: 20, left: 20, width: 40, height: 40, borderTop: "3px solid #d5a83d", borderLeft: "3px solid #d5a83d" }} />
+              <div style={{ position: "absolute", top: 20, right: 20, width: 40, height: 40, borderTop: "3px solid #d5a83d", borderRight: "3px solid #d5a83d" }} />
+              <div style={{ position: "absolute", bottom: 20, left: 20, width: 40, height: 40, borderBottom: "3px solid #d5a83d", borderLeft: "3px solid #d5a83d" }} />
+              <div style={{ position: "absolute", bottom: 20, right: 20, width: 40, height: 40, borderBottom: "3px solid #d5a83d", borderRight: "3px solid #d5a83d" }} />
+
+              <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: ".3em", textTransform: "uppercase", color: "#bd8e28", marginBottom: 12 }}>The Select Network Private Investors Group LLC</div>
+              <h2 style={{ fontFamily: "Georgia, serif", fontSize: 38, fontWeight: 400, color: "#071a33", margin: "0 0 8px", letterSpacing: "-.02em" }}>Certificate of Achievement</h2>
+              <div style={{ width: 120, height: 2, background: "linear-gradient(90deg, transparent, #d5a83d, transparent)", margin: "0 auto 24px" }} />
+              <p style={{ color: "#667085", fontSize: 14, margin: "0 0 8px" }}>This certifies that</p>
+              <h1 style={{ fontFamily: "Georgia, serif", fontSize: 48, fontWeight: 400, color: "#071a33", margin: "0 0 8px", borderBottom: "2px solid #d5a83d", display: "inline-block", paddingBottom: 8 }}>{viewCert.member}</h1>
+              <p style={{ color: "#667085", fontSize: 14, margin: "16px 0 8px" }}>has been recognized for</p>
+              <h3 style={{ fontFamily: "Georgia, serif", fontSize: 26, fontWeight: 400, color: "#bd8e28", margin: "0 0 24px" }}>{viewCert.cert}</h3>
+              <p style={{ color: "#4b5563", fontSize: 14, lineHeight: 1.7, maxWidth: 500, margin: "0 auto 28px" }}>
+                Presented in recognition of outstanding commitment to the Select Network community, demonstrating excellence in partnership, growth, and leadership.
+              </p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 32, paddingTop: 20, borderTop: "1px solid #e7e2d8" }}>
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontFamily: "Georgia, serif", fontSize: 20, fontStyle: "italic", color: "#071a33" }}>Lorenzo Miller</div>
+                  <div style={{ fontSize: 11, color: "#667085", marginTop: 4 }}>Founder & CEO</div>
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ width: 60, height: 60, borderRadius: "50%", border: "2px solid #d5a83d", background: "linear-gradient(135deg,#075933,#0d6d42)", color: "#ffd46f", display: "grid", placeItems: "center", fontWeight: 900, fontSize: 12, margin: "0 auto" }}>SN</div>
+                  <div style={{ fontSize: 10, color: "#667085", marginTop: 6 }}>Official Seal</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 14, color: "#071a33", fontWeight: 700 }}>Date Issued</div>
+                  <div style={{ fontSize: 13, color: "#667085" }}>{viewCert.date}</div>
+                </div>
+              </div>
+            </div>
+            {/* Actions bar */}
+            <div style={{ padding: "16px 24px", background: "#f9f6ef", borderTop: "1px solid #e7e2d8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "#667085" }}>Certificate ID: SN-{Math.floor(1000 + Math.random() * 9000)}</span>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button style={btnGreen}>Download PDF</button>
+                <button style={btnOutline} onClick={() => setViewCert(null)}>Close</button>
+              </div>
+            </div>
           </div>
         </div>
       )}

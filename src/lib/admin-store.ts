@@ -180,6 +180,11 @@ export function getPublishedDogs(): AdminDog[] {
   return getAdminDogs().filter((d) => d.status === "published" || d.status === "urgent");
 }
 
+export function isAdminDogsInitialized(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem("ttrg-admin-dogs") !== null;
+}
+
 export function getAdminDogById(id: string): AdminDog | undefined {
   return getAdminDogs().find((d) => d.id === id);
 }
@@ -189,6 +194,11 @@ export function upsertAdminDog(dog: AdminDog) {
   const idx = dogs.findIndex((d) => d.id === dog.id);
   if (idx >= 0) dogs[idx] = dog;
   else dogs.push(dog);
+  saveAdminDogs(dogs);
+}
+
+export function deleteAdminDog(id: string) {
+  const dogs = getAdminDogs().filter((d) => d.id !== id);
   saveAdminDogs(dogs);
 }
 
