@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, PawPrint, ChevronRight, ChevronDown, Filter, Gift, Stethoscope, GraduationCap, Home, Eye } from "lucide-react";
 import { dogs as staticDogs } from "@/lib/dogs";
-import { getPublishedDogs, isAdminDogsInitialized } from "@/lib/admin-store";
+import { fetchPublishedDogs, subscribeToDogs } from "@/lib/admin-store";
 import DogCard from "@/components/ttrg/DogCard";
 
 const filters = ["All Dogs", "Urgent Cases", "Puppies", "In Rehab", "Ready for Home"];
@@ -26,8 +26,13 @@ export default function SponsorPage() {
   const [dogs, setDogs] = useState(staticDogs);
 
   useEffect(() => {
-    const published = getPublishedDogs();
-    if (isAdminDogsInitialized()) setDogs(published as unknown as typeof staticDogs);
+    fetchPublishedDogs().then((published) => {
+      if (published.length > 0) setDogs(published as unknown as typeof staticDogs);
+    });
+    const unsub = subscribeToDogs((dogs) => {
+      if (dogs.length > 0) setDogs(dogs as unknown as typeof staticDogs);
+    });
+    return () => { unsub(); };
   }, []);
 
   return (

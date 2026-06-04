@@ -54,3 +54,7 @@ public/lorenzo/videos/*.mov
 # Large images
 public/lorenzo/trainers/lorenzo-with-mts.jpg
 public/lorenzo/facility-outside.jpg
+
+# Environment variables
+.env.local
+.env*.local

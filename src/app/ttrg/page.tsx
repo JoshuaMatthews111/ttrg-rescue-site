@@ -10,7 +10,7 @@ import {
   Star, TrendingUp, Award, MapPin,
 } from "lucide-react";
 import { dogs as dogData } from "@/lib/dogs";
-import { getPublishedDogs, isAdminDogsInitialized, getTickerItems, type TickerItem } from "@/lib/admin-store";
+import { fetchPublishedDogs, fetchTickerItems, subscribeToDogs, type TickerItem } from "@/lib/admin-store";
 import DogCard from "@/components/ttrg/DogCard";
 
 /* ─── HERO DATA — single video, rotating headlines ─── */
@@ -161,12 +161,20 @@ export default function TTRGHome() {
   const [tickerColor, setTickerColor] = useState({ from: "#1e6b3a", via: "#28a745", to: "#1e6b3a" });
 
   useEffect(() => {
-    const published = getPublishedDogs();
-    if (isAdminDogsInitialized()) setDogs(published as unknown as typeof dogData);
-    const items = getTickerItems().filter((t) => t.active);
-    if (items.length > 0) setTickerItems(items);
+    async function loadData() {
+      const published = await fetchPublishedDogs();
+      if (published.length > 0) setDogs(published as unknown as typeof dogData);
+      const items = await fetchTickerItems();
+      const active = items.filter((t) => t.active);
+      if (active.length > 0) setTickerItems(active);
+    }
+    loadData();
     const savedColor = localStorage.getItem("ttrg-ticker-color");
     if (savedColor) { try { setTickerColor(JSON.parse(savedColor)); } catch {} }
+    const unsub = subscribeToDogs((dogs) => {
+      if (dogs.length > 0) setDogs(dogs as unknown as typeof dogData);
+    });
+    return () => { unsub(); };
   }, []);
 
   useEffect(() => {

@@ -1,5 +1,10 @@
-// Admin data store — uses localStorage for test-mode persistence
+// Admin data store — uses localStorage for test-mode persistence + Supabase for live persistence
 // This is the single source of truth for admin-managed data
+
+import {
+  insertSubmission, insertContactMessage, insertFosterApplication,
+  insertSponsorInterest, insertTickerItem, insertDonation,
+} from "./supabase-store";
 
 export type DogStatus = "draft" | "pending_review" | "published" | "hidden" | "adopted" | "urgent" | "archived";
 
@@ -246,6 +251,7 @@ export function addSubmission(sub: Submission) {
   const subs = getSubmissions();
   subs.unshift(sub);
   saveSubmissions(subs);
+  insertSubmission(sub).catch(() => {});
 }
 
 // ─── CONTACT MESSAGES ───
@@ -257,6 +263,7 @@ export function addContactMessage(msg: ContactMessage) {
   const msgs = getContactMessages();
   msgs.unshift(msg);
   setStore("ttrg-contacts", msgs);
+  insertContactMessage(msg).catch(() => {});
 }
 
 // ─── FOSTER APPLICATIONS ───
@@ -268,6 +275,7 @@ export function addFosterApplication(app: FosterApplication) {
   const apps = getFosterApplications();
   apps.unshift(app);
   setStore("ttrg-foster-apps", apps);
+  insertFosterApplication(app).catch(() => {});
 }
 
 // ─── SPONSOR INTERESTS ───
@@ -279,6 +287,7 @@ export function addSponsorInterest(interest: SponsorInterest) {
   const interests = getSponsorInterests();
   interests.unshift(interest);
   setStore("ttrg-sponsor-interests", interests);
+  insertSponsorInterest(interest).catch(() => {});
 }
 
 // ─── SITE SETTINGS (admin-editable ticker, hero, announcements) ───
@@ -344,6 +353,7 @@ export function addTickerItem(item: TickerItem) {
   const items = getTickerItems();
   items.unshift(item);
   saveTickerItems(items);
+  insertTickerItem(item).catch(() => {});
 }
 
 export function getSiteSettings(): SiteSettings {
@@ -369,7 +379,27 @@ export function addDonation(donation: Donation) {
   const donations = getDonations();
   donations.unshift(donation);
   saveDonations(donations);
+  insertDonation(donation).catch(() => {});
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SUPABASE ASYNC RE-EXPORTS — use these in components for real-time data
+// ═══════════════════════════════════════════════════════════════════════════════
+export {
+  fetchDogs, fetchPublishedDogs, fetchDogById, upsertDog, deleteDog,
+  authenticateUser,
+  fetchAdminUsers, upsertUser,
+  fetchSubmissions, insertSubmission, updateSubmissionStatus,
+  fetchContactMessages, insertContactMessage,
+  fetchFosterApplications, insertFosterApplication,
+  fetchSponsorInterests, insertSponsorInterest,
+  fetchTickerItems, saveTickerItemsDB, insertTickerItem,
+  fetchDonations, insertDonation,
+  fetchSiteSettings, saveSiteSettingsDB,
+  insertAuditLog, fetchAuditLogs,
+  uploadFile, deleteFile, listFiles,
+  subscribeToDogs, subscribeToTable,
+} from "./supabase-store";
 
 // Auto-generate ticker from dog journey progress
 export function generateJourneyTicker(dogName: string, fromStage: string, toStage: string): TickerItem {

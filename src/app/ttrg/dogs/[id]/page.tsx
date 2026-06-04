@@ -1,14 +1,14 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Heart, MapPin, Shield, Stethoscope, GraduationCap, Home, ChevronRight, ChevronLeft, ArrowLeft, Share2,
   PawPrint, AlertTriangle, X, Phone, Mail, CheckCircle2, Clock, Star, Utensils, Dumbbell, Brain,
-  Calendar, Users,
+  Calendar, Users, Loader2,
 } from "lucide-react";
 import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
-import { getAdminDogById } from "@/lib/admin-store";
+import { fetchDogById } from "@/lib/admin-store";
 
 /* ── stage helpers ── */
 const stageOrder: Record<string, number> = { rescue: 0, medical: 1, rehab: 2, foster: 3, adopt: 4, home: 5 };
@@ -25,10 +25,25 @@ const legendItems = [
 
 export default function DogProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const adminDog = typeof window !== "undefined" ? getAdminDogById(id) : undefined;
   const staticDog = getDogById(id);
-  const rawDog = (adminDog || staticDog) as (Dog & Record<string, unknown>) | undefined;
+  const [rawDog, setRawDog] = useState<(Dog & Record<string, unknown>) | undefined>(staticDog as (Dog & Record<string, unknown>) | undefined);
   const [activeImage, setActiveImage] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDogById(id).then((supabaseDog) => {
+      if (supabaseDog) setRawDog(supabaseDog as unknown as Dog & Record<string, unknown>);
+      setLoading(false);
+    });
+  }, [id]);
+
+  if (loading && !rawDog) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-[#C41E2A]" />
+      </div>
+    );
+  }
 
   if (!rawDog) {
     return (

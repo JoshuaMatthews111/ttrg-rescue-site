@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getTickerItems, saveTickerItems, type TickerItem } from "@/lib/admin-store";
+import { fetchTickerItems, saveTickerItemsDB, type TickerItem } from "@/lib/admin-store";
 import { Plus, Trash2, ToggleLeft, ToggleRight, Sparkles, GripVertical, Save, Palette } from "lucide-react";
 
 const TICKER_COLOR_KEY = "ttrg-ticker-color";
@@ -21,15 +21,15 @@ export default function TickerAdmin() {
   const [tickerColor, setTickerColor] = useState(presetColors[0]);
 
   useEffect(() => {
-    setItems(getTickerItems());
+    fetchTickerItems().then(setItems);
     const savedColor = localStorage.getItem(TICKER_COLOR_KEY);
     if (savedColor) {
       try { setTickerColor(JSON.parse(savedColor)); } catch {}
     }
   }, []);
 
-  const save = () => {
-    saveTickerItems(items);
+  const save = async () => {
+    await saveTickerItemsDB(items);
     localStorage.setItem(TICKER_COLOR_KEY, JSON.stringify(tickerColor));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

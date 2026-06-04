@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { CheckCircle2, XCircle, Eye, Search } from "lucide-react";
-import { getSubmissions, saveSubmissions, type Submission } from "@/lib/admin-store";
+import { fetchSubmissions, updateSubmissionStatus, type Submission } from "@/lib/admin-store";
 
 const urgencyColors: Record<string, string> = { Critical: "bg-red-100 text-red-700", Urgent: "bg-amber-100 text-amber-700", Standard: "bg-slate-100 text-slate-600", Low: "bg-slate-50 text-slate-500" };
 const statusColors: Record<string, string> = { pending: "bg-amber-100 text-amber-700", approved: "bg-emerald-100 text-emerald-700", rejected: "bg-red-100 text-red-700", more_info: "bg-blue-100 text-blue-700" };
@@ -11,12 +11,12 @@ export default function SubmissionsPage() {
   const [filter, setFilter] = useState("all");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
-  useEffect(() => { setSubmissions(getSubmissions()); }, []);
+  useEffect(() => { fetchSubmissions().then(setSubmissions); }, []);
 
-  const handleAction = (id: string, action: "approved" | "rejected") => {
+  const handleAction = async (id: string, action: "approved" | "rejected") => {
     const updated = submissions.map((s) => s.id === id ? { ...s, status: action as Submission["status"], actionBy: `Admin (You) — just now` } : s);
     setSubmissions(updated);
-    saveSubmissions(updated);
+    await updateSubmissionStatus(id, action, "Admin (You)");
   };
 
   const filtered = filter === "all" ? submissions : submissions.filter((s) => s.status === filter);

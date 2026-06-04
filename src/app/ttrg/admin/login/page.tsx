@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, Eye, EyeOff, AlertCircle } from "lucide-react";
-import { authenticate, setSession } from "@/lib/admin-store";
+import { authenticate, setSession, authenticateUser } from "@/lib/admin-store";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -13,21 +13,29 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      const result = authenticate(username, password);
-      if (result) {
-        setSession(result.name, result.role);
-        router.push("/ttrg/admin");
-      } else {
-        setError("Invalid username or password.");
-      }
+    // Try Supabase auth first (uses email + password_hash)
+    const sbResult = await authenticateUser(username, password);
+    if (sbResult) {
+      setSession(sbResult.name, sbResult.role);
+      router.push("/ttrg/admin");
       setLoading(false);
-    }, 600);
+      return;
+    }
+
+    // Fallback to demo auth
+    const result = authenticate(username, password);
+    if (result) {
+      setSession(result.name, result.role);
+      router.push("/ttrg/admin");
+    } else {
+      setError("Invalid username or password.");
+    }
+    setLoading(false);
   };
 
   return (
