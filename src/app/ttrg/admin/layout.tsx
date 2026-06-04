@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Dog, FileText, Heart, BookOpen, Users, Building2, Settings,
   Bell, ChevronRight, Menu, X, LogOut, Shield, GraduationCap, AlertTriangle,
-  Activity, ChevronDown, Image as ImageIcon, Megaphone,
+  Activity, ChevronDown, Image as ImageIcon, Megaphone, Paintbrush,
 } from "lucide-react";
 import { getSession, clearSession } from "@/lib/admin-store";
 
@@ -21,6 +21,7 @@ const navByRole: Record<Role, { label: string; href: string; icon: typeof Layout
     { label: "Stories & Videos", href: "/ttrg/admin/media", icon: BookOpen },
     { label: "Partners", href: "/ttrg/admin/partners", icon: Building2 },
     { label: "Ticker / Banner", href: "/ttrg/admin/ticker", icon: Megaphone },
+    { label: "Site Builder", href: "/ttrg/admin/site-builder", icon: Paintbrush },
     { label: "Users & Roles", href: "/ttrg/admin/users", icon: Users },
     { label: "Notifications", href: "/ttrg/admin/notifications", icon: Bell, badge: 4 },
     { label: "Settings", href: "/ttrg/admin/settings", icon: Settings },
@@ -32,6 +33,7 @@ const navByRole: Record<Role, { label: string; href: string; icon: typeof Layout
     { label: "Stories & Videos", href: "/ttrg/admin/media", icon: BookOpen },
     { label: "Partners", href: "/ttrg/admin/partners", icon: Building2 },
     { label: "Ticker / Banner", href: "/ttrg/admin/ticker", icon: Megaphone },
+    { label: "Site Builder", href: "/ttrg/admin/site-builder", icon: Paintbrush },
     { label: "Notifications", href: "/ttrg/admin/notifications", icon: Bell, badge: 4 },
   ],
   trainer: [
@@ -82,6 +84,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [role, checking]);
 
   if (pathname === "/ttrg/admin/login") return <>{children}</>;
+  if (pathname.startsWith("/ttrg/admin/site-builder")) return <>{children}</>;
   if (checking) return <div className="min-h-screen bg-[#0a1628] flex items-center justify-center"><div className="w-8 h-8 border-2 border-[#C41E2A]/30 border-t-[#C41E2A] rounded-full animate-spin" /></div>;
 
   const nav = navByRole[role];

@@ -6,7 +6,7 @@ import {
   Dog, AlertTriangle, FileText, DollarSign, BookOpen, ArrowRight, Search, Bell,
   ShieldCheck, Stethoscope, Home, HandHeart, Repeat, Activity, TrendingUp,
   PawPrint, Heart, Truck, Wrench, GraduationCap, Building2, Plus, Eye, Send,
-  Image as ImageIcon, Users,
+  Image as ImageIcon, Users, Paintbrush,
 } from "lucide-react";
 import { RoleContext } from "./layout";
 
@@ -56,7 +56,7 @@ const quickActions = [
   { label: "Review Applications", icon: FileText, href: "/ttrg/admin/applications" },
   { label: "Add Story/Video", icon: BookOpen, href: "/ttrg/admin/media" },
   { label: "View Donations", icon: DollarSign, href: "/ttrg/admin/donations" },
-  { label: "Manage Urgent Cases", icon: AlertTriangle, href: "/ttrg/admin/dogs?status=urgent" },
+  { label: "Site Builder", icon: Paintbrush, href: "/ttrg/admin/site-builder" },
   { label: "Send Update", icon: Send, href: "/ttrg/admin/notifications" },
 ];
 
