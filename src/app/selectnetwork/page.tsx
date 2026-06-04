@@ -75,9 +75,16 @@ export default function SelectNetworkHomePage() {
           <div className="sn-hero-copy">
             <div className="sn-editorial-kicker">Private investors.<br />Strategic partners.<br />Lasting impact.</div>
             <h1 className="sn-rotator-headline">
-              {HERO_PHRASES.map((phrase, i) => (
-                <span key={i} className={`sn-rotator-phrase${heroPhrase === i ? " active" : ""}`}>{phrase}</span>
-              ))}
+              {HERO_PHRASES.map((phrase, i) => {
+                const words = phrase.split(" ");
+                const gold = words.slice(0, 2).join(" ");
+                const rest = words.slice(2).join(" ");
+                return (
+                  <span key={i} className={`sn-rotator-phrase${heroPhrase === i ? " active" : ""}`}>
+                    <span className="sn-rp-gold">{gold}</span>{rest ? " " : ""}<span className="sn-rp-navy">{rest}</span>
+                  </span>
+                );
+              })}
             </h1>
             <div className="sn-gold-rule"><span className="sn-rule-diamond">◇</span></div>
             <h2 className="sn-hero-subtitle">Building the Next Wave of Private Investment Opportunities</h2>
@@ -350,48 +357,55 @@ export default function SelectNetworkHomePage() {
         /* Headline Rotator */
         .sn-rotator-headline {
           font-family: Georgia, 'Times New Roman', serif;
-          font-size: clamp(36px, 3.8vw, 56px);
-          line-height: 1.15;
-          letter-spacing: -.03em;
+          font-size: clamp(32px, 3.4vw, 50px);
+          line-height: 1.2;
+          letter-spacing: -.025em;
           color: var(--navy);
           margin: 0 0 14px;
           font-weight: 500;
           max-width: 520px;
           position: relative;
-          height: 1.3em;
-          overflow: hidden;
+          min-height: 2.5em;
         }
         .sn-rotator-phrase {
           position: absolute;
           top: 0; left: 0; right: 0;
           display: block;
           opacity: 0;
-          transform: rotateX(90deg) translateY(-20px);
+          transform: rotateX(90deg) translateY(-10px);
           transform-origin: center bottom;
-          transition: none;
-          background: linear-gradient(90deg, #8d5518, #d7a64b, #c98a2e, #805112);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          overflow: hidden;
+          transition: opacity .15s, transform .15s;
+          pointer-events: none;
         }
         .sn-rotator-phrase.active {
           opacity: 1;
           transform: rotateX(0deg) translateY(0);
           animation: snFlipIn .6s cubic-bezier(.23,1,.32,1) forwards;
+          pointer-events: auto;
         }
-        .sn-rotator-phrase.active::after {
+        .sn-rp-gold {
+          background: linear-gradient(90deg, #8d5518, #d7a64b, #c98a2e, #805112);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          position: relative;
+          display: inline;
+        }
+        .sn-rotator-phrase.active .sn-rp-gold::after {
           content: "";
           position: absolute;
           top: 0; bottom: 0;
-          width: 40%;
+          width: 45%;
           left: -60%;
-          background: linear-gradient(100deg, transparent, rgba(255,228,148,.5) 45%, rgba(255,240,190,.8) 50%, rgba(255,228,148,.5) 55%, transparent);
+          background: linear-gradient(100deg, transparent, rgba(255,228,148,.55) 45%, rgba(255,240,190,.85) 50%, rgba(255,228,148,.55) 55%, transparent);
           animation: snShineSlide 3.2s ease-in-out infinite;
           pointer-events: none;
         }
+        .sn-rp-navy {
+          color: var(--navy);
+        }
         @keyframes snFlipIn {
-          0% { opacity: 0; transform: rotateX(90deg) translateY(-20px); filter: blur(2px); }
+          0% { opacity: 0; transform: rotateX(90deg) translateY(-10px); filter: blur(2px); }
           40% { opacity: 1; filter: blur(0); }
           100% { opacity: 1; transform: rotateX(0deg) translateY(0); }
         }
