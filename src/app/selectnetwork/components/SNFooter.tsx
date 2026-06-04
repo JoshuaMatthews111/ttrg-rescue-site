@@ -67,7 +67,7 @@ export default function SNFooter() {
           <div style={{ display: "flex", flexDirection: "column", gap: 11, color: "#c6d2e1", fontSize: 13.5 }}>
             <a href="tel:+12168651165" style={{ color: "#c6d2e1", textDecoration: "none" }}>(216) 865-1165</a>
             <a href="mailto:Selectprofits@gmail.com" style={{ color: "#c6d2e1", textDecoration: "none" }}>Selectprofits@gmail.com</a>
-            <span>123 Legacy Way, Suite 100<br />Atlanta, GA 30309</span>
+            <span>4805 Orchard Rd<br />Garfield Hts, OH 44128</span>
             <Link
               href="/selectnetwork/login"
               style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 6, color: "#ffd46f", fontWeight: 800, fontSize: 12.5, textDecoration: "none", textTransform: "uppercase", letterSpacing: ".04em" }}

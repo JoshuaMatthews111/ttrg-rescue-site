@@ -9,9 +9,21 @@ export default function SelectNetworkHomePage() {
   /* ─── Focus card rotation ─── */
   const [activeCard, setActiveCard] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [heroPhrase, setHeroPhrase] = useState(0);
+  const HERO_PHRASES = [
+    "Access Private Opportunities.",
+    "Connect Capital to Growing Companies.",
+    "Build Strategic Partnerships.",
+    "Expand With Proven Systems.",
+    "Join a Private Investor Network.",
+  ];
   useEffect(() => {
     const timer = setInterval(() => setActiveCard((i) => (i + 1) % 6), 1700);
     return () => clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    const phraseTimer = setInterval(() => setHeroPhrase((i) => (i + 1) % 5), 3200);
+    return () => clearInterval(phraseTimer);
   }, []);
 
   return (
@@ -62,7 +74,11 @@ export default function SelectNetworkHomePage() {
           {/* Left — Copy */}
           <div className="sn-hero-copy">
             <div className="sn-editorial-kicker">Private investors.<br />Strategic partners.<br />Lasting impact.</div>
-            <h1 className="sn-static-headline"><span className="sn-gold sn-shine">Private</span> Access.<br /><span className="sn-gold sn-shine">Identifying</span> Opportunity.<br />Building Value.</h1>
+            <h1 className="sn-rotator-headline">
+              {HERO_PHRASES.map((phrase, i) => (
+                <span key={i} className={`sn-rotator-phrase${heroPhrase === i ? " active" : ""}`}>{phrase}</span>
+              ))}
+            </h1>
             <div className="sn-gold-rule"><span className="sn-rule-diamond">◇</span></div>
             <h2 className="sn-hero-subtitle">Building the Next Wave of Private Investment Opportunities</h2>
             <p className="sn-hero-paragraph">Select Network exists to connect capital with vision, strong company systems, and strategic private investment opportunities designed to create sustainable long-term growth.</p>
@@ -331,35 +347,53 @@ export default function SelectNetworkHomePage() {
         .sn-editorial-kicker { color: #b97820; font-size: 13px; line-height: 1.45; text-transform: uppercase; letter-spacing: .28em; font-weight: 900; margin-bottom: 18px; }
         .sn-hero-copy { align-self: center; padding-top: 15px; }
 
-        /* Headline */
-        .sn-static-headline {
+        /* Headline Rotator */
+        .sn-rotator-headline {
           font-family: Georgia, 'Times New Roman', serif;
-          font-size: clamp(42px, 4.2vw, 64px);
-          line-height: 1.05;
-          letter-spacing: -.035em;
+          font-size: clamp(36px, 3.8vw, 56px);
+          line-height: 1.15;
+          letter-spacing: -.03em;
           color: var(--navy);
           margin: 0 0 14px;
           font-weight: 500;
           max-width: 520px;
+          position: relative;
+          height: 1.3em;
+          overflow: hidden;
         }
-        .sn-gold {
-          background: linear-gradient(90deg, #8d5518, #d7a64b, #805112);
+        .sn-rotator-phrase {
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          display: block;
+          opacity: 0;
+          transform: rotateX(90deg) translateY(-20px);
+          transform-origin: center bottom;
+          transition: none;
+          background: linear-gradient(90deg, #8d5518, #d7a64b, #c98a2e, #805112);
           -webkit-background-clip: text;
           background-clip: text;
           color: transparent;
-          display: inline-block;
-          position: relative;
+          overflow: hidden;
         }
-        .sn-shine { overflow: hidden; }
-        .sn-shine::after {
+        .sn-rotator-phrase.active {
+          opacity: 1;
+          transform: rotateX(0deg) translateY(0);
+          animation: snFlipIn .6s cubic-bezier(.23,1,.32,1) forwards;
+        }
+        .sn-rotator-phrase.active::after {
           content: "";
           position: absolute;
           top: 0; bottom: 0;
           width: 40%;
           left: -60%;
-          background: linear-gradient(100deg, transparent, rgba(255,228,148,.45) 45%, rgba(255,240,190,.7) 50%, rgba(255,228,148,.45) 55%, transparent);
-          animation: snShineSlide 4s ease-in-out infinite;
+          background: linear-gradient(100deg, transparent, rgba(255,228,148,.5) 45%, rgba(255,240,190,.8) 50%, rgba(255,228,148,.5) 55%, transparent);
+          animation: snShineSlide 3.2s ease-in-out infinite;
           pointer-events: none;
+        }
+        @keyframes snFlipIn {
+          0% { opacity: 0; transform: rotateX(90deg) translateY(-20px); filter: blur(2px); }
+          40% { opacity: 1; filter: blur(0); }
+          100% { opacity: 1; transform: rotateX(0deg) translateY(0); }
         }
         @keyframes snShineSlide {
           0%, 30% { left: -60%; opacity: 0; }
