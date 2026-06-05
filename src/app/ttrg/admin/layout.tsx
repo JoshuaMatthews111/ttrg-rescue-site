@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Dog, FileText, Heart, BookOpen, Users, Building2, Settings,
-  Bell, ChevronRight, Menu, X, LogOut, Shield, GraduationCap, AlertTriangle,
+  Bell, ChevronRight, Menu, X, LogOut, Shield, GraduationCap,
   Activity, ChevronDown, Image as ImageIcon, Megaphone, Paintbrush,
 } from "lucide-react";
 import { getSession, clearSession } from "@/lib/admin-store";
@@ -161,14 +161,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Emergency Mode */}
-      <div className="p-4 border-t border-white/5">
-        <button className="w-full bg-gradient-to-br from-[#C41E2A] to-[#7a0d18] hover:from-[#A01825] text-white py-3 rounded-xl text-xs font-black tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-red-900/40 transition-all">
-          <AlertTriangle className="w-4 h-4" /> EMERGENCY MODE
-        </button>
-        <p className="text-white/30 text-[9px] text-center mt-1.5">Initiate Emergency Protocol</p>
       </div>
 
       {/* User + Logout */}

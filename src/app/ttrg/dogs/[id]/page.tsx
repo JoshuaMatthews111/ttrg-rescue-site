@@ -8,7 +8,7 @@ import {
   Calendar, Users, Loader2,
 } from "lucide-react";
 import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
-import { fetchDogById } from "@/lib/admin-store";
+import { fetchDogById, subscribeToTable } from "@/lib/admin-store";
 
 /* ── stage helpers ── */
 const stageOrder: Record<string, number> = { rescue: 0, medical: 1, rehab: 2, foster: 3, adopt: 4, home: 5 };
@@ -35,6 +35,12 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
       if (supabaseDog) setRawDog(supabaseDog as unknown as Dog & Record<string, unknown>);
       setLoading(false);
     });
+    const unsub = subscribeToTable("dogs", () => {
+      fetchDogById(id).then((supabaseDog) => {
+        if (supabaseDog) setRawDog(supabaseDog as unknown as Dog & Record<string, unknown>);
+      });
+    });
+    return () => { unsub(); };
   }, [id]);
 
   if (loading && !rawDog) {
