@@ -48,11 +48,7 @@ const impactStats = [
   { label: "Community Partners", value: 75, suffix: "+", icon: Building2 },
 ];
 
-const testimonialVideos = [
-  { id: 1, src: "/ttrg/videos/britta-testimonial.mp4", title: "From Fear to Family", quote: "Luna's journey from heartbreak to thriving.", category: "Rescue Story", thumb: "/ttrg/videos/britta-testimonial-poster.jpg" },
-  { id: 2, src: "/ttrg/videos/testimonial-2.mp4", title: "Second Chances Work", quote: "Max went from neglected to thriving.", category: "Training Story", thumb: "/ttrg/videos/testimonial-2-poster.jpg" },
-  { id: 3, src: "/ttrg/videos/trefz-family.mp4", title: "A Bond That Heals", quote: "How Rex helped a family heal too.", category: "Client Testimonial", thumb: "/ttrg/videos/trefz-family-poster.jpg" },
-];
+// Testimonial videos removed — will be populated via admin media library when added back
 
 const journey = [
   { num: 1, label: "Rescue", icon: ShieldCheck, desc: "We save dogs from high-risk situations and transport them to safety.", detail: "Our rescue network spans shelters, owner surrenders, and emergency situations. Every dog is evaluated, stabilized, and moved to safety within 24–72 hours.", cta: "Recommend a Dog for Rescue", ctaHref: "/ttrg/submit", stat: "2,300+ dogs rescued" },
@@ -148,7 +144,6 @@ function scrollToId(id: string) {
 
 /* ─── PAGE ─── */
 export default function TTRGHome() {
-  const [videoModal, setVideoModal] = useState<null | typeof testimonialVideos[0]>(null);
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupDismissed, setPopupDismissed] = useState(false);
@@ -439,33 +434,6 @@ export default function TTRGHome() {
             </div>
           </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonialVideos.map((vid) => (
-              <div key={vid.id} className="group text-left rounded-3xl overflow-hidden border border-[#2d5a3d]/10 hover:shadow-2xl transition-all duration-500 bg-white">
-                <button onClick={() => setVideoModal(vid)} className="w-full text-left">
-                  <div className="relative aspect-[16/10] overflow-hidden bg-slate-900">
-                    <img src={vid.thumb} alt={vid.title} className="w-full h-full object-cover brightness-90 group-hover:brightness-75 group-hover:scale-105 transition-all duration-700" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-[#C41E2A] group-hover:scale-110 transition-all shadow-lg">
-                        <Play className="w-6 h-6 text-white fill-white ml-1" />
-                      </div>
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-5">
-                      <span className="inline-block bg-[#C41E2A]/90 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full mb-2">{vid.category}</span>
-                      <p className="text-white font-bold text-sm">{vid.title}</p>
-                      <p className="text-white/60 text-xs italic mt-1">&ldquo;{vid.quote}&rdquo;</p>
-                    </div>
-                  </div>
-                </button>
-                <div className="px-4 py-3 flex items-center justify-between">
-                  <span className="text-[10px] text-[#1B2A4A]/40 font-semibold uppercase tracking-wider">Share this story</span>
-                  <ShareButtons title={vid.title} />
-                </div>
-              </div>
-            ))}
-          </div>
-
           <div className="text-center mt-10">
             <Link href="/ttrg/stories" className="inline-flex items-center gap-2 text-sm font-bold text-[#1B2A4A] hover:text-[#C41E2A] transition-colors">
               VIEW ALL SUCCESS STORIES <ChevronRight className="w-4 h-4" />
@@ -623,26 +591,6 @@ export default function TTRGHome() {
           </div>
         </div>
       </section>
-
-      {/* ═══ VIDEO LIGHTBOX ═══ */}
-      {videoModal && (
-        <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4" onClick={() => setVideoModal(null)}>
-          <div className="relative w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setVideoModal(null)} className="absolute -top-12 right-0 text-white/60 hover:text-white transition-colors">
-              <X className="w-8 h-8" />
-            </button>
-            <div className="rounded-2xl overflow-hidden shadow-2xl bg-black">
-              <video controls autoPlay className="w-full aspect-video">
-                <source src={videoModal.src} type="video/mp4" />
-              </video>
-              <div className="p-5 bg-[#1B2A4A]">
-                <p className="text-white font-bold text-lg">{videoModal.title}</p>
-                <p className="text-white/50 text-sm mt-1">{videoModal.quote}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ═══ BO & BRADY VIDEO LIGHTBOX ═══ */}
       {boVideoOpen && (

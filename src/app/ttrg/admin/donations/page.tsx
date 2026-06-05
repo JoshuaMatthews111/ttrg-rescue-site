@@ -1,8 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DollarSign, Heart, TrendingUp, Search, Building2, Repeat, Filter } from "lucide-react";
+import { DollarSign, Heart, TrendingUp, Search, Building2, Repeat, Filter, Info } from "lucide-react";
 import { fetchDonations as fetchRealDonations } from "@/lib/admin-store";
+
+function InfoTip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative inline-flex ml-1.5" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)} onClick={() => setShow(!show)}>
+      <Info className="w-3.5 h-3.5 text-white/30 hover:text-white/60 cursor-help transition-colors" />
+      {show && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-[#1B2A4A] border border-white/20 text-white/80 text-[10px] leading-relaxed p-2.5 rounded-lg shadow-xl z-50 pointer-events-none">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
 
 type DonationType = "one_time" | "monthly" | "infrastructure" | "corporate" | "dog_sponsor";
 
@@ -19,23 +33,6 @@ interface Donation {
   receipt: boolean;
 }
 
-const donations: Donation[] = [
-  { id: "D-2401", donor: "John Davis", email: "john@email.com", amount: 525, type: "one_time", category: "Vet Care", dog: "K9 Bella", date: "2026-05-21", status: "paid", receipt: true },
-  { id: "D-2402", donor: "Sarah Miller", email: "sarah@email.com", amount: 250, type: "monthly", category: "Training Program", date: "2026-05-21", status: "paid", receipt: true },
-  { id: "D-2403", donor: "Robert White", email: "robert@email.com", amount: 1000, type: "one_time", category: "Emergency Rescue Fund", date: "2026-05-21", status: "paid", receipt: true },
-  { id: "D-2404", donor: "Emily Wilson", email: "emily@email.com", amount: 100, type: "monthly", category: "Transport", dog: "K9 Max", date: "2026-05-21", status: "paid", receipt: true },
-  { id: "D-2405", donor: "The Garcia Family", email: "garcia@email.com", amount: 300, type: "monthly", category: "Foster Care Support", date: "2026-05-20", status: "paid", receipt: true },
-  { id: "D-2406", donor: "K9 Solutions Inc.", email: "corp@k9solutions.com", amount: 5000, type: "corporate", category: "Corporate Sponsorship", date: "2026-05-19", status: "paid", receipt: true },
-  { id: "D-2407", donor: "Patriot Logistics", email: "donate@patriotlog.com", amount: 1500, type: "infrastructure", category: "Kennel Expansion", date: "2026-05-18", status: "paid", receipt: true },
-  { id: "D-2408", donor: "Anonymous", email: "—", amount: 50, type: "one_time", category: "General", date: "2026-05-18", status: "paid", receipt: false },
-];
-
-const summary = [
-  { label: "Total Raised (YTD)", value: "$87,450", sub: "+18.7% vs last year", icon: DollarSign, color: "from-emerald-500 to-emerald-700" },
-  { label: "Monthly Recurring", value: "$23,410", sub: "+12.3% vs last month", icon: Repeat, color: "from-blue-500 to-blue-700" },
-  { label: "One-Time Gifts", value: "$64,040", sub: "+22.9% vs last month", icon: Heart, color: "from-red-500 to-red-700" },
-  { label: "Corporate Partners", value: 48, sub: "+4 this month", icon: Building2, color: "from-violet-500 to-purple-700" },
-];
 
 const typeColors: Record<DonationType, string> = {
   one_time: "bg-blue-500/20 text-blue-300",
@@ -48,27 +45,35 @@ const typeColors: Record<DonationType, string> = {
 export default function DonationsPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<DonationType | "all">("all");
-  const [allDonations, setAllDonations] = useState(donations);
+  const [allDonations, setAllDonations] = useState<Donation[]>([]);
 
   useEffect(() => {
     fetchRealDonations().then((real) => {
-      if (real.length > 0) {
-        const mapped: Donation[] = real.map((r) => ({
-          id: r.id,
-          donor: r.name,
-          email: r.email,
-          amount: r.amount,
-          type: r.frequency === "monthly" ? "monthly" as DonationType : "one_time" as DonationType,
-          category: r.dogName ? `Dog Sponsor – ${r.dogName}` : "General Donation",
-          dog: r.dogName,
-          date: r.date.split("T")[0],
-          status: r.status === "completed" ? "paid" as const : "pending" as const,
-          receipt: false,
-        }));
-        setAllDonations([...mapped, ...donations]);
-      }
+      const mapped: Donation[] = real.map((r) => ({
+        id: r.id,
+        donor: r.name,
+        email: r.email,
+        amount: r.amount,
+        type: r.frequency === "monthly" ? "monthly" as DonationType : "one_time" as DonationType,
+        category: r.dogName ? `Dog Sponsor – ${r.dogName}` : "General Donation",
+        dog: r.dogName,
+        date: r.date ? r.date.split("T")[0] : "",
+        status: r.status === "completed" ? "paid" as const : "pending" as const,
+        receipt: false,
+      }));
+      setAllDonations(mapped);
     });
   }, []);
+
+  const totalRaised = allDonations.reduce((sum, d) => sum + d.amount, 0);
+  const monthlyRecurring = allDonations.filter(d => d.type === "monthly").reduce((sum, d) => sum + d.amount, 0);
+  const oneTime = allDonations.filter(d => d.type === "one_time").reduce((sum, d) => sum + d.amount, 0);
+  const summary = [
+    { label: "Total Raised", value: `$${totalRaised.toLocaleString()}`, sub: `${allDonations.length} donations`, icon: DollarSign, color: "from-emerald-500 to-emerald-700" },
+    { label: "Monthly Recurring", value: `$${monthlyRecurring.toLocaleString()}`, sub: `${allDonations.filter(d => d.type === "monthly").length} active`, icon: Repeat, color: "from-blue-500 to-blue-700" },
+    { label: "One-Time Gifts", value: `$${oneTime.toLocaleString()}`, sub: `${allDonations.filter(d => d.type === "one_time").length} gifts`, icon: Heart, color: "from-red-500 to-red-700" },
+    { label: "Avg Donation", value: `$${allDonations.length > 0 ? Math.round(totalRaised / allDonations.length) : 0}`, sub: "Per donation", icon: TrendingUp, color: "from-violet-500 to-purple-700" },
+  ];
 
   const filtered = allDonations.filter((d) => {
     if (filter !== "all" && d.type !== filter) return false;
@@ -80,8 +85,8 @@ export default function DonationsPage() {
     <div className="p-5 sm:p-8 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">DONATIONS</h1>
-          <p className="text-white/40 text-xs mt-1">Track all donations: one-time, monthly, dog sponsorship, infrastructure, and corporate</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">DONATIONS <InfoTip text="Shows all real donations processed through the site. Numbers reflect actual payments. Connect Authorize.net reporting API for historical transaction data." /></h1>
+          <p className="text-white/40 text-xs mt-1">Live donation data from the database — {allDonations.length} total records</p>
         </div>
       </div>
 

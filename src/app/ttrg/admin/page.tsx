@@ -1,55 +1,34 @@
 "use client";
 
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Dog, AlertTriangle, FileText, DollarSign, BookOpen, ArrowRight, Search, Bell,
   ShieldCheck, Stethoscope, Home, HandHeart, Repeat, Activity, TrendingUp,
   PawPrint, Heart, Truck, Wrench, GraduationCap, Building2, Plus, Eye, Send,
-  Image as ImageIcon, Users, Paintbrush,
+  Image as ImageIcon, Users, Paintbrush, Info,
 } from "lucide-react";
 import { RoleContext } from "./layout";
+import {
+  fetchDogs, fetchSubmissions, fetchDonations, fetchFosterApplications,
+  fetchSponsorInterests, fetchAuditLogs,
+  type AdminDog, type Submission, type Donation,
+} from "@/lib/admin-store";
 
-/* ─── DATA ─── */
-const statCards = [
-  { label: "Active Dogs", value: 126, sub: "+8 this week", icon: Dog, color: "from-blue-500 to-blue-700", trend: "up" },
-  { label: "Urgent Cases", value: 9, sub: "Needs immediate attention", icon: AlertTriangle, color: "from-red-500 to-red-700", trend: "alert" },
-  { label: "Pending Applications", value: 23, sub: "-4 vs last week", icon: FileText, color: "from-amber-500 to-orange-600", trend: "down" },
-  { label: "Donations This Month", value: "$24,580", sub: "+18.7% vs last month", icon: DollarSign, color: "from-emerald-500 to-emerald-700", trend: "up" },
-  { label: "Stories Published", value: 17, sub: "+5 this month", icon: BookOpen, color: "from-violet-500 to-purple-700", trend: "up" },
-];
-
-const pipeline = [
-  { stage: "Rescue", count: 18, sub: "+3 new", icon: ShieldCheck, color: "bg-red-600/20 border-red-500/40" },
-  { stage: "Rehabilitate", count: 22, sub: "In treatment", icon: Stethoscope, color: "bg-orange-600/20 border-orange-500/40" },
-  { stage: "Training (Internal)", count: 27, sub: "In training", icon: GraduationCap, color: "bg-amber-600/20 border-amber-500/40" },
-  { stage: "Foster", count: 31, sub: "In foster care", icon: Home, color: "bg-blue-600/20 border-blue-500/40" },
-  { stage: "Adopt", count: 28, sub: "Ready", icon: HandHeart, color: "bg-emerald-600/20 border-emerald-500/40" },
-];
-
-const missionFeed = [
-  { time: "10 min ago", type: "urgent", dog: "K9 Bella", text: "Needs foster placement", priority: "HIGH", location: "Houston, TX" },
-  { time: "25 min ago", type: "urgent", dog: "K9 Rex", text: "Medical attention required", priority: "HIGH", location: "Memphis, TN" },
-  { time: "45 min ago", type: "rescue", dog: "K9 Luna", text: "Rescue transport needed", priority: "MEDIUM", location: "Dallas, TX" },
-  { time: "1 hr ago", type: "donation", dog: "", text: "$525 donation received for K9 Max", priority: "INFO", location: "John D." },
-  { time: "2 hr ago", type: "application", dog: "", text: "New foster application submitted", priority: "INFO", location: "Amanda F." },
-];
-
-const approvalsQueue = [
-  { name: "Amanda Foster", type: "Adoption Application", time: "9:50 AM", dog: "K9 Rocky" },
-  { name: "Michael Thompson", type: "Foster Application", time: "9:15 AM", dog: "K9 Luna" },
-  { name: "Jessica Martinez", type: "Adoption Application", time: "8:40 AM", dog: "K9 Daisy" },
-  { name: "David Anderson", type: "Foster Application", time: "Yesterday", dog: "K9 Max" },
-  { name: "Lisa Brown", type: "Adoption Application", time: "Yesterday", dog: "K9 Zeus" },
-];
-
-const donorActivity = [
-  { initials: "JD", name: "John Davis", time: "10:20 AM", amount: "$525.00", purpose: "K9 Bella · Medical Care" },
-  { initials: "SM", name: "Sarah Miller", time: "9:45 AM", amount: "$250.00", purpose: "Training Program" },
-  { initials: "RW", name: "Robert White", time: "9:30 AM", amount: "$1,000.00", purpose: "Emergency Rescue Fund" },
-  { initials: "EW", name: "Emily Wilson", time: "8:15 AM", amount: "$100.00", purpose: "K9 Max · Transport" },
-  { initials: "TG", name: "The Garcia Family", time: "Yesterday", amount: "$300.00", purpose: "Foster Care Support" },
-];
+/* ─── Info Tooltip ─── */
+function InfoTip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative inline-flex ml-1.5" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)} onClick={() => setShow(!show)}>
+      <Info className="w-3.5 h-3.5 text-white/30 hover:text-white/60 cursor-help transition-colors" />
+      {show && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-[#1B2A4A] border border-white/20 text-white/80 text-[10px] leading-relaxed p-2.5 rounded-lg shadow-xl z-50 pointer-events-none">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
 
 const quickActions = [
   { label: "Add Dog", icon: Plus, href: "/ttrg/admin/dogs" },
@@ -68,11 +47,64 @@ const priorityColors: Record<string, string> = {
 
 export default function AdminDashboard() {
   const { role } = useContext(RoleContext);
+  const [dogs, setDogs] = useState<AdminDog[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [fosterApps, setFosterApps] = useState<{ id: string; firstName?: string; lastName?: string; status?: string; date?: string }[]>([]);
+  const [sponsors, setSponsors] = useState<{ id: string; name: string; dogName?: string; amount?: number; date?: string }[]>([]);
+  const [auditLogs, setAuditLogs] = useState<{ action: string; entityName?: string; userName?: string; timestamp?: string }[]>([]);
+  const [lastRefresh, setLastRefresh] = useState<string>("");
+
+  useEffect(() => {
+    async function load() {
+      const [d, s, don, fa, sp, logs] = await Promise.all([
+        fetchDogs(), fetchSubmissions(), fetchDonations(),
+        fetchFosterApplications(), fetchSponsorInterests(), fetchAuditLogs(),
+      ]);
+      setDogs(d); setSubmissions(s); setDonations(don);
+      setFosterApps(fa as unknown as typeof fosterApps);
+      setSponsors(sp as unknown as typeof sponsors);
+      setAuditLogs(logs as unknown as typeof auditLogs);
+      setLastRefresh(new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" }) + " ET");
+    }
+    load();
+  }, []);
 
   // Trainer view
   if (role === "trainer") return <TrainerDashboard />;
   // Partner view
   if (role === "org_partner") return <PartnerDashboard />;
+
+  // Computed real stats
+  const publishedDogs = dogs.filter((d) => d.status === "published" || d.status === "urgent");
+  const urgentDogs = dogs.filter((d) => d.urgent || d.status === "urgent");
+  const pendingSubs = submissions.filter((s) => s.status === "pending");
+  const totalDonationAmt = donations.reduce((sum, d) => sum + (d.amount || 0), 0);
+  const pendingFoster = fosterApps.filter((f) => f.status === "pending");
+
+  const pipelineCounts = {
+    rescue: dogs.filter((d) => d.stage === "rescue").length,
+    rehabilitate: dogs.filter((d) => d.stage === "rehabilitate").length,
+    train: dogs.filter((d) => d.stage === "train").length,
+    recover: dogs.filter((d) => d.stage === "recover").length,
+    rehome: dogs.filter((d) => d.stage === "rehome").length,
+  };
+
+  const pipeline = [
+    { stage: "Rescue", count: pipelineCounts.rescue, icon: ShieldCheck, color: "bg-red-600/20 border-red-500/40" },
+    { stage: "Rehabilitate", count: pipelineCounts.rehabilitate, icon: Stethoscope, color: "bg-orange-600/20 border-orange-500/40" },
+    { stage: "Training", count: pipelineCounts.train, icon: GraduationCap, color: "bg-amber-600/20 border-amber-500/40" },
+    { stage: "Recover", count: pipelineCounts.recover, icon: Home, color: "bg-blue-600/20 border-blue-500/40" },
+    { stage: "Rehome", count: pipelineCounts.rehome, icon: HandHeart, color: "bg-emerald-600/20 border-emerald-500/40" },
+  ];
+
+  const statCards = [
+    { label: "Active Dogs", value: publishedDogs.length, sub: `${dogs.length} total in system`, icon: Dog, color: "from-blue-500 to-blue-700", trend: "up" as const },
+    { label: "Urgent Cases", value: urgentDogs.length, sub: "Needs immediate attention", icon: AlertTriangle, color: "from-red-500 to-red-700", trend: "alert" as const },
+    { label: "Pending Applications", value: pendingSubs.length + pendingFoster.length, sub: `${pendingSubs.length} submissions, ${pendingFoster.length} foster`, icon: FileText, color: "from-amber-500 to-orange-600", trend: "down" as const },
+    { label: "Total Donations", value: `$${totalDonationAmt.toLocaleString()}`, sub: `${donations.length} donations recorded`, icon: DollarSign, color: "from-emerald-500 to-emerald-700", trend: "up" as const },
+    { label: "Sponsor Interests", value: sponsors.length, sub: "Active sponsor inquiries", icon: Heart, color: "from-violet-500 to-purple-700", trend: "up" as const },
+  ];
 
   // Super Admin / Admin view
   return (
@@ -84,31 +116,12 @@ export default function AdminDashboard() {
           <p className="text-white/40 text-xs mt-1">RESCUE. REHABILITATE. <span className="text-[#C41E2A] font-bold">TRAIN.</span> REHOME.</p>
         </div>
         <div className="flex items-center gap-3">
+          {lastRefresh && <span className="text-[10px] text-white/30">Last refreshed: {lastRefresh}</span>}
           <div className="relative flex-1 lg:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-            <input placeholder="Search dogs, cases, donors, applications..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/30" />
+            <input placeholder="Search dogs, cases, donors..." className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/30" />
           </div>
-          <button className="relative w-10 h-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors">
-            <Bell className="w-4 h-4 text-white/60" />
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#C41E2A] text-white text-[10px] font-bold rounded-full flex items-center justify-center">12</span>
-          </button>
         </div>
-      </div>
-
-      {/* Mission Feed Ticker */}
-      <div className="bg-gradient-to-r from-[#C41E2A]/10 via-transparent to-transparent border border-[#C41E2A]/20 rounded-xl px-4 py-3 mb-6 flex items-center gap-3 overflow-hidden">
-        <span className="flex items-center gap-2 flex-shrink-0">
-          <span className="w-2 h-2 rounded-full bg-[#C41E2A] animate-pulse" />
-          <span className="text-[#C41E2A] text-[10px] font-bold tracking-wider">MISSION FEED</span>
-        </span>
-        <div className="flex items-center gap-6 text-xs text-white/70 overflow-hidden whitespace-nowrap">
-          <span>NEW RESCUE: K9 Max rescued in Houston, TX</span>
-          <span className="text-white/30">•</span>
-          <span>URGENT CASE: K9 Bella needs foster now</span>
-          <span className="text-white/30">•</span>
-          <span>DONATION RECEIVED: $525 from John D.</span>
-        </div>
-        <Link href="/ttrg/admin/notifications" className="ml-auto text-[#C41E2A] text-[10px] font-bold tracking-wider hover:underline flex-shrink-0">VIEW ALL →</Link>
       </div>
 
       {/* Stat Cards */}
@@ -137,6 +150,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2">
               <PawPrint className="w-4 h-4 text-[#C41E2A]" />
               <h2 className="text-sm font-bold text-white">DOG JOURNEY PIPELINE</h2>
+              <InfoTip text="Shows the number of dogs currently in each stage of their journey. These counts are live from the database and update as you change dog stages in the Dogs Management page." />
             </div>
             <Link href="/ttrg/admin/dogs" className="text-[10px] font-bold text-white/40 hover:text-white">VIEW DETAILS →</Link>
           </div>
@@ -146,123 +160,118 @@ export default function AdminDashboard() {
                 <stage.icon className="w-5 h-5 text-white mb-2" />
                 <p className="text-3xl font-black text-white">{stage.count}</p>
                 <p className="text-[10px] font-bold text-white/70 mt-1">{stage.stage}</p>
-                <p className="text-[9px] text-white/40 mt-0.5">{stage.sub}</p>
               </Link>
             ))}
           </div>
           <div className="mt-5 flex items-center justify-between pt-4 border-t border-white/5">
-            <span className="text-xs text-white/40 flex items-center gap-2"><PawPrint className="w-3.5 h-3.5" /> TOTAL DOGS IN PIPELINE: <strong className="text-white">126</strong></span>
-            <Link href="/ttrg/admin/dogs" className="text-[10px] font-bold text-[#C41E2A] hover:underline">VIEW PIPELINE DETAILS →</Link>
+            <span className="text-xs text-white/40 flex items-center gap-2"><PawPrint className="w-3.5 h-3.5" /> TOTAL DOGS IN SYSTEM: <strong className="text-white">{dogs.length}</strong></span>
+            <Link href="/ttrg/admin/dogs" className="text-[10px] font-bold text-[#C41E2A] hover:underline">VIEW ALL DOGS →</Link>
           </div>
         </div>
 
-        {/* Mission Feed */}
+        {/* Recent Activity */}
         <div className="bg-[#0f1b30] border border-white/5 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-              <h2 className="text-sm font-bold text-white">MISSION FEED</h2>
+              <Activity className="w-4 h-4 text-blue-400" />
+              <h2 className="text-sm font-bold text-white">RECENT ACTIVITY</h2>
+              <InfoTip text="Shows the latest actions taken in the admin panel (dog edits, status changes, deletions). Updated in real-time from the audit log." />
             </div>
-            <Link href="/ttrg/admin/notifications" className="text-[10px] font-bold text-white/40 hover:text-white">VIEW ALL →</Link>
           </div>
           <div className="space-y-3">
-            {missionFeed.slice(0, 4).map((item, i) => (
-              <div key={i} className="flex gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors">
+            {auditLogs.length === 0 && (
+              <p className="text-white/30 text-xs text-center py-8">No activity yet. Changes you make will appear here.</p>
+            )}
+            {auditLogs.slice(0, 5).map((log, i) => (
+              <div key={i} className="flex gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
                 <div className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center flex-shrink-0">
-                  {item.type === "urgent" && <AlertTriangle className="w-4 h-4 text-red-400" />}
-                  {item.type === "rescue" && <Truck className="w-4 h-4 text-blue-400" />}
-                  {item.type === "donation" && <DollarSign className="w-4 h-4 text-emerald-400" />}
-                  {item.type === "application" && <FileText className="w-4 h-4 text-amber-400" />}
+                  <Activity className="w-4 h-4 text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {item.dog && <p className="text-white text-xs font-bold">{item.dog}</p>}
-                    {!item.dog && <p className="text-white text-xs font-bold">{item.text}</p>}
-                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${priorityColors[item.priority]}`}>{item.priority}</span>
-                  </div>
-                  {item.dog && <p className="text-white/60 text-xs mt-0.5">{item.text}</p>}
-                  <p className="text-white/40 text-[10px] mt-1">{item.time} · {item.location}</p>
+                  <p className="text-white text-xs font-bold truncate">{log.action?.replace(/_/g, " ").toUpperCase()}</p>
+                  <p className="text-white/60 text-[10px] truncate">{log.entityName || "—"} · by {log.userName || "Admin"}</p>
+                  <p className="text-white/30 text-[9px] mt-0.5">{log.timestamp ? new Date(log.timestamp).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "short", timeStyle: "short" }) : ""}</p>
                 </div>
               </div>
             ))}
           </div>
-          <Link href="/ttrg/admin/notifications" className="block text-center text-xs font-bold text-[#C41E2A] hover:underline mt-4 py-2 border-t border-white/5">VIEW ALL ALERTS &amp; INCIDENTS</Link>
         </div>
       </div>
 
       {/* Bottom Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-        {/* Donations Analytics */}
+        {/* Donations */}
         <div className="bg-[#0f1b30] border border-white/5 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-emerald-400" />
-              <h2 className="text-sm font-bold text-white">DONATIONS ANALYTICS</h2>
+              <h2 className="text-sm font-bold text-white">DONATIONS</h2>
+              <InfoTip text="Total donations recorded in the system. These are from site submissions. To connect Authorize.net for live payment tracking, the API Login ID, Transaction Key, and Signature Key are needed." />
             </div>
-            <span className="text-[10px] text-white/40">This Month</span>
+            <Link href="/ttrg/admin/donations" className="text-[10px] font-bold text-white/40 hover:text-white">VIEW ALL →</Link>
           </div>
-          <p className="text-4xl font-black text-white">$24,580</p>
-          <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1"><TrendingUp className="w-3 h-3" /> +18.7% vs last month</p>
-
-          {/* Mini chart */}
-          <div className="mt-5 h-24 flex items-end justify-between gap-1">
-            {[40, 30, 55, 45, 60, 75, 50, 65, 80, 70, 85, 95].map((h, i) => (
-              <div key={i} className="flex-1 bg-gradient-to-t from-[#C41E2A] to-[#C41E2A]/30 rounded-t" style={{ height: `${h}%` }} />
-            ))}
-          </div>
-          <div className="grid grid-cols-3 gap-2 mt-5 pt-4 border-t border-white/5">
-            <div><p className="text-lg font-black text-white">142</p><p className="text-[10px] text-white/40">Total Donations</p></div>
-            <div><p className="text-lg font-black text-white">$173</p><p className="text-[10px] text-white/40">Avg Donation</p></div>
-            <div><p className="text-lg font-black text-white">23</p><p className="text-[10px] text-white/40">New Donors</p></div>
+          <p className="text-4xl font-black text-white">${totalDonationAmt.toLocaleString()}</p>
+          <p className="text-xs text-white/40 mt-1">{donations.length} donations recorded</p>
+          <div className="grid grid-cols-2 gap-2 mt-5 pt-4 border-t border-white/5">
+            <div><p className="text-lg font-black text-white">{donations.length}</p><p className="text-[10px] text-white/40">Total Donations</p></div>
+            <div><p className="text-lg font-black text-white">${donations.length > 0 ? Math.round(totalDonationAmt / donations.length) : 0}</p><p className="text-[10px] text-white/40">Avg Donation</p></div>
           </div>
         </div>
 
-        {/* Recent Donor Activity */}
+        {/* Recent Donors */}
         <div className="bg-[#0f1b30] border border-white/5 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Heart className="w-4 h-4 text-red-400" />
-              <h2 className="text-sm font-bold text-white">RECENT DONOR ACTIVITY</h2>
+              <h2 className="text-sm font-bold text-white">RECENT DONORS</h2>
+              <InfoTip text="Donors who have submitted donations via the site. Shows actual donor names, amounts, and dates from the database." />
             </div>
             <Link href="/ttrg/admin/donations" className="text-[10px] font-bold text-white/40 hover:text-white">VIEW ALL →</Link>
           </div>
           <div className="space-y-2">
-            {donorActivity.map((d, i) => (
+            {donations.length === 0 && <p className="text-white/30 text-xs text-center py-8">No donations yet.</p>}
+            {donations.slice(0, 5).map((d, i) => (
               <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">{d.initials}</div>
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">
+                  {d.name?.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-xs font-bold truncate">{d.name}</p>
-                  <p className="text-white/40 text-[10px] truncate">{d.purpose}</p>
+                  <p className="text-white/40 text-[10px] truncate">{d.dogName ? `Sponsor: ${d.dogName}` : "General Donation"}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-emerald-400 text-xs font-black">{d.amount}</p>
-                  <p className="text-white/30 text-[9px]">{d.time}</p>
+                  <p className="text-emerald-400 text-xs font-black">${d.amount}</p>
+                  <p className="text-white/30 text-[9px]">{d.date ? new Date(d.date).toLocaleDateString() : ""}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Applications Approvals Queue */}
+        {/* Foster/Sponsor Applications */}
         <div className="bg-[#0f1b30] border border-white/5 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-amber-400" />
-              <h2 className="text-sm font-bold text-white">APPLICATIONS QUEUE</h2>
+              <h2 className="text-sm font-bold text-white">FOSTER APPLICATIONS</h2>
+              <InfoTip text="Foster applications submitted through the public site. Shows applicant names and status. Pending applications need admin review." />
             </div>
             <Link href="/ttrg/admin/applications" className="text-[10px] font-bold text-white/40 hover:text-white">VIEW ALL →</Link>
           </div>
           <div className="space-y-2">
-            {approvalsQueue.map((a, i) => (
+            {fosterApps.length === 0 && <p className="text-white/30 text-xs text-center py-8">No foster applications yet.</p>}
+            {fosterApps.slice(0, 5).map((a, i) => (
               <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">{a.name.split(" ").map((n) => n[0]).join("")}</div>
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">
+                  {((a.firstName || "")[0] || "") + ((a.lastName || "")[0] || "")}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-bold truncate">{a.name}</p>
-                  <p className="text-white/40 text-[10px] truncate">{a.type}</p>
+                  <p className="text-white text-xs font-bold truncate">{a.firstName} {a.lastName}</p>
+                  <p className="text-white/40 text-[10px] truncate">Foster Application</p>
                 </div>
                 <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                  <span className="bg-amber-500/20 text-amber-300 text-[8px] font-bold px-1.5 py-0.5 rounded">PENDING</span>
-                  <span className="text-white/30 text-[9px]">{a.dog}</span>
+                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${a.status === "pending" ? "bg-amber-500/20 text-amber-300" : "bg-emerald-500/20 text-emerald-300"}`}>{(a.status || "pending").toUpperCase()}</span>
+                  <span className="text-white/30 text-[9px]">{a.date ? new Date(a.date).toLocaleDateString() : ""}</span>
                 </div>
               </div>
             ))}

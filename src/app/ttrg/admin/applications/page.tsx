@@ -1,9 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { Search, FileText, CheckCircle2, XCircle, Clock, ChevronRight, Mail, Phone, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, FileText, CheckCircle2, XCircle, Clock, ChevronRight, Mail, Phone, Filter, Info } from "lucide-react";
+import { fetchFosterApplications, fetchSubmissions, fetchSponsorInterests } from "@/lib/admin-store";
 
-type AppCategory = "adoption" | "foster" | "trainer" | "volunteer" | "recommend" | "partner";
+function InfoTip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <span className="relative inline-flex ml-1.5" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)} onClick={() => setShow(!show)}>
+      <Info className="w-3.5 h-3.5 text-white/30 hover:text-white/60 cursor-help transition-colors" />
+      {show && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-[#1B2A4A] border border-white/20 text-white/80 text-[10px] leading-relaxed p-2.5 rounded-lg shadow-xl z-50 pointer-events-none">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
+
+type AppCategory = "foster" | "recommend" | "sponsor";
 type AppStatus = "new" | "pending" | "follow_up" | "approved" | "rejected" | "archived";
 
 interface Application {
@@ -19,26 +34,10 @@ interface Application {
   urgent?: boolean;
 }
 
-const applications: Application[] = [
-  { id: "A-2401", category: "adoption", name: "Amanda Foster", email: "amanda@email.com", phone: "(216) 555-0101", date: "2026-05-21", status: "new", details: "Interested in adopting K9 Rocky. Has prior dog experience.", dog: "K9 Rocky" },
-  { id: "A-2402", category: "foster", name: "Michael Thompson", email: "michael.t@email.com", phone: "(216) 555-0102", date: "2026-05-21", status: "new", details: "Available for emergency foster placements.", dog: "K9 Luna" },
-  { id: "A-2403", category: "adoption", name: "Jessica Martinez", email: "jessica.m@email.com", phone: "(216) 555-0103", date: "2026-05-21", status: "pending", details: "Family of 4, large backyard, no other pets.", dog: "K9 Daisy" },
-  { id: "A-2404", category: "foster", name: "David Anderson", email: "david.a@email.com", phone: "(216) 555-0104", date: "2026-05-20", status: "pending", details: "Experienced with high-energy dogs.", dog: "K9 Max" },
-  { id: "A-2405", category: "trainer", name: "Robert White", email: "robert.w@email.com", phone: "(216) 555-0105", date: "2026-05-20", status: "new", details: "10 years training experience, CCPDT-KA certified.", urgent: true },
-  { id: "A-2406", category: "volunteer", name: "Lisa Brown", email: "lisa.b@email.com", phone: "(216) 555-0106", date: "2026-05-19", status: "pending", details: "Available weekends. Interested in event support and transport.", },
-  { id: "A-2407", category: "recommend", name: "Sarah Johnson", email: "sarah.j@email.com", phone: "(216) 555-0107", date: "2026-05-19", status: "new", details: "Recommending Bella, 4yo German Shepherd. Owner can no longer care for her.", dog: "Bella", urgent: true },
-  { id: "A-2408", category: "partner", name: "K9 Solutions Inc.", email: "partnerships@k9solutions.com", phone: "(216) 555-0108", date: "2026-05-18", status: "approved", details: "Corporate sponsor inquiry — $25,000 annual commitment.", },
-  { id: "A-2409", category: "recommend", name: "Houston Animal Shelter", email: "shelter@houstonas.org", phone: "(713) 555-0109", date: "2026-05-18", status: "pending", details: "3 dogs need immediate placement. Capacity issue.", urgent: true },
-  { id: "A-2410", category: "volunteer", name: "Mark Wilson", email: "mark.w@email.com", phone: "(216) 555-0110", date: "2026-05-17", status: "approved", details: "Social media content support.", },
-];
-
 const categoryMeta: Record<AppCategory, { label: string; color: string; icon: string }> = {
-  adoption: { label: "Adoption", color: "from-red-500 to-red-700", icon: "❤️" },
   foster: { label: "Foster", color: "from-orange-500 to-red-600", icon: "🏠" },
-  trainer: { label: "Trainer", color: "from-amber-500 to-orange-600", icon: "🎓" },
-  volunteer: { label: "Volunteer", color: "from-blue-500 to-indigo-600", icon: "🤝" },
-  recommend: { label: "Recommend a Dog", color: "from-emerald-500 to-teal-600", icon: "🐾" },
-  partner: { label: "Partner / Corporate", color: "from-violet-500 to-purple-700", icon: "🏢" },
+  recommend: { label: "Dog Submission", color: "from-emerald-500 to-teal-600", icon: "🐾" },
+  sponsor: { label: "Sponsor Interest", color: "from-violet-500 to-purple-700", icon: "💜" },
 };
 
 const statusColors: Record<AppStatus, string> = {
@@ -54,6 +53,60 @@ export default function ApplicationsPage() {
   const [tab, setTab] = useState<AppCategory | "all">("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Application | null>(null);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const [fosters, subs, sponsors] = await Promise.all([
+        fetchFosterApplications(), fetchSubmissions(), fetchSponsorInterests(),
+      ]);
+      const apps: Application[] = [];
+      (fosters as unknown as Record<string, unknown>[]).forEach((f) => {
+        apps.push({
+          id: (f.id as string) || `F-${apps.length}`,
+          category: "foster",
+          name: `${f.firstName || f.first_name || ""} ${f.lastName || f.last_name || ""}`.trim() || "Unknown",
+          email: (f.email as string) || "",
+          phone: (f.phone as string) || "",
+          date: (f.date as string) || (f.created_at as string) || "",
+          status: ((f.status as string) || "pending") as AppStatus,
+          details: (f.details as string) || (f.message as string) || "",
+          dog: f.dogName as string || f.dog_name as string || undefined,
+        });
+      });
+      (subs as unknown as Record<string, unknown>[]).forEach((s) => {
+        apps.push({
+          id: (s.id as string) || `S-${apps.length}`,
+          category: "recommend",
+          name: (s.submitterName as string) || (s.submitter_name as string) || "Unknown",
+          email: (s.submitterEmail as string) || (s.submitter_email as string) || "",
+          phone: (s.submitterPhone as string) || (s.submitter_phone as string) || "",
+          date: (s.date as string) || (s.created_at as string) || "",
+          status: ((s.status as string) || "pending") as AppStatus,
+          details: `Dog: ${(s.dogName as string) || (s.dog_name as string) || "Unknown"} - ${(s.reason as string) || ""}`,
+          dog: (s.dogName as string) || (s.dog_name as string) || undefined,
+          urgent: s.urgent as boolean,
+        });
+      });
+      (sponsors as unknown as Record<string, unknown>[]).forEach((sp) => {
+        apps.push({
+          id: (sp.id as string) || `SP-${apps.length}`,
+          category: "sponsor",
+          name: (sp.name as string) || "Unknown",
+          email: (sp.email as string) || "",
+          phone: (sp.phone as string) || "",
+          date: (sp.date as string) || (sp.created_at as string) || "",
+          status: "new" as AppStatus,
+          details: `Interested in sponsoring ${(sp.dogName as string) || (sp.dog_name as string) || "a dog"}`,
+          dog: (sp.dogName as string) || (sp.dog_name as string) || undefined,
+        });
+      });
+      setApplications(apps);
+      setLoading(false);
+    }
+    load();
+  }, []);
 
   const filtered = applications.filter((a) => {
     if (tab !== "all" && a.category !== tab) return false;
@@ -70,8 +123,8 @@ export default function ApplicationsPage() {
     <div className="p-5 sm:p-8 max-w-[1600px] mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">APPLICATIONS</h1>
-          <p className="text-white/40 text-xs mt-1">Manage adoption, foster, trainer, volunteer, recommendations, and partner inquiries</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">APPLICATIONS <InfoTip text="This panel shows all foster applications, dog submissions (recommend a dog), and sponsor interest forms submitted through the public website. Data is live from Supabase." /></h1>
+          <p className="text-white/40 text-xs mt-1">Foster applications, dog submissions, and sponsor interests from the public site</p>
         </div>
       </div>
 
