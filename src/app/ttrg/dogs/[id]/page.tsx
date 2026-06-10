@@ -288,9 +288,38 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
 
+            {/* Donation Amounts */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-100">
+              <h3 className="text-sm font-black text-[#1B2A4A] mb-1 uppercase tracking-wider">Support {dog.name}</h3>
+              <p className="text-xs text-[#1B2A4A]/40 mb-4">Choose a donation amount</p>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {[
+                  { amount: 25, label: "Food Support" },
+                  { amount: 50, label: "Basic Care" },
+                  { amount: 100, label: "Vet & Nutrition" },
+                  { amount: 250, label: "Training & Rehab" },
+                ].map((tier) => (
+                  <Link
+                    key={tier.amount}
+                    href={`/ttrg/donate?ttrgDog=${dog.name}&amount=${tier.amount}`}
+                    className="bg-[#FFF0F0] hover:bg-[#C41E2A] text-[#C41E2A] hover:text-white rounded-xl p-3 text-center transition-all group/tier"
+                  >
+                    <span className="text-lg font-black block">${tier.amount}</span>
+                    <span className="text-[10px] font-medium opacity-70 group-hover/tier:opacity-100">{tier.label}</span>
+                  </Link>
+                ))}
+              </div>
+              <Link
+                href={`/ttrg/donate?ttrgDog=${dog.name}`}
+                className="block text-center text-xs text-[#C41E2A] font-semibold hover:underline"
+              >
+                Enter Custom Amount →
+              </Link>
+            </div>
+
             {/* CTA Buttons */}
             <Link href={`/ttrg/donate?ttrgDog=${dog.name}`} className="block w-full bg-[#C41E2A] hover:bg-[#A01825] text-white py-4 rounded-2xl text-sm font-bold transition-colors text-center flex items-center justify-center gap-2">
-              <Heart className="w-5 h-5 fill-white" /> Support {dog.name}
+              <Heart className="w-5 h-5 fill-white" /> Donate Now
             </Link>
             <Link href="/ttrg/foster" className="block w-full border-2 border-[#1B2A4A]/15 text-[#1B2A4A] py-4 rounded-2xl text-sm font-bold hover:bg-white transition-colors text-center">
               Apply to Foster

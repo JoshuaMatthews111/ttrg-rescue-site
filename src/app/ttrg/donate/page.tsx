@@ -63,9 +63,10 @@ function formatExpiry(v: string) {
 function DonateInner() {
   const params = useSearchParams();
   const dogName = params.get("ttrgDog") || "";
+  const preAmount = params.get("amount") ? Number(params.get("amount")) : null;
   const formRef = useRef<HTMLFormElement>(null);
 
-  const [selected, setSelected] = useState<number | null>(50);
+  const [selected, setSelected] = useState<number | null>(preAmount || 50);
   const [custom, setCustom] = useState("");
   const [donationType, setDonationType] = useState<"monthly" | "once">("once");
   const [showCosts, setShowCosts] = useState(false);

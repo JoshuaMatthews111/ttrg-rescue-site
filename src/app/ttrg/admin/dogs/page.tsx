@@ -56,12 +56,28 @@ export default function AdminDogsPage() {
 
   const openEdit = (dog: AdminDog) => { setEditDog({ ...dog, gallery: dog.gallery || [] }); setShowModal(true); };
 
+  // Map admin stage to journey stage + progress
+  const stageToJourney: Record<string, { journeyStage: string; percent: number; label: string }> = {
+    rescue:       { journeyStage: "rescue",  percent: 10,  label: "Rescue Intake" },
+    rehabilitate: { journeyStage: "rehab",   percent: 35,  label: "Rehabilitation In Progress" },
+    train:        { journeyStage: "rehab",   percent: 50,  label: "In Training — Rehabilitation Phase" },
+    recover:      { journeyStage: "medical", percent: 25,  label: "Medical Recovery" },
+    rehome:       { journeyStage: "adopt",   percent: 80,  label: "Ready for Adoption" },
+  };
+
   const saveDog = async () => {
     if (!editDog || !editDog.name) return;
     setSaving(true);
     editDog.updatedAt = new Date().toISOString();
     // auto-set primary image from gallery if not set
     if (!editDog.image && editDog.gallery.length > 0) editDog.image = editDog.gallery[0];
+    // auto-sync journey stage + progress from admin stage
+    const mapped = stageToJourney[editDog.stage];
+    if (mapped) {
+      (editDog as unknown as Record<string, unknown>).currentJourneyStage = mapped.journeyStage;
+      (editDog as unknown as Record<string, unknown>).progressPercent = mapped.percent;
+      (editDog as unknown as Record<string, unknown>).currentStageLabel = mapped.label;
+    }
     await upsertDog(editDog);
     const session = getSession();
     await insertAuditLog({ userName: session?.name || "Admin", userRole: session?.role || "admin", action: "save_dog", entityType: "dog", entityId: editDog.id, entityName: editDog.name });
@@ -308,17 +324,12 @@ export default function AdminDogsPage() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Monthly Sponsor ($)</label>
-                  <input type="number" value={editDog.price} onChange={(e) => setEditDog({ ...editDog, price: Number(e.target.value) })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
-                </div>
-                <div className="flex items-end gap-4 pb-1">
-                  <label className="flex items-center gap-2 text-sm text-[#1B2A4A]/60 cursor-pointer">
-                    <input type="checkbox" checked={editDog.urgent} onChange={(e) => setEditDog({ ...editDog, urgent: e.target.checked })} className="rounded" />
-                    Mark as Urgent
-                  </label>
-                </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm text-[#1B2A4A]/60 cursor-pointer">
+                  <input type="checkbox" checked={editDog.urgent} onChange={(e) => setEditDog({ ...editDog, urgent: e.target.checked })} className="rounded" />
+                  Mark as Urgent
+                </label>
+                <span className="text-[10px] text-[#1B2A4A]/30">Donation amounts: $25 · $50 · $100 · $250 + Custom (set site-wide)</span>
               </div>
               {/* ── Photos (multi-upload + gallery) ── */}
               <div>

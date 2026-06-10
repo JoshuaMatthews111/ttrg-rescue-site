@@ -172,6 +172,28 @@ export default function DogCard({ dog: raw }: { dog: Dog }) {
           </div>
         </div>
 
+        {/* ── DONATE AMOUNTS ── */}
+        <div className="mb-3">
+          <p className="text-[10px] font-bold text-[#1B2A4A]/50 mb-2 uppercase tracking-wider">Support {dog.name}</p>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[25, 50, 100, 250].map((amt) => (
+              <Link
+                key={amt}
+                href={`/ttrg/donate?ttrgDog=${dog.name}&amount=${amt}`}
+                className="bg-[#FFF0F0] hover:bg-[#C41E2A] text-[#C41E2A] hover:text-white py-2 rounded-lg text-xs font-bold transition-all text-center"
+              >
+                ${amt}
+              </Link>
+            ))}
+          </div>
+          <Link
+            href={`/ttrg/donate?ttrgDog=${dog.name}`}
+            className="block text-center text-[10px] text-[#C41E2A] font-semibold mt-1.5 hover:underline"
+          >
+            Custom Amount →
+          </Link>
+        </div>
+
         {/* ── BUTTONS ── */}
         <div className="flex gap-3 mt-auto">
           <Link
