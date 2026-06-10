@@ -1,7 +1,8 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
-import { Heart, AlertTriangle, Clock, CheckCircle2, ArrowRight } from "lucide-react";
+import { Heart, AlertTriangle, Clock, CheckCircle2, ArrowRight, Play } from "lucide-react";
 import type { Dog, journeyStages } from "@/lib/dogs";
 
 /* mini journey stages for the progress bar */
@@ -24,29 +25,61 @@ function getStageIndex(key: string): number {
 const oldStageMap: Record<string, string> = { rescue: "rescue", rehabilitate: "rehab", train: "rehab", recover: "medical", rehome: "adopt" };
 
 export default function DogCard({ dog: raw }: { dog: Dog }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
   /* safe defaults for legacy admin dogs */
   const dog = {
     ...raw,
     daysInRescue: raw.daysInRescue || 0,
     currentJourneyStage: raw.currentJourneyStage || (oldStageMap[raw.stage] as Dog["currentJourneyStage"]) || "rescue",
     statusBadges: raw.statusBadges || (raw.urgent ? ["Urgent"] : []),
+    videoUrl: (raw as unknown as Record<string, unknown>).videoUrl as string || (raw as unknown as Record<string, unknown>).video_url as string || "",
   };
   const currentIdx = getStageIndex(dog.currentJourneyStage);
+  const hasVideo = !!dog.videoUrl;
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 group flex flex-col">
-      {/* ── IMAGE ── */}
+      {/* ── HERO MEDIA (video or image) ── */}
       <Link href={`/ttrg/dogs/${dog.id}`} className="block">
-        <div className="relative h-56 sm:h-60 overflow-hidden">
-          <img
-            src={dog.image}
-            alt={dog.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-          />
+        <div
+          className="relative h-56 sm:h-60 overflow-hidden"
+          onMouseEnter={() => { if (hasVideo && videoRef.current) videoRef.current.play().catch(() => {}); }}
+          onMouseLeave={() => { if (hasVideo && videoRef.current) { videoRef.current.pause(); videoRef.current.currentTime = 0; } }}
+        >
+          {hasVideo ? (
+            <>
+              <video
+                ref={videoRef}
+                src={dog.videoUrl}
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                poster={dog.image || undefined}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-80 group-hover:opacity-0 transition-opacity">
+                <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                  <Play className="w-6 h-6 text-[#C41E2A] fill-[#C41E2A] ml-0.5" />
+                </div>
+              </div>
+            </>
+          ) : (
+            <img
+              src={dog.image}
+              alt={dog.name}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
           {/* badges top-left */}
           <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+            {hasVideo && (
+              <span className="flex items-center gap-1 bg-[#1B2A4A]/70 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <Play className="w-3 h-3 fill-white" /> Video
+              </span>
+            )}
             {dog.urgent && (
               <span className="flex items-center gap-1 bg-[#C41E2A] text-white px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider animate-pulse">
                 <AlertTriangle className="w-3 h-3" /> Urgent

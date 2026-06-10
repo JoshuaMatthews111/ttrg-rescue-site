@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { Plus, Search, Edit, Eye, Trash2, CheckCircle2, X, Globe, EyeOff, Archive, Upload, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Eye, Trash2, CheckCircle2, X, Globe, EyeOff, Archive, Upload, Loader2, Film, ImageIcon, GripVertical } from "lucide-react";
 import {
   fetchDogs, upsertDog, deleteDog as deleteDogDB,
-  uploadFile, insertAuditLog, subscribeToTable, getSession,
+  uploadFile, deleteFile, insertAuditLog, subscribeToTable, getSession,
   type AdminDog, type DogStatus,
 } from "@/lib/admin-store";
 
@@ -16,7 +16,7 @@ const statusLabels: Record<string, string> = { draft: "Draft", pending_review: "
 
 const emptyDog: Omit<AdminDog, "id" | "createdAt" | "updatedAt" | "createdBy"> = {
   name: "", age: "", breed: "", gender: "Male", weight: "", price: 35, story: "", fullStory: "",
-  image: "",
+  image: "", videoUrl: "",
   gallery: [], urgent: false, stage: "rescue", stageColor: "bg-red-500",
   medicalNeeds: "", trainingNeeds: "", behaviorNotes: "", specialNeeds: "", location: "Cleveland, OH", status: "draft",
 };
@@ -29,7 +29,9 @@ export default function AdminDogsPage() {
   const [showModal, setShowModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadProgress, setUploadProgress] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const loadDogs = useCallback(async () => {
     const data = await fetchDogs();
@@ -52,12 +54,14 @@ export default function AdminDogsPage() {
     setShowModal(true);
   };
 
-  const openEdit = (dog: AdminDog) => { setEditDog({ ...dog }); setShowModal(true); };
+  const openEdit = (dog: AdminDog) => { setEditDog({ ...dog, gallery: dog.gallery || [] }); setShowModal(true); };
 
   const saveDog = async () => {
     if (!editDog || !editDog.name) return;
     setSaving(true);
     editDog.updatedAt = new Date().toISOString();
+    // auto-set primary image from gallery if not set
+    if (!editDog.image && editDog.gallery.length > 0) editDog.image = editDog.gallery[0];
     await upsertDog(editDog);
     const session = getSession();
     await insertAuditLog({ userName: session?.name || "Admin", userRole: session?.role || "admin", action: "save_dog", entityType: "dog", entityId: editDog.id, entityName: editDog.name });
@@ -88,14 +92,57 @@ export default function AdminDogsPage() {
     await loadDogs();
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Multi-photo upload: accepts multiple files, adds to gallery
+  const handlePhotosUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !editDog) return;
+    setUploading(true);
+    const newGallery = [...(editDog.gallery || [])];
+    let newImage = editDog.image;
+    for (let i = 0; i < files.length; i++) {
+      setUploadProgress(`Uploading photo ${i + 1} of ${files.length}...`);
+      const file = files[i];
+      const path = `dogs/${editDog.id}/${Date.now()}-${file.name}`;
+      const url = await uploadFile("media", path, file);
+      if (url) {
+        newGallery.push(url);
+        if (!newImage) newImage = url;
+      }
+    }
+    setEditDog({ ...editDog, image: newImage, gallery: newGallery });
+    setUploading(false);
+    setUploadProgress("");
+    // reset input so same files can be re-selected
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  // Video upload
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editDog) return;
     setUploading(true);
-    const path = `dogs/${editDog.id}/${Date.now()}-${file.name}`;
+    setUploadProgress(`Uploading video (${(file.size / 1024 / 1024).toFixed(1)} MB)...`);
+    const path = `dogs/${editDog.id}/video-${Date.now()}-${file.name}`;
     const url = await uploadFile("media", path, file);
-    if (url) setEditDog({ ...editDog, image: url });
+    if (url) setEditDog({ ...editDog, videoUrl: url });
     setUploading(false);
+    setUploadProgress("");
+    if (videoInputRef.current) videoInputRef.current.value = "";
+  };
+
+  // Remove a gallery image
+  const removeGalleryImage = (idx: number) => {
+    if (!editDog) return;
+    const newGallery = editDog.gallery.filter((_, i) => i !== idx);
+    const removedUrl = editDog.gallery[idx];
+    const newImage = editDog.image === removedUrl ? (newGallery[0] || "") : editDog.image;
+    setEditDog({ ...editDog, gallery: newGallery, image: newImage });
+  };
+
+  // Set a gallery image as the primary/cover photo
+  const setPrimaryImage = (url: string) => {
+    if (!editDog) return;
+    setEditDog({ ...editDog, image: url });
   };
 
   const statusCounts = dogs.reduce((acc, d) => { acc[d.status] = (acc[d.status] || 0) + 1; return acc; }, {} as Record<string, number>);
@@ -273,17 +320,57 @@ export default function AdminDogsPage() {
                   </label>
                 </div>
               </div>
+              {/* ── Photos (multi-upload + gallery) ── */}
               <div>
-                <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Dog Photo</label>
-                <div className="flex items-center gap-3">
-                  {editDog.image && <img src={editDog.image} alt="preview" className="w-16 h-16 rounded-xl object-cover border" />}
-                  <div className="flex-1 space-y-2">
-                    <input value={editDog.image} onChange={(e) => setEditDog({ ...editDog, image: e.target.value })} placeholder="Image URL or upload below" className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-[#1B2A4A]/70 transition-colors disabled:opacity-50">
-                      {uploading ? <><Loader2 className="w-3 h-3 animate-spin" /> Uploading...</> : <><Upload className="w-3 h-3" /> Upload Photo</>}
+                <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-2 flex items-center gap-2">
+                  <ImageIcon className="w-3.5 h-3.5" /> Photos <span className="font-normal text-[#1B2A4A]/40">(upload multiple — first is cover photo)</span>
+                </label>
+                {editDog.gallery && editDog.gallery.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {editDog.gallery.map((url, i) => (
+                      <div key={i} className="relative group">
+                        <img src={url} alt={`Photo ${i + 1}`} className={`w-20 h-20 rounded-xl object-cover border-2 transition-all ${editDog.image === url ? "border-[#C41E2A] ring-2 ring-[#C41E2A]/20" : "border-slate-200"}`} />
+                        <div className="absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                          <button type="button" onClick={() => setPrimaryImage(url)} className="w-6 h-6 rounded-full bg-white/90 flex items-center justify-center" title="Set as cover">
+                            <CheckCircle2 className={`w-3.5 h-3.5 ${editDog.image === url ? "text-[#C41E2A]" : "text-slate-500"}`} />
+                          </button>
+                          <button type="button" onClick={() => removeGalleryImage(i)} className="w-6 h-6 rounded-full bg-white/90 flex items-center justify-center" title="Remove">
+                            <X className="w-3.5 h-3.5 text-red-500" />
+                          </button>
+                        </div>
+                        {editDog.image === url && (
+                          <span className="absolute -top-1.5 -left-1.5 bg-[#C41E2A] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">COVER</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <input ref={photoInputRef} type="file" accept="image/*" multiple onChange={handlePhotosUpload} className="hidden" />
+                <button type="button" onClick={() => photoInputRef.current?.click()} disabled={uploading} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-[#1B2A4A]/70 transition-colors disabled:opacity-50">
+                  {uploading && uploadProgress.includes("photo") ? <><Loader2 className="w-3 h-3 animate-spin" /> {uploadProgress}</> : <><Upload className="w-3 h-3" /> Upload Photos</>}
+                </button>
+              </div>
+
+              {/* ── Video Upload ── */}
+              <div>
+                <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-2 flex items-center gap-2">
+                  <Film className="w-3.5 h-3.5" /> Dog Video <span className="font-normal text-[#1B2A4A]/40">(plays on homepage card &amp; profile — no size limit)</span>
+                </label>
+                {editDog.videoUrl && (
+                  <div className="mb-3 relative rounded-xl overflow-hidden border border-slate-200 bg-black">
+                    <video src={editDog.videoUrl} controls muted className="w-full max-h-48 object-contain" />
+                    <button type="button" onClick={() => setEditDog({ ...editDog, videoUrl: "" })} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-500/90 text-white flex items-center justify-center hover:bg-red-600 transition-colors" title="Remove video">
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <input ref={videoInputRef} type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" />
+                  <button type="button" onClick={() => videoInputRef.current?.click()} disabled={uploading} className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-[#1B2A4A]/70 transition-colors disabled:opacity-50">
+                    {uploading && uploadProgress.includes("video") ? <><Loader2 className="w-3 h-3 animate-spin" /> {uploadProgress}</> : <><Film className="w-3 h-3" /> Upload Video</>}
+                  </button>
+                  <span className="text-[10px] text-[#1B2A4A]/30">or</span>
+                  <input value={editDog.videoUrl || ""} onChange={(e) => setEditDog({ ...editDog, videoUrl: e.target.value })} placeholder="Paste video URL" className="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
                 </div>
               </div>
               <div>

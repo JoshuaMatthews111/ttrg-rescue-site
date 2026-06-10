@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS dogs (
   full_story TEXT DEFAULT '',
   image TEXT DEFAULT '',
   gallery JSONB DEFAULT '[]'::jsonb,
+  video_url TEXT DEFAULT '',
   urgent BOOLEAN DEFAULT false,
   stage TEXT DEFAULT 'rescue' CHECK (stage IN ('rescue', 'rehabilitate', 'train', 'recover', 'rehome')),
   stage_color TEXT DEFAULT 'bg-red-500',

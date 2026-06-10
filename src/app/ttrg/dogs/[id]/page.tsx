@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Heart, MapPin, Shield, Stethoscope, GraduationCap, Home, ChevronRight, ChevronLeft, ArrowLeft, Share2,
   PawPrint, AlertTriangle, X, Phone, Mail, CheckCircle2, Clock, Star, Utensils, Dumbbell, Brain,
-  Calendar, Users, Loader2,
+  Calendar, Users, Loader2, Play, Film,
 } from "lucide-react";
 import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
 import { fetchDogById, subscribeToTable } from "@/lib/admin-store";
@@ -28,6 +28,7 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
   const staticDog = getDogById(id);
   const [rawDog, setRawDog] = useState<(Dog & Record<string, unknown>) | undefined>(staticDog as (Dog & Record<string, unknown>) | undefined);
   const [activeImage, setActiveImage] = useState(0);
+  const [showVideo, setShowVideo] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
   };
 
   const currentIdx = stageOrder[dog.currentJourneyStage] ?? 0;
+  const dogVideoUrl = (rawDog?.videoUrl as string) || (rawDog?.video_url as string) || "";
 
   return (
     <div className="bg-[#FAFAF8] min-h-screen">
@@ -180,8 +182,35 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* ── COL 1: Gallery + Status ── */}
           <div className="lg:col-span-5 space-y-6">
-            {/* Image gallery */}
+            {/* Video + Image gallery */}
             <div className="bg-white rounded-3xl overflow-hidden border border-slate-100">
+              {/* Video section (if dog has video) */}
+              {dogVideoUrl && (
+                <div className="relative">
+                  {showVideo ? (
+                    <div className="relative aspect-video bg-black">
+                      <video src={dogVideoUrl} controls autoPlay playsInline className="w-full h-full object-contain" />
+                      <button onClick={() => setShowVideo(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setShowVideo(true)} className="w-full relative aspect-video bg-slate-900 group/vid">
+                      <img src={dog.image} alt={dog.name} className="w-full h-full object-cover opacity-80 group-hover/vid:opacity-60 transition-opacity" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                        <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-xl group-hover/vid:scale-110 transition-transform">
+                          <Play className="w-7 h-7 text-[#C41E2A] fill-[#C41E2A] ml-1" />
+                        </div>
+                        <span className="flex items-center gap-1.5 bg-black/50 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-sm">
+                          <Film className="w-3.5 h-3.5" /> Watch {dog.name}&apos;s Video
+                        </span>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Photo gallery */}
               <div className="relative aspect-[4/3]">
                 <img src={dog.gallery[activeImage] || dog.image} alt={dog.name} className="w-full h-full object-cover" />
                 <div className="absolute top-4 right-4 bg-black/50 text-white text-xs font-bold px-3 py-1.5 rounded-full">

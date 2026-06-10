@@ -20,6 +20,7 @@ export interface AdminDog {
   fullStory: string;
   image: string;
   gallery: string[];
+  videoUrl?: string;
   urgent: boolean;
   stage: "rescue" | "rehabilitate" | "train" | "recover" | "rehome";
   stageColor: string;
