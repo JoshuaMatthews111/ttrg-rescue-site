@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Heart, PawPrint, ChevronRight, Play, X, Shield, Stethoscope, Home, HandHeart, Repeat } from "lucide-react";
+import { Heart, PawPrint, ChevronRight, Play, X, Shield, Stethoscope, Home, HandHeart, Repeat, Loader2 } from "lucide-react";
+import { fetchDogs } from "@/lib/admin-store";
+import type { AdminDog } from "@/lib/admin-store";
 
 const journeySteps = [
   { num: 1, label: "Rescue", icon: Shield, desc: "We save dogs from high-risk situations, shelters, and emergency surrenders — safety is their first step." },
@@ -12,13 +14,22 @@ const journeySteps = [
   { num: 5, label: "Repeat", icon: Repeat, desc: "Every dog adopted means we can save the next one. The mission continues." },
 ];
 
-const currentDogs = [
-  { name: "Bailey", stage: "Rehabilitate", stageColor: "bg-amber-500", story: "Bailey was found scared and underweight. With patience and love, he's blossoming every day." },
-  { name: "Tucker", stage: "Foster", stageColor: "bg-emerald-500", story: "Tucker is in a foster home gaining confidence and learning to trust again." },
-  { name: "Daisy", stage: "Rehabilitate", stageColor: "bg-amber-500", story: "Daisy is healing from the inside out. Her spirit is stronger, and so is she." },
-  { name: "Milo", stage: "Rescue", stageColor: "bg-red-500", story: "Milo's rescue was just the beginning. Now he's safe, fed, and on the road to a brighter future." },
-  { name: "Ranger", stage: "Adopt", stageColor: "bg-violet-500", story: "Ranger is ready for his forever home! He's loyal, loving, and can't wait to meet you." },
-];
+// Map journey stage to display stage and color
+const getStageDisplay = (dog: AdminDog) => {
+  const stageMap: Record<string, { stage: string; stageColor: string }> = {
+    "Intake": { stage: "Rescue", stageColor: "bg-red-500" },
+    "Assessment": { stage: "Rescue", stageColor: "bg-red-500" },
+    "Medical Care": { stage: "Rehabilitate", stageColor: "bg-amber-500" },
+    "Training": { stage: "Rehabilitate", stageColor: "bg-amber-500" },
+    "Behavioral Rehabilitation": { stage: "Rehabilitate", stageColor: "bg-amber-500" },
+    "Foster Placement": { stage: "Foster", stageColor: "bg-emerald-500" },
+    "Adoption Preparation": { stage: "Adopt", stageColor: "bg-violet-500" },
+    "Ready for Adoption": { stage: "Adopt", stageColor: "bg-violet-500" },
+    "Adopted": { stage: "Adopted", stageColor: "bg-blue-500" },
+    "Long-Term Support": { stage: "Adopted", stageColor: "bg-blue-500" },
+  };
+  return stageMap[dog.journeyStage || "Intake"] || { stage: "Rescue", stageColor: "bg-red-500" };
+};
 
 const storyVideos = [
   { id: 1, src: "/ttrg/videos/britta-testimonial.mp4", title: "From Fear to Family", duration: "2:18" },
@@ -29,6 +40,19 @@ const storyVideos = [
 
 export default function JourneysPage() {
   const [videoModal, setVideoModal] = useState<null | typeof storyVideos[0]>(null);
+  const [dogs, setDogs] = useState<AdminDog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDogs().then((allDogs) => {
+      // Only show published dogs that are not adopted/archived
+      const publishedDogs = allDogs.filter(d => 
+        d.status === "published" || d.status === "urgent"
+      );
+      setDogs(publishedDogs.slice(0, 5)); // Show max 5 dogs
+      setLoading(false);
+    });
+  }, []);
 
   return (
     <div className="bg-white">
@@ -86,35 +110,53 @@ export default function JourneysPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-            {currentDogs.map((dog) => (
-              <div key={dog.name} className="bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-lg transition-all group">
-                <div className="relative h-48 overflow-hidden bg-[#1B2A4A] flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-2">
-                      <PawPrint className="w-8 h-8 text-white/60" />
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-[#C41E2A]" />
+            </div>
+          ) : dogs.length === 0 ? (
+            <div className="text-center py-12 text-[#1B2A4A]/40">
+              <PawPrint className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>No published journey stories yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+              {dogs.map((dog) => {
+                const stageInfo = getStageDisplay(dog);
+                return (
+                  <Link key={dog.id} href={`/ttrg/dogs/${dog.id}`} className="bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-lg transition-all group">
+                    <div className="relative h-48 overflow-hidden bg-[#1B2A4A] flex items-center justify-center">
+                      {dog.image ? (
+                        <img src={dog.image} alt={dog.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      ) : (
+                        <div className="text-center">
+                          <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-2">
+                            <PawPrint className="w-8 h-8 text-white/60" />
+                          </div>
+                          <p className="text-white/80 text-lg font-bold">{dog.name}</p>
+                        </div>
+                      )}
+                      <span className={`absolute bottom-3 left-3 ${stageInfo.stageColor} text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full`}>
+                        {stageInfo.stage}
+                      </span>
                     </div>
-                    <p className="text-white/80 text-lg font-bold">{dog.name}</p>
-                  </div>
-                  <span className={`absolute bottom-3 left-3 ${dog.stageColor} text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full`}>
-                    {dog.stage}
-                  </span>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-[#1B2A4A] text-base">{dog.name}</h3>
-                  <p className="text-[11px] text-[#1B2A4A]/50 leading-relaxed mt-1 line-clamp-3">{dog.story}</p>
-                  <div className="flex items-center gap-2 mt-3">
-                    <button className="flex-1 border border-[#C41E2A] text-[#C41E2A] py-2 rounded-lg text-[11px] font-bold hover:bg-[#C41E2A] hover:text-white transition-colors">
-                      FOLLOW JOURNEY
-                    </button>
-                    <button className="w-9 h-9 border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50 transition-colors">
-                      <Heart className="w-4 h-4 text-[#C41E2A]" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-[#1B2A4A] text-base">{dog.name}</h3>
+                      <p className="text-[11px] text-[#1B2A4A]/50 leading-relaxed mt-1 line-clamp-3">{dog.rescueStory || dog.story}</p>
+                      <div className="flex items-center gap-2 mt-3">
+                        <span className="flex-1 border border-[#C41E2A] text-[#C41E2A] py-2 rounded-lg text-[11px] font-bold text-center group-hover:bg-[#C41E2A] group-hover:text-white transition-colors">
+                          FOLLOW JOURNEY
+                        </span>
+                        <button className="w-9 h-9 border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50 transition-colors">
+                          <Heart className="w-4 h-4 text-[#C41E2A]" />
+                        </button>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
