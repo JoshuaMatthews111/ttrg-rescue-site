@@ -2,24 +2,26 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { Plus, Search, Edit, Eye, Trash2, CheckCircle2, X, Globe, EyeOff, Archive, Upload, Loader2, Film, ImageIcon, GripVertical } from "lucide-react";
+import { Plus, Search, Edit, Eye, Trash2, CheckCircle2, X, Globe, EyeOff, Archive, Upload, Loader2, Film, ImageIcon, GripVertical, ChevronDown, Heart, Stethoscope, GraduationCap, Brain, Star, Home } from "lucide-react";
 import {
   fetchDogs, upsertDog, deleteDog as deleteDogDB,
   uploadFile, deleteFile, insertAuditLog, subscribeToTable, getSession,
   type AdminDog, type DogStatus,
 } from "@/lib/admin-store";
+import {
+  BREED_OPTIONS, AGE_UNITS, GENDER_OPTIONS, SIZE_OPTIONS, DOG_STATUS_OPTIONS,
+  MEDICAL_NEEDS_OPTIONS, TRAINING_NEEDS_OPTIONS, BEHAVIOR_NOTES_OPTIONS, SPECIAL_NEEDS_OPTIONS,
+  RESCUE_SOURCE_OPTIONS, JOURNEY_STAGE_OPTIONS, SUPPORT_GOAL_OPTIONS,
+  DOG_STATUS_COLORS, formatAge, formatBreed, isEmpty, getTimelineIndex, getTimelineKey,
+  createEmptyDog,
+} from "@/lib/dog-constants";
 
 const stageLabels: Record<string, string> = { rescue: "Rescued", rehabilitate: "In Rehab", train: "In Training", recover: "Recovering", rehome: "Ready for Home" };
 const stageColors: Record<string, string> = { rescue: "bg-red-100 text-red-700", rehabilitate: "bg-amber-100 text-amber-700", train: "bg-emerald-100 text-emerald-700", recover: "bg-blue-100 text-blue-700", rehome: "bg-violet-100 text-violet-700" };
 const statusColors: Record<string, string> = { draft: "bg-slate-100 text-slate-600", pending_review: "bg-amber-100 text-amber-700", published: "bg-emerald-100 text-emerald-700", hidden: "bg-slate-100 text-slate-500", adopted: "bg-violet-100 text-violet-700", urgent: "bg-red-100 text-red-700", archived: "bg-slate-100 text-slate-400" };
 const statusLabels: Record<string, string> = { draft: "Draft", pending_review: "Pending Review", published: "Published", hidden: "Hidden", adopted: "Adopted", urgent: "Urgent", archived: "Archived" };
 
-const emptyDog: Omit<AdminDog, "id" | "createdAt" | "updatedAt" | "createdBy"> = {
-  name: "", age: "", breed: "", gender: "Male", weight: "", price: 35, story: "", fullStory: "",
-  image: "", videoUrl: "",
-  gallery: [], urgent: false, stage: "rescue", stageColor: "bg-red-500",
-  medicalNeeds: "", trainingNeeds: "", behaviorNotes: "", specialNeeds: "", location: "Cleveland, OH", status: "draft",
-};
+const emptyDog: Omit<AdminDog, "id" | "createdAt" | "updatedAt" | "createdBy"> = createEmptyDog();
 
 export default function AdminDogsPage() {
   const [dogs, setDogs] = useState<AdminDog[]>([]);
@@ -68,19 +70,230 @@ export default function AdminDogsPage() {
   const saveDog = async () => {
     if (!editDog || !editDog.name) return;
     setSaving(true);
-    editDog.updatedAt = new Date().toISOString();
+    const dog = { ...editDog };
+    dog.updatedAt = new Date().toISOString();
+
     // auto-set primary image from gallery if not set
-    if (!editDog.image && editDog.gallery.length > 0) editDog.image = editDog.gallery[0];
-    // auto-sync journey stage + progress from admin stage
-    const mapped = stageToJourney[editDog.stage];
-    if (mapped) {
-      (editDog as unknown as Record<string, unknown>).currentJourneyStage = mapped.journeyStage;
-      (editDog as unknown as Record<string, unknown>).progressPercent = mapped.percent;
-      (editDog as unknown as Record<string, unknown>).currentStageLabel = mapped.label;
+    if (!dog.image && dog.gallery.length > 0) dog.image = dog.gallery[0];
+
+    // Sync structured age to legacy age field
+    if (dog.ageNumber && dog.ageUnit) {
+      const approx = dog.ageApproximate ? "Approximately " : "";
+      dog.age = `${approx}${dog.ageNumber} ${dog.ageUnit}`;
     }
-    await upsertDog(editDog);
+
+    // Sync structured breed to legacy breed field
+    if (dog.breedOption) {
+      dog.breed = dog.breedOption === "Other" && dog.otherBreed
+        ? dog.otherBreed
+        : dog.breedOption;
+    }
+
+    // Sync structured gender to legacy gender field
+    if (dog.genderOption) {
+      dog.gender = dog.genderOption;
+    }
+
+    // Sync structured needs arrays to legacy text fields
+    if (dog.medicalNeedsOptions && dog.medicalNeedsOptions.length > 0) {
+      const other = dog.otherMedicalNeed && dog.medicalNeedsOptions.includes("Other")
+        ? `Other: ${dog.otherMedicalNeed}`
+        : "";
+      const base = dog.medicalNeedsOptions.filter(o => o !== "Other").join(", ");
+      dog.medicalNeeds = base + (other ? (base ? ", " : "") + other : "");
+    }
+
+    if (dog.trainingNeedsOptions && dog.trainingNeedsOptions.length > 0) {
+      const other = dog.otherTrainingNeed && dog.trainingNeedsOptions.includes("Other")
+        ? `Other: ${dog.otherTrainingNeed}`
+        : "";
+      const base = dog.trainingNeedsOptions.filter(o => o !== "Other").join(", ");
+      dog.trainingNeeds = base + (other ? (base ? ", " : "") + other : "");
+    }
+
+    if (dog.behaviorNotesOptions && dog.behaviorNotesOptions.length > 0) {
+      const other = dog.otherBehaviorNote && dog.behaviorNotesOptions.includes("Other")
+        ? `Other: ${dog.otherBehaviorNote}`
+        : "";
+      const base = dog.behaviorNotesOptions.filter(o => o !== "Other").join(", ");
+      dog.behaviorNotes = base + (other ? (base ? ", " : "") + other : "");
+      if (dog.behaviorNotesText) {
+        dog.behaviorNotes += (dog.behaviorNotes ? "\n\n" : "") + dog.behaviorNotesText;
+      }
+    }
+
+    if (dog.specialNeedsOptions && dog.specialNeedsOptions.length > 0) {
+      const other = dog.otherSpecialNeed && dog.specialNeedsOptions.includes("Other")
+        ? `Other: ${dog.otherSpecialNeed}`
+        : "";
+      const base = dog.specialNeedsOptions.filter(o => o !== "Other").join(", ");
+      dog.specialNeeds = base + (other ? (base ? ", " : "") + other : "");
+    }
+
+    // Sync journey stage to old stage for compatibility
+    if (dog.journeyStage) {
+      const stageMap: Record<string, string> = {
+        "Intake": "rescue",
+        "Assessment": "rescue",
+        "Medical Care": "recover",
+        "Training": "train",
+        "Behavioral Rehabilitation": "rehabilitate",
+        "Foster Placement": "rehabilitate",
+        "Adoption Preparation": "rehome",
+        "Ready for Adoption": "rehome",
+        "Adopted": "rehome",
+        "Long-Term Support": "rehome",
+      };
+      dog.stage = stageMap[dog.journeyStage] as typeof dog.stage || "rescue";
+    }
+
+    // Calculate progress percent based on journey stage
+    const progressMap: Record<string, number> = {
+      "Intake": 10,
+      "Assessment": 20,
+      "Medical Care": 30,
+      "Training": 50,
+      "Behavioral Rehabilitation": 60,
+      "Foster Placement": 70,
+      "Adoption Preparation": 80,
+      "Ready for Adoption": 90,
+      "Adopted": 100,
+      "Long-Term Support": 100,
+    };
+    dog.progressPercent = progressMap[dog.journeyStage || ""] || 10;
+    dog.currentJourneyStage = getTimelineKey(dog.journeyStage);
+    dog.currentStageLabel = dog.journeyStage || "Intake";
+
+    // Set status badges based on dog status and support goal
+    const badges: string[] = [];
+    if (dog.dogStatus === "Urgent Support Needed" || dog.urgent) badges.push("Urgent");
+    if (dog.supportGoal === "Needs Sponsor") badges.push("Needs Sponsor");
+    if (dog.supportGoal === "Needs Foster") badges.push("Needs Foster");
+    if (dog.supportGoal === "Needs Adoption") badges.push("Ready for Home");
+    if (dog.dogStatus === "Medical Care") badges.push("Medical Care");
+    if (dog.dogStatus === "In Training" || dog.dogStatus === "Behavioral Rehabilitation") badges.push("In Training");
+    dog.statusBadges = badges;
+
+    // Set rescue date if not set
+    if (!dog.rescueDate) {
+      dog.rescueDate = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    // Set care team and last update
+    dog.careTeam = "TTRG Team";
+    dog.lastUpdate = "Just now";
+    dog.adminNote = dog.medicalNeedsNotes || dog.trainingNeedsNotes || dog.specialNeedsNotes || "";
+
+    // Generate milestones based on journey stage and needs
+    const milestones: { label: string; date?: string; status: "completed" | "in_progress" | "upcoming" | "urgent" }[] = [];
+
+    // Always show rescue intake as completed
+    milestones.push({ label: "Rescue Intake", status: "completed", date: dog.rescueDate });
+
+    // Add milestones based on journey stage
+    const stageMilestones: Record<string, { label: string; status: "completed" | "in_progress" | "upcoming" }[]> = {
+      "Intake": [
+        { label: "Initial Assessment", status: "in_progress" },
+        { label: "Medical Evaluation", status: "upcoming" },
+      ],
+      "Assessment": [
+        { label: "Initial Assessment", status: "completed" },
+        { label: "Medical Evaluation", status: "in_progress" },
+      ],
+      "Medical Care": [
+        { label: "Medical Evaluation", status: "completed" },
+        { label: "Treatment in Progress", status: "in_progress" },
+        { label: "Ready for Training", status: "upcoming" },
+      ],
+      "Training": [
+        { label: "Training Started", status: "completed" },
+        { label: "Basic Obedience", status: "in_progress" },
+        { label: "Advanced Training", status: "upcoming" },
+      ],
+      "Behavioral Rehabilitation": [
+        { label: "Assessment Completed", status: "completed" },
+        { label: "Rehabilitation in Progress", status: "in_progress" },
+        { label: "Behavioral Evaluation", status: "upcoming" },
+      ],
+      "Foster Placement": [
+        { label: "Training Completed", status: "completed" },
+        { label: "Foster Home Found", status: "in_progress" },
+        { label: "Foster Adjustment", status: "upcoming" },
+      ],
+      "Adoption Preparation": [
+        { label: "Foster Care", status: "completed" },
+        { label: "Ready for Adoption", status: "in_progress" },
+      ],
+      "Ready for Adoption": [
+        { label: "Adoption Profile Created", status: "completed" },
+        { label: "Meet & Greets", status: "in_progress" },
+      ],
+      "Adopted": [
+        { label: "Forever Home Found", status: "completed" },
+        { label: "Adoption Finalized", status: "completed" },
+      ],
+      "Long-Term Support": [
+        { label: "In Forever Home", status: "completed" },
+        { label: "Ongoing Support", status: "in_progress" },
+      ],
+    };
+
+    const currentStageMilestones = stageMilestones[dog.journeyStage || "Intake"] || [];
+    milestones.push(...currentStageMilestones);
+
+    // Add needs-based milestones
+    if (dog.medicalNeedsOptions?.includes("Surgery Needed")) {
+      milestones.push({ label: "Surgery Required", status: "urgent" });
+    }
+    if (dog.trainingNeedsOptions?.includes("Basic Obedience")) {
+      milestones.push({ label: "Basic Obedience Training", status: "in_progress" });
+    }
+    if (dog.supportGoal?.includes("Foster")) {
+      milestones.push({ label: "Searching for Foster Home", status: "in_progress" });
+    }
+    if (dog.supportGoal?.includes("Adoption")) {
+      milestones.push({ label: "Waiting for Perfect Match", status: "upcoming" });
+    }
+
+    dog.milestones = milestones;
+
+    // Build currentNeeds array for the public page
+    const currentNeeds: { icon: string; label: string; detail: string; urgent?: boolean }[] = [];
+
+    if (dog.medicalNeedsOptions && dog.medicalNeedsOptions.length > 0) {
+      currentNeeds.push({
+        icon: "vet",
+        label: "Medical Care",
+        detail: dog.medicalNeedsOptions.slice(0, 2).join(", ") + (dog.medicalNeedsOptions.length > 2 ? "..." : ""),
+        urgent: dog.medicalNeedsOptions.includes("Surgery Needed") || dog.medicalNeedsOptions.includes("Emergency Care"),
+      });
+    }
+
+    if (dog.trainingNeedsOptions && dog.trainingNeedsOptions.length > 0) {
+      currentNeeds.push({
+        icon: "training",
+        label: "Training",
+        detail: dog.trainingNeedsOptions.slice(0, 2).join(", ") + (dog.trainingNeedsOptions.length > 2 ? "..." : ""),
+      });
+    }
+
+    if (dog.supportGoal?.includes("Foster")) {
+      currentNeeds.push({ icon: "foster", label: "Foster Home", detail: "Needs loving temporary home", urgent: true });
+    }
+
+    if (dog.supportGoal?.includes("Sponsor")) {
+      currentNeeds.push({ icon: "nutrition", label: "Monthly Sponsor", detail: "Sustained support needed" });
+    }
+
+    if (currentNeeds.length === 0) {
+      currentNeeds.push({ icon: "nutrition", label: "Daily Care", detail: "Food, shelter & love" });
+    }
+
+    dog.currentNeeds = currentNeeds;
+
+    await upsertDog(dog);
     const session = getSession();
-    await insertAuditLog({ userName: session?.name || "Admin", userRole: session?.role || "admin", action: "save_dog", entityType: "dog", entityId: editDog.id, entityName: editDog.name });
+    await insertAuditLog({ userName: session?.name || "Admin", userRole: session?.role || "admin", action: "save_dog", entityType: "dog", entityId: dog.id, entityName: dog.name });
     await loadDogs();
     setSaving(false);
     setShowModal(false);
@@ -279,58 +492,241 @@ export default function AdminDogsPage() {
               <h2 className="text-lg font-bold text-[#1B2A4A]">{dogs.find(d => d.id === editDog.id) ? `Edit: ${editDog.name || "Untitled"}` : "Add New Dog"}</h2>
               <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
             </div>
-            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Name *</label>
-                  <input value={editDog.name} onChange={(e) => setEditDog({ ...editDog, name: e.target.value })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+            <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+              {/* ═══════════════════════════════════════════════════════════════
+                  SECTION 1: BASIC PROFILE
+              ═══════════════════════════════════════════════════════════════ */}
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h3 className="text-sm font-bold text-[#1B2A4A] mb-4 flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#C41E2A] text-white text-xs flex items-center justify-center">1</span>
+                  Basic Profile
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Name *</label>
+                    <input value={editDog.name} onChange={(e) => setEditDog({ ...editDog, name: e.target.value })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Breed *</label>
+                    <select value={editDog.breedOption || "Mixed Breed"} onChange={(e) => setEditDog({ ...editDog, breedOption: e.target.value as typeof BREED_OPTIONS[number] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      {BREED_OPTIONS.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                    {editDog.breedOption === "Other" && (
+                      <input value={editDog.otherBreed || ""} onChange={(e) => setEditDog({ ...editDog, otherBreed: e.target.value })} placeholder="Enter custom breed" className="w-full h-9 px-3 mt-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Breed</label>
-                  <input value={editDog.breed} onChange={(e) => setEditDog({ ...editDog, breed: e.target.value })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Age Number</label>
+                    <input type="number" min="0" value={editDog.ageNumber || ""} onChange={(e) => setEditDog({ ...editDog, ageNumber: parseInt(e.target.value) || undefined })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Unit</label>
+                    <select value={editDog.ageUnit || "Years"} onChange={(e) => setEditDog({ ...editDog, ageUnit: e.target.value as typeof AGE_UNITS[number] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      {AGE_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex items-end pb-2">
+                    <label className="flex items-center gap-2 text-sm text-[#1B2A4A]/60 cursor-pointer">
+                      <input type="checkbox" checked={editDog.ageApproximate || false} onChange={(e) => setEditDog({ ...editDog, ageApproximate: e.target.checked })} className="rounded" />
+                      Approximate age
+                    </label>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Gender</label>
+                    <select value={editDog.genderOption || "Unknown"} onChange={(e) => setEditDog({ ...editDog, genderOption: e.target.value as typeof GENDER_OPTIONS[number] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      {GENDER_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Size</label>
+                    <select value={editDog.size || "Medium"} onChange={(e) => setEditDog({ ...editDog, size: e.target.value as typeof SIZE_OPTIONS[number] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      {SIZE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Weight</label>
+                    <input value={editDog.weight} onChange={(e) => setEditDog({ ...editDog, weight: e.target.value })} placeholder="e.g., 45 lbs" className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Location</label>
+                    <input value={editDog.location} onChange={(e) => setEditDog({ ...editDog, location: e.target.value })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Age</label>
-                  <input value={editDog.age} onChange={(e) => setEditDog({ ...editDog, age: e.target.value })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+
+              {/* ═══════════════════════════════════════════════════════════════
+                  SECTION 2: RESCUE JOURNEY
+              ═══════════════════════════════════════════════════════════════ */}
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h3 className="text-sm font-bold text-[#1B2A4A] mb-4 flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#C41E2A] text-white text-xs flex items-center justify-center">2</span>
+                  Rescue Journey
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Dog Status</label>
+                    <select value={editDog.dogStatus || "New Intake"} onChange={(e) => setEditDog({ ...editDog, dogStatus: e.target.value as typeof DOG_STATUS_OPTIONS[number] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      {DOG_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Journey Stage</label>
+                    <select value={editDog.journeyStage || "Intake"} onChange={(e) => setEditDog({ ...editDog, journeyStage: e.target.value as typeof JOURNEY_STAGE_OPTIONS[number] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      {JOURNEY_STAGE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Gender</label>
-                  <select value={editDog.gender} onChange={(e) => setEditDog({ ...editDog, gender: e.target.value })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20">
-                    <option>Male</option><option>Female</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">How Dog Came to TTRG</label>
+                    <select value={editDog.rescueSource || "Shelter Rescue"} onChange={(e) => setEditDog({ ...editDog, rescueSource: e.target.value as typeof RESCUE_SOURCE_OPTIONS[number] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      {RESCUE_SOURCE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    {editDog.rescueSource === "Other" && (
+                      <input value={editDog.otherRescueSource || ""} onChange={(e) => setEditDog({ ...editDog, otherRescueSource: e.target.value })} placeholder="Enter custom source" className="w-full h-9 px-3 mt-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Support Goal</label>
+                    <select value={editDog.supportGoal || "Needs Donations"} onChange={(e) => setEditDog({ ...editDog, supportGoal: e.target.value as typeof SUPPORT_GOAL_OPTIONS[number] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      {SUPPORT_GOAL_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    {editDog.supportGoal === "Other" && (
+                      <input value={editDog.otherSupportGoal || ""} onChange={(e) => setEditDog({ ...editDog, otherSupportGoal: e.target.value })} placeholder="Enter custom goal" className="w-full h-9 px-3 mt-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Weight</label>
-                  <input value={editDog.weight} onChange={(e) => setEditDog({ ...editDog, weight: e.target.value })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1 flex items-center gap-2">
+                    <Heart className="w-3.5 h-3.5 text-[#C41E2A]" /> Rescue Story
+                  </label>
+                  <textarea value={editDog.rescueStory || ""} onChange={(e) => setEditDog({ ...editDog, rescueStory: e.target.value })} placeholder="Tell the emotional story of how this dog came to TTRG and why they need support..." rows={4} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none bg-white" />
+                  <p className="text-[10px] text-[#1B2A4A]/40 mt-1">This story will appear prominently on the public dog page.</p>
+                </div>
+                <div className="flex items-center gap-4 mt-4">
+                  <label className="flex items-center gap-2 text-sm text-[#1B2A4A]/60 cursor-pointer">
+                    <input type="checkbox" checked={editDog.urgent || false} onChange={(e) => setEditDog({ ...editDog, urgent: e.target.checked })} className="rounded" />
+                    <span className="text-red-600 font-semibold">Mark as Urgent / Critical</span>
+                  </label>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Location</label>
-                  <input value={editDog.location} onChange={(e) => setEditDog({ ...editDog, location: e.target.value })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+
+              {/* ═══════════════════════════════════════════════════════════════
+                  SECTION 3: MEDICAL NEEDS
+              ═══════════════════════════════════════════════════════════════ */}
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h3 className="text-sm font-bold text-[#1B2A4A] mb-4 flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4 text-[#C41E2A]" /> Medical Needs
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {MEDICAL_NEEDS_OPTIONS.map(option => (
+                    <label key={option} className="flex items-center gap-2 text-xs text-[#1B2A4A]/70 cursor-pointer hover:bg-white/50 p-1.5 rounded-lg transition-colors">
+                      <input type="checkbox" checked={(editDog.medicalNeedsOptions || []).includes(option)} onChange={(e) => {
+                        const current = editDog.medicalNeedsOptions || [];
+                        const updated = e.target.checked ? [...current, option] : current.filter(o => o !== option);
+                        setEditDog({ ...editDog, medicalNeedsOptions: updated });
+                      }} className="rounded" />
+                      {option}
+                    </label>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Stage</label>
-                  <select value={editDog.stage} onChange={(e) => setEditDog({ ...editDog, stage: e.target.value as AdminDog["stage"] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20">
-                    <option value="rescue">Rescue</option><option value="rehabilitate">Rehabilitate</option><option value="train">Train</option><option value="recover">Recover</option><option value="rehome">Rehome</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Status</label>
-                  <select value={editDog.status} onChange={(e) => setEditDog({ ...editDog, status: e.target.value as DogStatus })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20">
-                    <option value="draft">Draft</option><option value="pending_review">Pending Review</option><option value="published">Published</option><option value="hidden">Hidden</option><option value="adopted">Adopted/Rehomed</option><option value="urgent">Urgent</option><option value="archived">Archived</option>
-                  </select>
+                {((editDog.medicalNeedsOptions || []).includes("Other")) && (
+                  <input value={editDog.otherMedicalNeed || ""} onChange={(e) => setEditDog({ ...editDog, otherMedicalNeed: e.target.value })} placeholder="Specify other medical need" className="w-full h-9 px-3 mt-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                )}
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Medical Notes</label>
+                  <textarea value={editDog.medicalNeedsNotes || ""} onChange={(e) => setEditDog({ ...editDog, medicalNeedsNotes: e.target.value })} placeholder="Additional medical details..." rows={2} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none bg-white" />
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-sm text-[#1B2A4A]/60 cursor-pointer">
-                  <input type="checkbox" checked={editDog.urgent} onChange={(e) => setEditDog({ ...editDog, urgent: e.target.checked })} className="rounded" />
-                  Mark as Urgent
-                </label>
-                <span className="text-[10px] text-[#1B2A4A]/30">Donation amounts: $25 · $50 · $100 · $250 + Custom (set site-wide)</span>
+
+              {/* ═══════════════════════════════════════════════════════════════
+                  SECTION 4: TRAINING NEEDS
+              ═══════════════════════════════════════════════════════════════ */}
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h3 className="text-sm font-bold text-[#1B2A4A] mb-4 flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-[#C41E2A]" /> Training Needs
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {TRAINING_NEEDS_OPTIONS.map(option => (
+                    <label key={option} className="flex items-center gap-2 text-xs text-[#1B2A4A]/70 cursor-pointer hover:bg-white/50 p-1.5 rounded-lg transition-colors">
+                      <input type="checkbox" checked={(editDog.trainingNeedsOptions || []).includes(option)} onChange={(e) => {
+                        const current = editDog.trainingNeedsOptions || [];
+                        const updated = e.target.checked ? [...current, option] : current.filter(o => o !== option);
+                        setEditDog({ ...editDog, trainingNeedsOptions: updated });
+                      }} className="rounded" />
+                      {option}
+                    </label>
+                  ))}
+                </div>
+                {((editDog.trainingNeedsOptions || []).includes("Other")) && (
+                  <input value={editDog.otherTrainingNeed || ""} onChange={(e) => setEditDog({ ...editDog, otherTrainingNeed: e.target.value })} placeholder="Specify other training need" className="w-full h-9 px-3 mt-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                )}
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Training Notes</label>
+                  <textarea value={editDog.trainingNeedsNotes || ""} onChange={(e) => setEditDog({ ...editDog, trainingNeedsNotes: e.target.value })} placeholder="Additional training details..." rows={2} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none bg-white" />
+                </div>
               </div>
+
+              {/* ═══════════════════════════════════════════════════════════════
+                  SECTION 5: BEHAVIOR NOTES
+              ═══════════════════════════════════════════════════════════════ */}
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h3 className="text-sm font-bold text-[#1B2A4A] mb-4 flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-[#C41E2A]" /> Behavior Notes
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {BEHAVIOR_NOTES_OPTIONS.map(option => (
+                    <label key={option} className="flex items-center gap-2 text-xs text-[#1B2A4A]/70 cursor-pointer hover:bg-white/50 p-1.5 rounded-lg transition-colors">
+                      <input type="checkbox" checked={(editDog.behaviorNotesOptions || []).includes(option)} onChange={(e) => {
+                        const current = editDog.behaviorNotesOptions || [];
+                        const updated = e.target.checked ? [...current, option] : current.filter(o => o !== option);
+                        setEditDog({ ...editDog, behaviorNotesOptions: updated });
+                      }} className="rounded" />
+                      {option}
+                    </label>
+                  ))}
+                </div>
+                {((editDog.behaviorNotesOptions || []).includes("Other")) && (
+                  <input value={editDog.otherBehaviorNote || ""} onChange={(e) => setEditDog({ ...editDog, otherBehaviorNote: e.target.value })} placeholder="Specify other behavior note" className="w-full h-9 px-3 mt-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                )}
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Behavior Notes</label>
+                  <textarea value={editDog.behaviorNotesText || ""} onChange={(e) => setEditDog({ ...editDog, behaviorNotesText: e.target.value })} placeholder="Detailed behavior observations..." rows={2} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none bg-white" />
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════════════════
+                  SECTION 6: SPECIAL NEEDS
+              ═══════════════════════════════════════════════════════════════ */}
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h3 className="text-sm font-bold text-[#1B2A4A] mb-4 flex items-center gap-2">
+                  <Star className="w-4 h-4 text-[#C41E2A]" /> Special Needs
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {SPECIAL_NEEDS_OPTIONS.map(option => (
+                    <label key={option} className="flex items-center gap-2 text-xs text-[#1B2A4A]/70 cursor-pointer hover:bg-white/50 p-1.5 rounded-lg transition-colors">
+                      <input type="checkbox" checked={(editDog.specialNeedsOptions || []).includes(option)} onChange={(e) => {
+                        const current = editDog.specialNeedsOptions || [];
+                        const updated = e.target.checked ? [...current, option] : current.filter(o => o !== option);
+                        setEditDog({ ...editDog, specialNeedsOptions: updated });
+                      }} className="rounded" />
+                      {option}
+                    </label>
+                  ))}
+                </div>
+                {((editDog.specialNeedsOptions || []).includes("Other")) && (
+                  <input value={editDog.otherSpecialNeed || ""} onChange={(e) => setEditDog({ ...editDog, otherSpecialNeed: e.target.value })} placeholder="Specify other special need" className="w-full h-9 px-3 mt-3 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                )}
+                <div className="mt-3">
+                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Special Needs Notes</label>
+                  <textarea value={editDog.specialNeedsNotes || ""} onChange={(e) => setEditDog({ ...editDog, specialNeedsNotes: e.target.value })} placeholder="Additional special needs details..." rows={2} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none bg-white" />
+                </div>
+              </div>
+
               {/* ── Photos (multi-upload + gallery) ── */}
               <div>
                 <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-2 flex items-center gap-2">
@@ -392,24 +788,57 @@ export default function AdminDogsPage() {
                 <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Full Story</label>
                 <textarea value={editDog.fullStory} onChange={(e) => setEditDog({ ...editDog, fullStory: e.target.value })} rows={4} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Medical Needs</label>
-                  <textarea value={editDog.medicalNeeds} onChange={(e) => setEditDog({ ...editDog, medicalNeeds: e.target.value })} rows={2} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none" />
+              {/* ═══════════════════════════════════════════════════════════════
+                  SECTION 7: LEGACY STORY FIELDS (for backward compatibility)
+              ═══════════════════════════════════════════════════════════════ */}
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h3 className="text-sm font-bold text-[#1B2A4A] mb-4 flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-slate-400 text-white text-xs flex items-center justify-center">7</span>
+                  Legacy Story Fields (Optional)
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Short Story (legacy)</label>
+                    <textarea value={editDog.story} onChange={(e) => setEditDog({ ...editDog, story: e.target.value })} placeholder="Brief one-line summary..." rows={2} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none bg-white" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Full Story (legacy)</label>
+                    <textarea value={editDog.fullStory} onChange={(e) => setEditDog({ ...editDog, fullStory: e.target.value })} placeholder="Complete story..." rows={3} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none bg-white" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Training Needs</label>
-                  <textarea value={editDog.trainingNeeds} onChange={(e) => setEditDog({ ...editDog, trainingNeeds: e.target.value })} rows={2} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none" />
-                </div>
+                <p className="text-[10px] text-[#1B2A4A]/40 mt-2">These legacy fields are auto-populated from the new structured fields above.</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Behavior Notes</label>
-                  <textarea value={editDog.behaviorNotes} onChange={(e) => setEditDog({ ...editDog, behaviorNotes: e.target.value })} rows={2} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Special Needs</label>
-                  <textarea value={editDog.specialNeeds} onChange={(e) => setEditDog({ ...editDog, specialNeeds: e.target.value })} rows={2} className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 resize-none" />
+
+              {/* ═══════════════════════════════════════════════════════════════
+                  SECTION 8: PUBLICATION STATUS
+              ═══════════════════════════════════════════════════════════════ */}
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                <h3 className="text-sm font-bold text-[#1B2A4A] mb-4 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-[#C41E2A]" /> Publication Status
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Status</label>
+                    <select value={editDog.status} onChange={(e) => setEditDog({ ...editDog, status: e.target.value as DogStatus })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      <option value="draft">Draft</option>
+                      <option value="pending_review">Pending Review</option>
+                      <option value="published">Published</option>
+                      <option value="hidden">Hidden</option>
+                      <option value="adopted">Adopted/Rehomed</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Legacy Stage (Auto-set)</label>
+                    <select value={editDog.stage} onChange={(e) => setEditDog({ ...editDog, stage: e.target.value as AdminDog["stage"] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
+                      <option value="rescue">Rescue</option>
+                      <option value="rehabilitate">Rehabilitate</option>
+                      <option value="train">Train</option>
+                      <option value="recover">Recover</option>
+                      <option value="rehome">Rehome</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>

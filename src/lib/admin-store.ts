@@ -8,32 +8,128 @@ import {
 
 export type DogStatus = "draft" | "pending_review" | "published" | "hidden" | "adopted" | "urgent" | "archived";
 
+// New structured field types
+export type BreedOption =
+  | "Labrador Retriever" | "Yellow Lab" | "Golden Retriever" | "German Shepherd"
+  | "Husky" | "Husky Mix" | "Pit Bull Terrier" | "American Bully" | "Boxer"
+  | "Rottweiler" | "Doberman Pinscher" | "Great Dane" | "Mastiff" | "Cane Corso"
+  | "Belgian Malinois" | "Border Collie" | "Australian Shepherd" | "Cattle Dog / Blue Heeler"
+  | "Beagle" | "Hound Mix" | "Pointer" | "Setter" | "Terrier Mix" | "Chihuahua"
+  | "Dachshund" | "Poodle" | "Doodle Mix" | "Shih Tzu" | "Maltese" | "Yorkie"
+  | "French Bulldog" | "English Bulldog" | "Cocker Spaniel" | "Springer Spaniel"
+  | "Akita" | "Chow Chow" | "Shar Pei" | "Mixed Breed" | "Unknown" | "Other";
+
+export type AgeUnit = "Weeks" | "Months" | "Years";
+export type GenderOption = "Male" | "Female" | "Unknown";
+export type SizeOption = "Small" | "Medium" | "Large" | "Extra Large";
+
+export type DogStatusOption =
+  | "New Intake" | "In Training" | "Medical Care" | "Behavioral Rehabilitation"
+  | "Foster Needed" | "In Foster" | "Ready for Adoption" | "Adoption Pending"
+  | "Adopted" | "Sponsor Needed" | "Urgent Support Needed";
+
+export type RescueSourceOption =
+  | "Owner Surrender" | "Shelter Rescue" | "Veterinary Clinic Referral"
+  | "Emergency Rescue" | "Abandoned" | "Stray" | "Transferred from Another Rescue"
+  | "Behavioral Rehabilitation Case" | "Medical Rescue Case" | "Other";
+
+export type JourneyStageOption =
+  | "Intake" | "Assessment" | "Medical Care" | "Training"
+  | "Behavioral Rehabilitation" | "Foster Placement" | "Adoption Preparation"
+  | "Ready for Adoption" | "Adopted" | "Long-Term Support";
+
+export type SupportGoalOption =
+  | "Needs Donations" | "Needs Sponsor" | "Needs Foster" | "Needs Adoption"
+  | "Needs Medical Support" | "Needs Training Support" | "Fully Sponsored" | "Other";
+
 export interface AdminDog {
   id: string;
   name: string;
-  age: string;
-  breed: string;
-  gender: string;
+
+  // Basic Profile (structured)
+  age: string; // legacy support
+  ageNumber?: number;
+  ageUnit?: AgeUnit;
+  ageApproximate?: boolean;
+
+  breed: string; // legacy support
+  breedOption?: BreedOption;
+  otherBreed?: string;
+
+  gender: string; // legacy support
+  genderOption?: GenderOption;
+
   weight: string;
+  size?: SizeOption;
+
+  dogStatus?: DogStatusOption;
+
   price: number;
   story: string;
   fullStory: string;
+  rescueStory?: string; // The emotional journey story
+
   image: string;
   gallery: string[];
   videoUrl?: string;
   urgent: boolean;
+
+  // Legacy stage (mapped to journey)
   stage: "rescue" | "rehabilitate" | "train" | "recover" | "rehome";
   stageColor: string;
-  medicalNeeds: string;
-  trainingNeeds: string;
-  behaviorNotes: string;
-  specialNeeds: string;
+
+  // Medical Needs (structured)
+  medicalNeeds: string; // legacy support
+  medicalNeedsOptions?: string[];
+  otherMedicalNeed?: string;
+  medicalNeedsNotes?: string;
+
+  // Training Needs (structured)
+  trainingNeeds: string; // legacy support
+  trainingNeedsOptions?: string[];
+  otherTrainingNeed?: string;
+  trainingNeedsNotes?: string;
+
+  // Behavior Notes (structured)
+  behaviorNotes: string; // legacy support
+  behaviorNotesOptions?: string[];
+  otherBehaviorNote?: string;
+  behaviorNotesText?: string;
+
+  // Special Needs (structured)
+  specialNeeds: string; // legacy support
+  specialNeedsOptions?: string[];
+  otherSpecialNeed?: string;
+  specialNeedsNotes?: string;
+
+  // Rescue Journey (structured)
+  rescueSource?: RescueSourceOption;
+  otherRescueSource?: string;
+  journeyStage?: JourneyStageOption;
+  supportGoal?: SupportGoalOption;
+  otherSupportGoal?: string;
+
   location: string;
   status: DogStatus;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
   createdBy: string;
+
+  // Extended journey fields (for compatibility)
+  rescueDate?: string;
+  daysInRescue?: number;
+  currentJourneyStage?: string;
+  journeyDates?: Record<string, string>;
+  progressPercent?: number;
+  currentStageLabel?: string;
+  statusBadges?: string[];
+  milestones?: unknown[];
+  currentNeeds?: unknown[];
+  careTeam?: string;
+  lastUpdate?: string;
+  adminNote?: string;
+  sponsorStatus?: string;
 }
 
 export type UserRole = "super_admin" | "admin" | "trainer" | "org_partner";
