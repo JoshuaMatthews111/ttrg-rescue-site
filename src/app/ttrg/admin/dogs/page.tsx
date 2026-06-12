@@ -582,6 +582,18 @@ export default function AdminDogsPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                   <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Current Stage Label (Public)</label>
+                    <input value={editDog.currentStageLabel || editDog.journeyStage || "Intake"} onChange={(e) => setEditDog({ ...editDog, currentStageLabel: e.target.value })} placeholder="e.g., Training - Basic Obedience" className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                    <p className="text-[10px] text-[#1B2A4A]/40 mt-1">This displays on the dog's public page</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Days in Care</label>
+                    <input type="number" value={editDog.daysInRescue || 0} onChange={(e) => setEditDog({ ...editDog, daysInRescue: parseInt(e.target.value) || 0 })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white" />
+                    <p className="text-[10px] text-[#1B2A4A]/40 mt-1">Auto-calculated from rescue date, or set manually</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                  <div>
                     <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">How Dog Came to TTRG</label>
                     <select value={editDog.rescueSource || "Shelter Rescue"} onChange={(e) => setEditDog({ ...editDog, rescueSource: e.target.value as typeof RESCUE_SOURCE_OPTIONS[number] })} className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 bg-white">
                       {RESCUE_SOURCE_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}

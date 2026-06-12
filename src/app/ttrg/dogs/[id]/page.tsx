@@ -100,6 +100,7 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
     age: rawDog.age || "",
     weight: rawDog.weight || "",
     currentJourneyStage: rawDog.currentJourneyStage as string | undefined,
+    currentStageLabel: rawDog.currentStageLabel as string | undefined,
     currentNeeds: (rawDog.currentNeeds as { icon: string; label: string; detail: string; urgent?: boolean }[]) || [],
     milestones: (rawDog.milestones as { label: string; date?: string; status: string }[]) || [],
   };
@@ -340,10 +341,10 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
           {/* Journey Info */}
           <div className="mt-8 p-4 bg-slate-50 rounded-xl">
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
-              {dog.journeyStage && (
+              {(dog.currentStageLabel || dog.journeyStage) && (
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#C41E2A]" />
-                  <span className="text-[#1B2A4A]">Current Stage: <strong>{dog.journeyStage}</strong></span>
+                  <span className="text-[#1B2A4A]">Current Stage: <strong>{dog.currentStageLabel || dog.journeyStage}</strong></span>
                 </div>
               )}
               {dog.rescueDate && (
