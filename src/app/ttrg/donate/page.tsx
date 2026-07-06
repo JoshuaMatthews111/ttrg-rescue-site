@@ -3,6 +3,7 @@
 import { useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Script from "next/script";
 import {
   Heart, Shield, Stethoscope, GraduationCap, Home, PawPrint, CheckCircle2,
   Phone, Mail, Truck, Sparkles, Utensils, Activity, AlertTriangle, Award,
@@ -311,6 +312,14 @@ function DonateInner() {
                 <Lock className="w-3 h-3" />
                 <span>Your payment is securely processed by Authorize.Net. TTRG never stores your card information.</span>
               </div>
+              {/* RapidScan Security Site Seal */}
+              <div className="flex justify-center mt-4">
+                <div id="rapidscan-siteseal"></div>
+              </div>
+              <Script
+                src="https://rapidscansecure.com/siteseal/siteseal.js?code=144,41183B1A4716EFAEDA66CF216BD026E8EC73FC28"
+                strategy="afterInteractive"
+              />
             </div>
 
             {/* Error */}

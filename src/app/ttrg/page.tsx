@@ -8,6 +8,7 @@ import {
   AlertTriangle, Clock, CheckCircle2, Repeat, ShieldCheck,
   HandHeart, Building2, ChevronRight, Quote, Share2,
   Star, TrendingUp, Award, MapPin,
+  HeartHandshake, FileSearch, Camera, DollarSign, CheckCircle,
 } from "lucide-react";
 import { dogs as dogData } from "@/lib/dogs";
 import { fetchPublishedDogs, fetchTickerItems, subscribeToDogs, type TickerItem } from "@/lib/admin-store";
@@ -40,12 +41,12 @@ const missionUpdates = [
 
 /* ─── IMPACT STATS ─── */
 const impactStats = [
-  { label: "Dogs Rescued", value: 2300, suffix: "+", icon: ShieldCheck },
-  { label: "Trained & Rehabbed", value: 1850, suffix: "+", icon: Stethoscope },
-  { label: "Dogs Rehomed", value: 1600, suffix: "+", icon: Home },
-  { label: "Active Trainers", value: 45, suffix: "+", icon: Award },
-  { label: "Foster Families", value: 200, suffix: "+", icon: HandHeart },
-  { label: "Community Partners", value: 75, suffix: "+", icon: Building2 },
+  { label: "Active Trainers", value: 25, suffix: "+", icon: Award },
+  { label: "Foster Families", value: 7, suffix: "+", icon: HandHeart },
+  { label: "Community Partners", value: 250, suffix: "+", icon: Building2 },
+  { label: "Trained & Rehabbed", value: 400, suffix: "+", icon: Stethoscope },
+  { label: "Dogs Rescued", value: 400, suffix: "+", icon: ShieldCheck },
+  { label: "Dogs Rehomed", value: 200, suffix: "+", icon: Home },
 ];
 
 // Testimonial videos removed — will be populated via admin media library when added back
@@ -206,6 +207,7 @@ export default function TTRGHome() {
 
   const heroSec = useInView();
   const journeySec = useInView();
+  const familySec = useInView();
   const dogsSec = useInView();
   const founderSec = useInView();
   const statsSec = useInView();
@@ -389,6 +391,64 @@ export default function TTRGHome() {
             <Link href="/ttrg/journeys" className="inline-flex items-center gap-2 bg-[#1B2A4A] hover:bg-[#2a3d66] text-white px-8 py-4 rounded-full text-sm font-bold transition-all">
               <PawPrint className="w-4 h-4" /> SEE FULL DOG JOURNEYS
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════ 3B. FAMILY PRESERVATION JOURNEY ═══════ */}
+      <section id="make-training-affordable" ref={familySec.ref} className="py-20 sm:py-24 bg-gradient-to-br from-[#FFF8F0] via-[#FFF5EB] to-[#FFFAF5]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className={`text-center mb-14 ${familySec.visible ? "animate-fade-up" : "opacity-0"}`}>
+            <div className="inline-flex items-center gap-2 bg-[#D97706]/10 rounded-full px-4 py-1.5 mb-4">
+              <HeartHandshake className="w-3.5 h-3.5 text-[#D97706]" />
+              <span className="text-[#D97706] text-xs font-bold uppercase tracking-wider">The Family Preservation Journey</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1B2A4A] tracking-tight">Helping Families Keep Their Dogs</h2>
+            <p className="text-base text-[#1B2A4A]/50 mt-3 max-w-2xl mx-auto">Not every dog needs to be rescued from a shelter. Some dogs need help before they lose their home. When a family cannot afford the training needed to keep their dog, TTRG helps evaluate the situation, tell the story, raise support, fund the training, and report the results back to donors.</p>
+          </div>
+
+          <div className="relative">
+            <div className="hidden md:block absolute top-14 left-[10%] right-[10%] h-0.5 bg-gradient-to-r from-[#D97706]/10 via-[#D97706]/40 to-[#D97706]/10" />
+            <div className="flex flex-col md:flex-row items-stretch md:items-start justify-between gap-6 md:gap-2">
+              {[
+                { num: 1, label: "Family in Need", icon: HeartHandshake, desc: "A family with limited resources needs help keeping their dog." },
+                { num: 2, label: "Situation Evaluated", icon: FileSearch, desc: "TTRG reviews the family, the dog, the behavior issues, and the training need." },
+                { num: 3, label: "Support Profile Created", icon: Camera, desc: "Photos, videos, and the family's story are gathered into an individual fundraising profile." },
+                { num: 4, label: "Training Funds Raised", icon: DollarSign, desc: "The campaign is shared with donors until the needed training support is funded." },
+                { num: 5, label: "Training Completed", icon: CheckCircle, desc: "The dog receives training, the family gives a final testimony, and donors see the outcome." },
+              ].map((step, i) => (
+                <div
+                  key={step.label}
+                  className={`flex items-center gap-4 md:flex-col md:gap-3 md:text-center flex-1 group ${familySec.visible ? "animate-fade-up" : "opacity-0"}`}
+                  style={{ animationDelay: `${i * 0.1}s` }}
+                >
+                  <div className="relative z-10 flex-shrink-0">
+                    <div className="w-24 h-24 rounded-full flex items-center justify-center shadow-lg bg-white border-2 border-[#D97706]/30 group-hover:shadow-xl group-hover:scale-105 group-hover:border-[#D97706]/60 transition-all duration-300">
+                      <step.icon className="w-10 h-10 text-[#D97706]" strokeWidth={1.8} />
+                    </div>
+                    <span className="absolute -top-1 -right-1 w-8 h-8 rounded-full text-xs font-black flex items-center justify-center shadow-md bg-[#D97706] text-white">
+                      {step.num}
+                    </span>
+                  </div>
+                  <div className="md:mt-2 text-left md:text-center">
+                    <p className="font-black text-lg text-[#1B2A4A]">{step.label}</p>
+                    <p className="text-xs text-[#1B2A4A]/55 mt-1.5 max-w-[200px] leading-relaxed">{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="text-center mt-14">
+            <p className="text-xs text-[#1B2A4A]/40 uppercase tracking-wider mb-3 font-bold">Every family helped means one more dog stays home</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link href="/ttrg/make-training-affordable" className="inline-flex items-center gap-2 bg-[#D97706] hover:bg-[#B45309] text-white px-8 py-4 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/20">
+                <HeartHandshake className="w-4 h-4" /> HELP A FAMILY KEEP THEIR DOG
+              </Link>
+              <Link href="/ttrg/make-training-affordable" className="inline-flex items-center gap-2 border-2 border-[#1B2A4A]/15 text-[#1B2A4A] px-6 py-3.5 rounded-full text-sm font-bold hover:bg-white transition-all">
+                VIEW FAMILY SUPPORT STORIES <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

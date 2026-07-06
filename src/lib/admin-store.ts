@@ -498,6 +498,147 @@ export {
   subscribeToDogs, subscribeToTable,
 } from "./supabase-store";
 
+/* ═══════ FAMILY SUPPORT PROFILES ═══════ */
+export type FamilyProfileStatus = "draft" | "published" | "funded" | "completed" | "archived";
+
+export interface FamilyProfile {
+  id: string;
+  slug: string;
+  familyName: string;
+  dogName: string;
+  dogBreed: string;
+  location: string;
+  image: string;
+  gallery: string[];
+  videoUrl?: string;
+  story: string;
+  shortSummary: string;
+  behaviorIssues: string;
+  trainingNeeded: string;
+  goalAmount: number;
+  raisedAmount: number;
+  donorCount: number;
+  status: FamilyProfileStatus;
+  urgent: boolean;
+  featured: boolean;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  completedAt?: string;
+  testimony?: string;
+}
+
+const FAMILY_KEY = "ttrg-family-profiles";
+
+const demoFamilyProfiles: FamilyProfile[] = [
+  {
+    id: "fam-demo-1",
+    slug: "johnson-family-max",
+    familyName: "The Johnson Family",
+    dogName: "Max",
+    dogBreed: "German Shepherd Mix",
+    location: "Cleveland, OH",
+    image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80",
+    gallery: [],
+    story: "The Johnson family adopted Max two years ago, but recently Max has developed leash reactivity and resource guarding that the family cannot address on their own. With two young children at home, they are worried about safety but love Max deeply and don't want to surrender him. Professional training would cost $1,800 — far beyond what the family can afford on a single income. TTRG evaluated the situation and believes 6 weeks of structured behavior modification will resolve the issues and keep Max safely in his home.",
+    shortSummary: "Max needs behavior training to stay safely with his family of four.",
+    behaviorIssues: "Leash reactivity, resource guarding around food bowls",
+    trainingNeeded: "6-week behavior modification program with certified trainer",
+    goalAmount: 1800,
+    raisedAmount: 1240,
+    donorCount: 18,
+    status: "published",
+    urgent: true,
+    featured: true,
+    createdAt: "2026-06-20T10:00:00Z",
+    updatedAt: "2026-07-05T14:30:00Z",
+    publishedAt: "2026-06-21T08:00:00Z",
+  },
+  {
+    id: "fam-demo-2",
+    slug: "martinez-family-bella",
+    familyName: "The Martinez Family",
+    dogName: "Bella",
+    dogBreed: "Pit Bull Terrier",
+    location: "Akron, OH",
+    image: "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600&q=80",
+    gallery: [],
+    story: "Maria Martinez is a single mother raising three children while working two jobs. Bella has been the family's loyal companion for four years, but after a move to a new apartment, Bella has developed severe separation anxiety — barking, destructive chewing, and accidents. The landlord has given them 30 days to resolve it or Bella must go. Maria reached out to TTRG in tears. A professional desensitization and crate training program will cost $1,200. Help keep Bella home where she is loved.",
+    shortSummary: "Bella's separation anxiety is threatening her family's housing — training can save her spot.",
+    behaviorIssues: "Severe separation anxiety, destructive behavior, excessive barking",
+    trainingNeeded: "4-week separation anxiety desensitization + crate training",
+    goalAmount: 1200,
+    raisedAmount: 450,
+    donorCount: 8,
+    status: "published",
+    urgent: true,
+    featured: false,
+    createdAt: "2026-06-25T10:00:00Z",
+    updatedAt: "2026-07-04T11:00:00Z",
+    publishedAt: "2026-06-26T09:00:00Z",
+  },
+  {
+    id: "fam-demo-3",
+    slug: "williams-family-duke",
+    familyName: "The Williams Family",
+    dogName: "Duke",
+    dogBreed: "Labrador Retriever",
+    location: "Mentor, OH",
+    image: "https://images.unsplash.com/photo-1529429617124-95b109e86bb8?w=600&q=80",
+    gallery: [],
+    story: "Retired veteran James Williams adopted Duke from a shelter to be his emotional support companion. Duke is gentle and loving indoors, but pulls dangerously on walks — James was recently injured when Duke lunged after a squirrel. James lives on a fixed income and cannot afford the leash training Duke needs. With proper loose-leash walking training and basic obedience, Duke can safely accompany James on daily walks that are crucial for both their wellbeing.",
+    shortSummary: "Veteran needs help training his support dog for safe daily walks.",
+    behaviorIssues: "Extreme leash pulling, lunging at distractions",
+    trainingNeeded: "5-week loose-leash walking + obedience program",
+    goalAmount: 950,
+    raisedAmount: 950,
+    donorCount: 14,
+    status: "completed",
+    urgent: false,
+    featured: false,
+    createdAt: "2026-05-15T10:00:00Z",
+    updatedAt: "2026-06-28T16:00:00Z",
+    publishedAt: "2026-05-16T08:00:00Z",
+    completedAt: "2026-06-28T16:00:00Z",
+    testimony: "Duke is a completely different dog on walks now. James says he feels safe again and they walk together every morning. Thank you to every donor who made this possible.",
+  },
+];
+
+export function getFamilyProfiles(): FamilyProfile[] {
+  if (typeof window === "undefined") return demoFamilyProfiles;
+  const raw = localStorage.getItem(FAMILY_KEY);
+  if (!raw) {
+    localStorage.setItem(FAMILY_KEY, JSON.stringify(demoFamilyProfiles));
+    return demoFamilyProfiles;
+  }
+  return JSON.parse(raw);
+}
+
+export function saveFamilyProfiles(profiles: FamilyProfile[]) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(FAMILY_KEY, JSON.stringify(profiles));
+}
+
+export function getPublishedFamilyProfiles(): FamilyProfile[] {
+  return getFamilyProfiles().filter(p => p.status === "published" || p.status === "funded" || p.status === "completed");
+}
+
+export function getFamilyProfileBySlug(slug: string): FamilyProfile | undefined {
+  return getFamilyProfiles().find(p => p.slug === slug);
+}
+
+export function upsertFamilyProfile(profile: FamilyProfile) {
+  const profiles = getFamilyProfiles();
+  const idx = profiles.findIndex(p => p.id === profile.id);
+  if (idx >= 0) profiles[idx] = profile;
+  else profiles.unshift(profile);
+  saveFamilyProfiles(profiles);
+}
+
+export function deleteFamilyProfile(id: string) {
+  saveFamilyProfiles(getFamilyProfiles().filter(p => p.id !== id));
+}
+
 // Auto-generate ticker from dog journey progress
 export function generateJourneyTicker(dogName: string, fromStage: string, toStage: string): TickerItem {
   const stageLabels: Record<string, string> = {

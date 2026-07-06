@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Heart, Menu, X, ChevronDown, PawPrint, Home, Users, GraduationCap, Building2, HandHeart, BookOpen, Award } from "lucide-react";
+import { Heart, Menu, X, ChevronDown, PawPrint, Home, Users, GraduationCap, Building2, HandHeart, BookOpen, Award, HeartHandshake } from "lucide-react";
 
 const dogsDropdown = [
   { label: "Meet Our Dogs", href: "/ttrg/sponsor", icon: Heart },
@@ -127,6 +127,9 @@ export default function TTRGNav() {
               onToggle={() => setOpenDrop(openDrop === "about" ? null : "about")}
               onClose={() => setOpenDrop(null)}
             />
+            <Link href="/ttrg/make-training-affordable" className="text-[#D97706] text-sm font-semibold hover:text-[#B45309] transition-colors flex items-center gap-1">
+              <HeartHandshake className="w-3.5 h-3.5" /> Make Training Affordable
+            </Link>
             <Link href="/ttrg/contact" className="text-[#1B2A4A] text-sm font-semibold hover:text-[#C41E2A] transition-colors">
               Contact
             </Link>
@@ -202,6 +205,9 @@ export default function TTRGNav() {
                 </Link>
               ))}
 
+              <Link href="/ttrg/make-training-affordable" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 px-6 py-3 text-[#D97706] text-[15px] font-medium hover:bg-amber-50 transition-colors">
+                <HeartHandshake className="w-4 h-4" /> Make Training Affordable
+              </Link>
               <Link href="/ttrg/contact" onClick={() => setMobileOpen(false)} className="block px-6 py-3 text-[#1B2A4A] text-[15px] font-medium hover:bg-slate-50 hover:text-[#C41E2A] transition-colors">
                 Contact
               </Link>
