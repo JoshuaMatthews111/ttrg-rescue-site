@@ -62,6 +62,16 @@ export default function MakeTrainingAffordable() {
         </div>
       </section>
 
+      {/* Disclaimer */}
+      <div className="bg-amber-50 border-b border-amber-200 py-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-[11px] text-amber-700 text-center font-medium">
+            <AlertTriangle className="w-3 h-3 inline mr-1" />
+            Profiles shown below are representative examples for illustration purposes unless individually marked as verified TTRG cases. Photos may be stock or representative images.
+          </p>
+        </div>
+      </div>
+
       {/* Filters */}
       <section className="py-8 bg-white border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

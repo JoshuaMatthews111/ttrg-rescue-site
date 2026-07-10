@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Heart, MapPin, Phone, Mail, MessageCircle, ExternalLink } from "lucide-react";
+import { Heart, MapPin, Phone, Mail } from "lucide-react";
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -71,7 +71,7 @@ export default function TTRGFooter() {
               <p className="text-white/40 text-sm leading-relaxed mb-3">
                 Team Trainers Rescue Group is a rescue mission ecosystem helping dogs move from rescue to rehabilitation, training, foster care, and permanent homes.
               </p>
-              <p className="text-white/30 text-xs">EIN: [Pending from client]</p>
+              <p className="text-white/30 text-xs">EIN: 46-1426142</p>
               <p className="text-white/30 text-xs mt-1">501(c)(3) · All donations are tax-deductible.</p>
             </div>
 
@@ -110,7 +110,7 @@ export default function TTRGFooter() {
                 </p>
                 <p className="flex items-center gap-2">
                   <Mail className="w-4 h-4 flex-shrink-0" />
-                  <a href="mailto:Teamtrainersrescue@gmail.com" className="hover:text-white transition-colors">Teamtrainersrescue@gmail.com</a>
+                  <a href="mailto:info@teamtrainersrescuegroup.com" className="hover:text-white transition-colors">info@teamtrainersrescuegroup.com</a>
                 </p>
               </div>
             </div>
@@ -152,12 +152,6 @@ export default function TTRGFooter() {
         </div>
       </footer>
 
-      {/* Chat Bubble (Crisp-style) */}
-      <div className="fixed bottom-5 right-5 z-50">
-        <button className="w-12 h-12 bg-[#1B2A4A] hover:bg-[#2a3d66] rounded-full shadow-xl flex items-center justify-center transition-all hover:scale-110">
-          <MessageCircle className="w-5 h-5 text-white" />
-        </button>
-      </div>
     </>
   );
 }

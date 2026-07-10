@@ -36,8 +36,8 @@ export default function ContactPage() {
     <div className="min-h-[70vh] flex items-center justify-center">
       <div className="text-center max-w-md px-4">
         <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold text-[#1B2A4A] mb-3">Message Sent!</h1>
-        <p className="text-[#1B2A4A]/60 mb-6">We&apos;ll get back to you within 24–48 hours.</p>
+        <h1 className="text-3xl font-bold text-[#1B2A4A] mb-3">Message Sent</h1>
+        <p className="text-[#1B2A4A]/60 mb-6">Thank you for reaching out to TTRG.</p>
         <Link href="/ttrg" className="text-[#C41E2A] font-semibold hover:underline">← Back to Home</Link>
       </div>
     </div>
@@ -60,7 +60,7 @@ export default function ContactPage() {
               {[
                 { icon: MapPin, label: "Visit Us", value: "4805 Orchard Rd\nCleveland, OH 44128" },
                 { icon: Phone, label: "Call Us", value: "(866) 436-4959", href: "tel:+18664364959" },
-                { icon: Mail, label: "Email Us", value: "Teamtrainersrescue@gmail.com", href: "mailto:Teamtrainersrescue@gmail.com" },
+                { icon: Mail, label: "Email Us", value: "info@teamtrainersrescuegroup.com", href: "mailto:info@teamtrainersrescuegroup.com" },
                 { icon: Clock, label: "Hours", value: "Mon–Fri: 9am–6pm\nSat: 10am–4pm\nSun: Closed" },
               ].map((item: { icon: typeof MapPin; label: string; value: string; href?: string }) => (
                 <div key={item.label} className="flex items-start gap-4">

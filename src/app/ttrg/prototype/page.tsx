@@ -494,7 +494,7 @@ export default function TTRGHomepage() {
               <div className="space-y-3 text-white/40 text-sm">
                 <p className="flex items-start gap-2"><MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" /> 4805 Orchard Rd<br />Cleveland, OH 44128</p>
                 <p className="flex items-center gap-2"><Phone className="w-4 h-4 flex-shrink-0" /> (866) 436-4959</p>
-                <p className="flex items-center gap-2"><Mail className="w-4 h-4 flex-shrink-0" /> <a href="mailto:Teamtrainersrescue@gmail.com" className="hover:text-white transition-colors">Teamtrainersrescue@gmail.com</a></p>
+                <p className="flex items-center gap-2"><Mail className="w-4 h-4 flex-shrink-0" /> <a href="mailto:info@teamtrainersrescuegroup.com" className="hover:text-white transition-colors">info@teamtrainersrescuegroup.com</a></p>
               </div>
             </div>
           </div>

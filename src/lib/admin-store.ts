@@ -418,8 +418,7 @@ export interface SiteSettings {
 
 const defaultTicker: TickerItem[] = [
   { id: "t1", text: "🐾 3 Dogs Rescued This Week — Your Support Saves Lives", active: true, createdAt: new Date().toISOString(), type: "manual" },
-  { id: "t2", text: "🐾 127 Dogs Successfully Trained, Rehabilitated & Rehomed", active: true, createdAt: new Date().toISOString(), type: "manual" },
-  { id: "t3", text: "🐾 New Rescue Story Added — Follow Bailey's Journey", active: true, createdAt: new Date().toISOString(), type: "manual" },
+  { id: "t2", text: "🐾 400+ Dogs Successfully Trained & Rehabilitated", active: true, createdAt: new Date().toISOString(), type: "manual" },
   { id: "t4", text: "🐾 Thank You To Our Amazing Donors & Foster Families", active: true, createdAt: new Date().toISOString(), type: "manual" },
   { id: "t5", text: "🐾 Emergency Foster Placements Helping Dogs in Critical Need", active: true, createdAt: new Date().toISOString(), type: "manual" },
   { id: "t6", text: "🐾 Every Adoption Opens Space for the Next Dog Waiting", active: true, createdAt: new Date().toISOString(), type: "manual" },

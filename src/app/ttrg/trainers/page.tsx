@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Award, Shield, CheckCircle2, Sparkles, Target, BookOpen, ChevronRight, MapPin, Calendar } from "lucide-react";
+import { Heart, Award, Shield, CheckCircle2, Sparkles, Target, BookOpen, ChevronRight, Calendar } from "lucide-react";
 
 const leadTrainers = [
   {
@@ -16,7 +16,7 @@ const leadTrainers = [
     name: "Jasmine Bland",
     role: "Behavior & Enrichment\nTrainer",
     exp: "8+",
-    cert: "CPDT-KA Certified",
+    cert: "Behavior & Enrichment Specialist",
     bio: "Jasmine specializes in positive reinforcement and enrichment training that helps dogs gain confidence and joy.",
     photo: "/ttrg/trainers/jasmine-bland-candid.jpg",
   },
@@ -24,7 +24,7 @@ const leadTrainers = [
     name: "Daniel Bainbridge",
     role: "Canine Specialist\n& Trainer",
     exp: "10+",
-    cert: "CPDT-KA Certified",
+    cert: "Canine Behavior Specialist",
     bio: "Daniel focuses on advanced obedience and behavior support for dogs with complex needs.",
     photo: "/ttrg/trainers/daniel-bainbridge-rd-candid.jpg",
   },
@@ -32,7 +32,7 @@ const leadTrainers = [
     name: "Bailey Brown",
     role: "Puppy Trainer\n& Socialization Expert",
     exp: "6+",
-    cert: "CPDT-KA Certified",
+    cert: "Puppy Development Specialist",
     bio: "Bailey helps young dogs build confidence and strong foundations for a lifetime of success.",
     photo: "/ttrg/trainers/bailey-brown-candid.jpg",
   },
@@ -199,16 +199,12 @@ export default function TrainersPage() {
             </div>
 
             <div className="bg-white rounded-2xl p-8 border border-slate-100">
-              <h3 className="text-lg font-bold text-[#1B2A4A] mb-2">Visit Us In Person</h3>
+              <h3 className="text-lg font-bold text-[#1B2A4A] mb-2">Get In Touch</h3>
               <p className="text-sm text-[#1B2A4A]/50 mb-4">
-                Come meet our team and see our training in action. Tours by appointment.
+                Have questions about our training programs or want to learn more about our team?
               </p>
-              <div className="flex items-center gap-2 text-sm text-[#1B2A4A]/60 mb-6">
-                <MapPin className="w-4 h-4 text-[#C41E2A]" />
-                4805 Orchard Rd, Cleveland, OH 44128
-              </div>
-              <Link href="/ttrg" className="text-[#C41E2A] text-xs font-bold hover:underline flex items-center gap-1">
-                SCHEDULE A VISIT <ChevronRight className="w-3 h-3" />
+              <Link href="/ttrg/contact" className="text-[#C41E2A] text-xs font-bold hover:underline flex items-center gap-1">
+                CONTACT US <ChevronRight className="w-3 h-3" />
               </Link>
             </div>
           </div>

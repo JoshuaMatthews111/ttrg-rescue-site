@@ -47,11 +47,11 @@ const ways = [
   {
     icon: GraduationCap,
     label: "Become a Trainer",
-    desc: "Join our training team and help rehabilitate rescue dogs through professional, compassionate training.",
-    href: "/ttrg/get-involved#trainer",
+    desc: "Interested in a career in dog training? Trainer positions are managed through Lorenzo's Dog Training Team. Contact us for more information about the application process.",
+    href: "https://lorenzosdogtrainingteam.com",
     color: "bg-amber-50",
-    cta: "Learn More",
-    apply: "Apply Now",
+    cta: "Visit Lorenzo's Dog Training Team",
+    apply: "Inquire About Training Careers",
     applyHref: "/ttrg/contact",
   },
   {

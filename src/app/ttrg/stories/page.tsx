@@ -6,10 +6,10 @@ import { Heart, Play, X, ChevronDown, PawPrint, ChevronRight, Sparkles, HandHear
 
 const categories = [
   { label: "All Stories", icon: PawPrint, active: true },
-  { label: "Adoption Stories", icon: Heart, active: false },
-  { label: "Rehabilitation Stories", icon: Sparkles, active: false },
-  { label: "Sponsor Stories", icon: HandHeart, active: false },
-  { label: "Volunteer Stories", icon: Users, active: false },
+  { label: "Rescue Stories", icon: Heart, active: false },
+  { label: "Training Stories", icon: Sparkles, active: false },
+  { label: "Adoption Stories", icon: HandHeart, active: false },
+  { label: "Client Testimonials", icon: Users, active: false },
 ];
 
 const featuredVideo = {
@@ -26,8 +26,8 @@ const videos = [
   { id: 2, src: "/ttrg/videos/trefz-family.mp4", title: "A Bond That Heals", quote: "How one family and one dog changed each other forever.", duration: "2:07", category: "Adoption Story" },
   { id: 3, src: "/ttrg/videos/just-the-2-of-us.mov", title: "Braveheart's New Beginning", quote: "Patience, training, and a second chance at life.", duration: "1:56", category: "Rescue Story" },
   { id: 4, src: "/ttrg/videos/britta-testimonial.mp4", title: "Healing Together", quote: "Rehabilitation gave this dog — and this family — hope again.", duration: "2:31", category: "Client Testimonial" },
-  { id: 5, src: "/ttrg/videos/testimonial-2.mp4", title: "Why I Sponsor", quote: "Sponsorship helps dogs get the training and care they deserve.", duration: "2:15", category: "Sponsor Story" },
-  { id: 6, src: "/ttrg/videos/trefz-family.mp4", title: "Volunteering Changed Me", quote: "Volunteering with rescue dogs is life-changing work.", duration: "2:05", category: "Client Testimonial" },
+  { id: 5, src: "/ttrg/videos/testimonial-2.mp4", title: "Tucker's Training Journey", quote: "Watch how professional training transformed Tucker's behavior.", duration: "2:15", category: "Training Story" },
+  { id: 6, src: "/ttrg/videos/trefz-family.mp4", title: "The Trefz Family's Rescue", quote: "A rescue story that changed this family forever.", duration: "2:05", category: "Rescue Story" },
 ];
 
 export default function StoriesPage() {
@@ -108,7 +108,12 @@ export default function StoriesPage() {
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videos.map((vid) => (
+            {videos.filter((vid) => {
+              if (activeCategory === "All Stories") return true;
+              if (activeCategory === "Client Testimonials") return vid.category === "Client Testimonial";
+              const key = activeCategory.replace(" Stories", "").toLowerCase();
+              return vid.category.toLowerCase().includes(key);
+            }).map((vid) => (
               <button
                 key={vid.id}
                 onClick={() => setVideoModal(vid)}

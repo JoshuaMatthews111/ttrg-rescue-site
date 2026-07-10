@@ -77,6 +77,7 @@ function DonateInner() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [trainerReferral, setTrainerReferral] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -127,6 +128,7 @@ function DonateInner() {
           zip: zip || undefined,
           donationType,
           dogName: dogName || undefined,
+          trainerReferral: trainerReferral || undefined,
         }),
       });
       const data = await res.json();
@@ -166,7 +168,7 @@ function DonateInner() {
           {success.subscriptionId && <p className="text-sm text-[#1B2A4A]/40 mb-2">Subscription ID: <span className="font-mono font-bold">{success.subscriptionId}</span></p>}
           <p className="text-sm text-[#1B2A4A]/40 mb-2">Amount: <strong>${finalAmount.toFixed(2)}{donationType === "monthly" ? "/month" : ""}</strong></p>
           <p className="text-sm text-[#1B2A4A]/40 mb-6">A confirmation will be sent to <strong>{email}</strong></p>
-          <p className="text-sm text-[#1B2A4A]/40 mb-8">Questions? Call <a href="tel:+18664364959" className="text-[#C41E2A] font-semibold">(866) 436-4959</a> or email <a href="mailto:Teamtrainersrescue@gmail.com" className="text-[#C41E2A] font-semibold">Teamtrainersrescue@gmail.com</a></p>
+          <p className="text-sm text-[#1B2A4A]/40 mb-8">Questions? Call <a href="tel:+18664364959" className="text-[#C41E2A] font-semibold">(866) 436-4959</a> or email <a href="mailto:info@teamtrainersrescuegroup.com" className="text-[#C41E2A] font-semibold">info@teamtrainersrescuegroup.com</a></p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/ttrg/sponsor" className="bg-[#C41E2A] hover:bg-[#A01825] text-white px-6 py-3 rounded-xl text-sm font-bold transition-colors">
               Sponsor a Dog
@@ -249,6 +251,7 @@ function DonateInner() {
             </div>
             <input type="email" placeholder="Email Address" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
             <input type="tel" placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} />
+            <input type="text" placeholder="Trainer Referral (Who referred you?) *" required value={trainerReferral} onChange={(e) => setTrainerReferral(e.target.value)} className={inputCls} />
 
             {/* Billing Address */}
             <div className="pt-2">
@@ -354,7 +357,7 @@ function DonateInner() {
                 <a href="tel:+18664364959" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1B2A4A]/60 hover:text-[#C41E2A] transition-colors">
                   <Phone className="w-3.5 h-3.5" /> (866) 436-4959
                 </a>
-                <a href="mailto:Teamtrainersrescue@gmail.com" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1B2A4A]/60 hover:text-[#C41E2A] transition-colors">
+                <a href="mailto:info@teamtrainersrescuegroup.com" className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1B2A4A]/60 hover:text-[#C41E2A] transition-colors">
                   <Mail className="w-3.5 h-3.5" /> Email Us
                 </a>
               </div>
@@ -467,7 +470,7 @@ function DonateInner() {
 
       <div className="text-center pb-8 px-4">
         <p className="text-[11px] text-slate-400">
-          Team Trainers Rescue Group is a 501(c)(3) nonprofit organization. EIN: [Pending from client]
+          Team Trainers Rescue Group is a 501(c)(3) nonprofit organization. EIN: 46-1426142
         </p>
         <p className="text-[10px] text-slate-300 mt-1">All donations are tax-deductible to the extent allowed by law.</p>
       </div>

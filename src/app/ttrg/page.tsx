@@ -32,8 +32,7 @@ const heroSubtitles = [
 /* ─── TICKER DATA ─── */
 const missionUpdates = [
   { text: "NEW: 3 Dogs Rescued This Week — Your Support Saves Lives!" },
-  { text: "MILESTONE: 127 Dogs Successfully Trained & Rehomed This Year" },
-  { text: "FOLLOW: Bailey Just Advanced to Foster Placement — Watch the Journey" },
+  { text: "MILESTONE: 400+ Dogs Successfully Trained & Rehabilitated" },
   { text: "THANK YOU: Incredible Donors & Foster Families Making It Possible" },
   { text: "URGENT: Emergency Foster Placements Needed — Can You Help?" },
   { text: "IMPACT: Every Adoption Opens Space for the Next Dog Waiting" },
@@ -216,7 +215,7 @@ export default function TTRGHome() {
     <div className="bg-[#FDFCFA]">
 
       {/* ═══════ 0. PERSISTENT SLIDING TICKER ═══════ */}
-      <div className="py-2.5 overflow-hidden relative z-50 shadow-md" style={{ background: `linear-gradient(to right, ${tickerColor.from}, ${tickerColor.via}, ${tickerColor.to})` }}>
+      <div className="py-2.5 overflow-hidden relative z-30 shadow-md" style={{ background: `linear-gradient(to right, ${tickerColor.from}, ${tickerColor.via}, ${tickerColor.to})` }}>
         <div className="flex animate-marquee whitespace-nowrap" style={{ "--marquee-duration": "35s" } as React.CSSProperties}>
           {[...((tickerItems.length > 0 ? tickerItems : missionUpdates.map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active)), ...((tickerItems.length > 0 ? tickerItems : missionUpdates.map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active))].map((item, i) => (
             <span key={`${item.id}-${i}`} className="inline-flex items-center mx-8 sm:mx-12 text-white text-xs sm:text-sm font-semibold tracking-wide">
@@ -387,7 +386,7 @@ export default function TTRGHome() {
           )}
 
           <div className="text-center mt-14">
-            <p className="text-xs text-[#1B2A4A]/40 uppercase tracking-wider mb-3">Training is a status, not a destination — every dog graduates to Foster &amp; Adoption</p>
+            <p className="text-xs text-[#1B2A4A]/40 uppercase tracking-wider mb-3">Every dog receives an individualized training and rehabilitation plan. When appropriate and responsible, dogs may progress toward foster care, adoption, or another safe long-term placement.</p>
             <Link href="/ttrg/journeys" className="inline-flex items-center gap-2 bg-[#1B2A4A] hover:bg-[#2a3d66] text-white px-8 py-4 rounded-full text-sm font-bold transition-all">
               <PawPrint className="w-4 h-4" /> SEE FULL DOG JOURNEYS
             </Link>

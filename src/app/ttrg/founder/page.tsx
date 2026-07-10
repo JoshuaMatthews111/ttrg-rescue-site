@@ -10,9 +10,9 @@ export default function FounderPage() {
       {/* ═══ 1. HERO — Two-column founder section ═══ */}
       <section className="py-16 sm:py-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-10 lg:gap-12 items-start">
             {/* Left — Photo + caption */}
-            <div>
+            <div className="lg:col-span-2">
               <div className="rounded-3xl overflow-hidden shadow-2xl">
                 <img
                   src="/ttrg/founder-lorenzo.jpg"
@@ -26,11 +26,22 @@ export default function FounderPage() {
               </div>
             </div>
 
-            {/* Right — Heading + tagline */}
-            <div className="flex flex-col justify-center">
+            {/* Right — Heading + opening story */}
+            <div className="lg:col-span-3">
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1B2A4A] leading-tight mb-4">Lorenzo Miller&hellip; Founder</h1>
               <p className="text-[#1B2A4A]/60 text-base sm:text-lg mb-2">40+ years dedicated to dogs — from training to rescue to changing lives.</p>
-              <p className="text-[#1B2A4A]/40 text-sm">Founder of Team Trainers Rescue Group · Cleveland, OH · 501(c)(3)</p>
+              <p className="text-[#1B2A4A]/40 text-sm mb-6">Founder of Team Trainers Rescue Group · Cleveland, OH · 501(c)(3) · EIN: 46-1426142</p>
+              <div className="space-y-4 text-[#1B2A4A]/70 text-base leading-relaxed">
+                <p>
+                  Lorenzo Miller&apos;s journey with dogs began long before he ever built a company, trained professionals, or developed a nationally recognized system. It began as a child growing up in the inner city with a deep compassion for the stray dogs wandering the neighborhoods around him.
+                </p>
+                <p>
+                  At just six years old, Lorenzo could not ignore what others walked past. He watched hungry dogs knock over garbage cans searching for food and shelter, and while most people saw a problem, he saw responsibility. He began bringing stray dogs home whenever he could. Knowing his parents would not allow him to keep them, Lorenzo secretly hid the dogs in his bedroom — training them to remain calm and quiet so they would not be discovered.
+                </p>
+                <p>
+                  What looked like childhood curiosity quickly revealed itself as something much deeper.
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -226,7 +226,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-slate-400">
                   <DollarSign className="w-3 h-3" />
-                  <span>100% of donations go directly to training costs</span>
+                  <span>Donations fund training, care, and program support for this family</span>
                 </div>
               </div>
             </div>

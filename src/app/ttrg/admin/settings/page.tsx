@@ -39,7 +39,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label className="text-xs text-[#1B2A4A]/50 block mb-1">Email</label>
-                <input type="text" defaultValue="Teamtrainersrescue@gmail.com" className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                <input type="text" defaultValue="info@teamtrainersrescuegroup.com" className="w-full h-10 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
               </div>
             </div>
           </div>

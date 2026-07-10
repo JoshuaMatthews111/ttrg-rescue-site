@@ -1,54 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, Heart, Stethoscope, Scissors, GraduationCap, Users, ArrowRight, MapPin, ExternalLink } from "lucide-react";
+import { Building2, Heart, GraduationCap, Users, ArrowRight, MapPin, ExternalLink } from "lucide-react";
 
 const partnerCategories = [
-  {
-    title: "Shelter Partners",
-    icon: Building2,
-    color: "from-[#2d5a3d] to-[#4a7c5c]",
-    partners: [
-      { name: "Cleveland Animal Protective League", desc: "Primary shelter partner for intake dogs", location: "Cleveland, OH" },
-      { name: "Cuyahoga County Animal Shelter", desc: "Emergency rescue coordination", location: "Cleveland, OH" },
-      { name: "Lake Humane Society", desc: "Overflow and transfer partner", location: "Mentor, OH" },
-    ],
-  },
-  {
-    title: "Veterinary Partners",
-    icon: Stethoscope,
-    color: "from-[#C41E2A] to-[#A01825]",
-    partners: [
-      { name: "West Park Animal Hospital", desc: "Primary veterinary care provider", location: "Cleveland, OH" },
-      { name: "Metropolitan Veterinary Hospital", desc: "Emergency and specialty care", location: "Copley, OH" },
-      { name: "VCA Great Lakes Veterinary", desc: "Surgical and advanced diagnostics", location: "Warrensville Heights, OH" },
-    ],
-  },
   {
     title: "Training Partners",
     icon: GraduationCap,
     color: "from-[#1B2A4A] to-[#2a3d66]",
+    type: "Partner",
     partners: [
-      { name: "Lorenzo's Dog Training Team", desc: "Primary training and rehabilitation partner", location: "Cleveland, OH" },
-      { name: "Canine Companions Training", desc: "Behavioral rehabilitation specialist", location: "Akron, OH" },
-    ],
-  },
-  {
-    title: "Grooming Partners",
-    icon: Scissors,
-    color: "from-orange-500 to-orange-700",
-    partners: [
-      { name: "Pampered Paws Grooming", desc: "Post-rescue grooming and care", location: "Cleveland, OH" },
-      { name: "Bark & Bath Mobile Grooming", desc: "On-site grooming services", location: "Greater Cleveland Area" },
-    ],
-  },
-  {
-    title: "Community Sponsors",
-    icon: Heart,
-    color: "from-pink-500 to-rose-600",
-    partners: [
-      { name: "Cleveland Foundation", desc: "Grant funding and community development", location: "Cleveland, OH" },
-      { name: "PetSmart Charities", desc: "Adoption events and supplies", location: "National" },
+      { name: "Lorenzo's Dog Training Team", desc: "Primary training and rehabilitation partner", location: "Cleveland, OH", url: "https://lorenzosdogtrainingteam.com" },
     ],
   },
 ];
@@ -70,6 +32,15 @@ export default function PartnersPage() {
         </div>
       </section>
 
+      {/* Disclaimer */}
+      <div className="bg-amber-50 border-b border-amber-200 py-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-[11px] text-amber-700 text-center font-medium">
+            Only organizations that have given explicit approval are listed below. This page is being updated as partnerships are confirmed.
+          </p>
+        </div>
+      </div>
+
       {/* Partner Categories */}
       <section className="py-16 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -81,7 +52,7 @@ export default function PartnersPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-[#1B2A4A]">{cat.title}</h2>
-                  <p className="text-xs text-[#1B2A4A]/40">{cat.partners.length} partners</p>
+                  <p className="text-xs text-[#1B2A4A]/40">{cat.type} · {cat.partners.length} listed</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -92,10 +63,15 @@ export default function PartnersPage() {
                     </div>
                     <h3 className="font-bold text-[#1B2A4A] text-lg mb-1">{p.name}</h3>
                     <p className="text-sm text-[#1B2A4A]/50 mb-3">{p.desc}</p>
-                    <div className="flex items-center gap-1.5 text-xs text-[#2d5a3d]/60">
+                    <div className="flex items-center gap-1.5 text-xs text-[#2d5a3d]/60 mb-3">
                       <MapPin className="w-3.5 h-3.5" />
                       {p.location}
                     </div>
+                    {p.url && (
+                      <a href={p.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C41E2A] hover:underline">
+                        <ExternalLink className="w-3 h-3" /> Visit Website
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>

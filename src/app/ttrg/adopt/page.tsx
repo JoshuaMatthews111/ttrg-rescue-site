@@ -64,7 +64,7 @@ export default function AdoptPage() {
         <p className="text-[#1B2A4A]/60 mb-4">Thank you for your interest in adopting. We&apos;ll review your application and contact you within 48 hours.</p>
         <div className="text-sm text-[#1B2A4A]/40 space-y-1 mb-6">
           <p className="flex items-center justify-center gap-2"><Phone className="w-4 h-4 text-[#C41E2A]" /><a href="tel:+18664364959" className="hover:text-[#C41E2A]">(866) 436-4959</a></p>
-          <p className="flex items-center justify-center gap-2"><Mail className="w-4 h-4 text-[#C41E2A]" /><a href="mailto:Teamtrainersrescue@gmail.com" className="hover:text-[#C41E2A]">Teamtrainersrescue@gmail.com</a></p>
+          <p className="flex items-center justify-center gap-2"><Mail className="w-4 h-4 text-[#C41E2A]" /><a href="mailto:info@teamtrainersrescuegroup.com" className="hover:text-[#C41E2A]">info@teamtrainersrescuegroup.com</a></p>
         </div>
         <Link href="/ttrg/sponsor" className="text-[#C41E2A] font-semibold hover:underline">View Available Dogs →</Link>
       </div>
