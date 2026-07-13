@@ -16,7 +16,7 @@ export default function ContactPage() {
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", subject: "", reason: "", message: "" });
   const u = (field: string, val: string) => setForm((f) => ({ ...f, [field]: val }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const msg: ContactMessage = {
       id: "CM-" + Date.now().toString(36).toUpperCase(),
@@ -29,6 +29,20 @@ export default function ContactPage() {
       read: false,
     };
     addContactMessage(msg);
+    // Also send to API to store in Supabase and notify info@teamtrainersrescuegroup.com
+    try {
+      await fetch("/api/ttrg/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: msg.name,
+          email: msg.email,
+          phone: msg.phone,
+          subject: msg.subject,
+          message: msg.message,
+        }),
+      });
+    } catch { /* silently continue — local storage already saved */ }
     setSubmitted(true);
   };
 

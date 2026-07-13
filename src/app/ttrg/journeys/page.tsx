@@ -32,10 +32,10 @@ const getStageDisplay = (dog: AdminDog) => {
 };
 
 const storyVideos = [
-  { id: 1, src: "/ttrg/videos/britta-testimonial.mp4", title: "From Fear to Family", duration: "2:18" },
-  { id: 2, src: "/ttrg/videos/testimonial-2.mp4", title: "Second Chances Work", duration: "1:56" },
-  { id: 3, src: "/ttrg/videos/trefz-family.mp4", title: "A Bond That Heals", duration: "2:07" },
-  { id: 4, src: "/ttrg/videos/just-the-2-of-us.mov", title: "Hope After Hardship", duration: "2:25" },
+  { id: 1, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/britta-testimonial.mp4", title: "From Fear to Family", duration: "2:18" },
+  { id: 2, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/testimonial-2.mp4", title: "Second Chances Work", duration: "1:56" },
+  { id: 3, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/trefz-family.mp4", title: "A Bond That Heals", duration: "2:07" },
+  { id: 4, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/just-the-2-of-us.mp4", title: "Hope After Hardship", duration: "2:25" },
 ];
 
 export default function JourneysPage() {

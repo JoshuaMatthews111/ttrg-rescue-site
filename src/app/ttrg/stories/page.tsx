@@ -14,7 +14,7 @@ const categories = [
 
 const featuredVideo = {
   id: 0,
-  src: "/ttrg/videos/britta-testimonial.mp4",
+  src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/britta-testimonial.mp4",
   title: "Luna's Journey: From Fear to Family",
   quote: "A story of rescue, trust, and transformation.",
   duration: "3:24",
@@ -22,12 +22,12 @@ const featuredVideo = {
 };
 
 const videos = [
-  { id: 1, src: "/ttrg/videos/testimonial-2.mp4", title: "Tucker's Second Chance", quote: "From neglect to thriving — a training success story.", duration: "2:18", category: "Training Story" },
-  { id: 2, src: "/ttrg/videos/trefz-family.mp4", title: "A Bond That Heals", quote: "How one family and one dog changed each other forever.", duration: "2:07", category: "Adoption Story" },
-  { id: 3, src: "/ttrg/videos/just-the-2-of-us.mov", title: "Braveheart's New Beginning", quote: "Patience, training, and a second chance at life.", duration: "1:56", category: "Rescue Story" },
-  { id: 4, src: "/ttrg/videos/britta-testimonial.mp4", title: "Healing Together", quote: "Rehabilitation gave this dog — and this family — hope again.", duration: "2:31", category: "Client Testimonial" },
-  { id: 5, src: "/ttrg/videos/testimonial-2.mp4", title: "Tucker's Training Journey", quote: "Watch how professional training transformed Tucker's behavior.", duration: "2:15", category: "Training Story" },
-  { id: 6, src: "/ttrg/videos/trefz-family.mp4", title: "The Trefz Family's Rescue", quote: "A rescue story that changed this family forever.", duration: "2:05", category: "Rescue Story" },
+  { id: 1, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/testimonial-2.mp4", title: "Tucker's Second Chance", quote: "From neglect to thriving — a training success story.", duration: "2:18", category: "Training Story" },
+  { id: 2, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/trefz-family.mp4", title: "A Bond That Heals", quote: "How one family and one dog changed each other forever.", duration: "2:07", category: "Adoption Story" },
+  { id: 3, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/just-the-2-of-us.mp4", title: "Braveheart's New Beginning", quote: "Patience, training, and a second chance at life.", duration: "1:56", category: "Rescue Story" },
+  { id: 4, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/britta-testimonial.mp4", title: "Healing Together", quote: "Rehabilitation gave this dog — and this family — hope again.", duration: "2:31", category: "Client Testimonial" },
+  { id: 5, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/testimonial-2.mp4", title: "Tucker's Training Journey", quote: "Watch how professional training transformed Tucker's behavior.", duration: "2:15", category: "Training Story" },
+  { id: 6, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/trefz-family.mp4", title: "The Trefz Family's Rescue", quote: "A rescue story that changed this family forever.", duration: "2:05", category: "Rescue Story" },
 ];
 
 export default function StoriesPage() {

@@ -58,3 +58,7 @@ public/lorenzo/facility-outside.jpg
 # Environment variables
 .env.local
 .env*.local
+
+# Large video files (served from Supabase Storage)
+public/ttrg/videos/*.mp4
+public/ttrg/videos/*.mov

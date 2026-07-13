@@ -47,16 +47,16 @@ export default function MakeTrainingAffordable() {
           </p>
           <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
             <div className="text-center">
-              <p className="text-3xl font-black text-[#D97706]">${totalRaised.toLocaleString()}</p>
-              <p className="text-[10px] text-white/40 uppercase font-bold">Total Raised</p>
+              <p className="text-3xl font-black text-[#D97706]">{profiles.length}</p>
+              <p className="text-[10px] text-white/40 uppercase font-bold">Families Supported</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-black text-white">{totalDonors}</p>
-              <p className="text-[10px] text-white/40 uppercase font-bold">Donors</p>
+              <p className="text-[10px] text-white/40 uppercase font-bold">Supporters</p>
             </div>
             <div className="text-center">
               <p className="text-3xl font-black text-emerald-400">{familiesHelped}</p>
-              <p className="text-[10px] text-white/40 uppercase font-bold">Families Helped</p>
+              <p className="text-[10px] text-white/40 uppercase font-bold">Goals Reached</p>
             </div>
           </div>
         </div>
@@ -147,18 +147,14 @@ export default function MakeTrainingAffordable() {
                         {/* Progress bar */}
                         <div className="mb-4">
                           <div className="flex justify-between text-xs mb-1.5">
-                            <span className="font-black text-[#1B2A4A]">${profile.raisedAmount.toLocaleString()} raised</span>
-                            <span className="text-slate-400">of ${profile.goalAmount.toLocaleString()}</span>
+                            <span className="font-bold text-[#1B2A4A]">{pct}% funded</span>
+                            <span className="flex items-center gap-1 text-slate-400"><Users className="w-3 h-3" /> {profile.donorCount} supporters</span>
                           </div>
                           <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? "bg-emerald-500" : "bg-gradient-to-r from-[#D97706] to-[#F59E0B]"}`}
                               style={{ width: `${pct}%` }}
                             />
-                          </div>
-                          <div className="flex justify-between text-[10px] text-slate-400 mt-1">
-                            <span>{pct}% funded</span>
-                            <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {profile.donorCount} donors</span>
                           </div>
                         </div>
 

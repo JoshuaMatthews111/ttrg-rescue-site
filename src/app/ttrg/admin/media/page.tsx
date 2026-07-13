@@ -17,9 +17,9 @@ interface Story {
 }
 
 const stories: Story[] = [
-  { id: "S-1", title: "From Fear to Family", description: "Luna's journey from heartbreak to thriving with her forever family.", type: "video", dog: "Luna", thumbnail: "/ttrg/dogs/luna.jpg", videoSrc: "/ttrg/videos/britta-testimonial.mp4", published: true, featured: true, date: "2026-05-15" },
-  { id: "S-2", title: "Second Chances Work", description: "Max went from neglected to thriving in just 12 weeks of training.", type: "video", dog: "Max", thumbnail: "/ttrg/dogs/tucker.jpg", videoSrc: "/ttrg/videos/testimonial-2.mp4", published: true, featured: true, date: "2026-05-10" },
-  { id: "S-3", title: "A Bond That Heals", description: "How Rex helped a family heal too.", type: "video", thumbnail: "/ttrg/dogs/shadow.jpg", videoSrc: "/ttrg/videos/trefz-family.mp4", published: true, featured: false, date: "2026-05-05" },
+  { id: "S-1", title: "From Fear to Family", description: "Luna's journey from heartbreak to thriving with her forever family.", type: "video", dog: "Luna", thumbnail: "/ttrg/dogs/luna.jpg", videoSrc: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/britta-testimonial.mp4", published: true, featured: true, date: "2026-05-15" },
+  { id: "S-2", title: "Second Chances Work", description: "Max went from neglected to thriving in just 12 weeks of training.", type: "video", dog: "Max", thumbnail: "/ttrg/dogs/tucker.jpg", videoSrc: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/testimonial-2.mp4", published: true, featured: true, date: "2026-05-10" },
+  { id: "S-3", title: "A Bond That Heals", description: "How Rex helped a family heal too.", type: "video", thumbnail: "/ttrg/dogs/shadow.jpg", videoSrc: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/trefz-family.mp4", published: true, featured: false, date: "2026-05-05" },
   { id: "S-4", title: "Prince's Transformation", description: "From behavioral challenges to confident companion.", type: "story", dog: "Prince", thumbnail: "/ttrg/dogs/prince.jpg", published: true, featured: false, date: "2026-04-28" },
   { id: "S-5", title: "Bailey Finds a Home", description: "After 47 days in rescue, Bailey's story has a happy ending.", type: "story", dog: "Bailey", thumbnail: "/ttrg/dogs/bailey.jpg", published: false, featured: false, date: "2026-04-20" },
 ];

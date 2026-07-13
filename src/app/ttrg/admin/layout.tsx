@@ -98,7 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <>
       {/* Logo */}
       <div className="p-5 border-b border-white/5 flex items-center gap-3">
-        <img src="/ttrg/ttrg-logo.jpeg" alt="TTRG" className="w-12 h-12 rounded-full object-cover ring-2 ring-[#C41E2A]/30 flex-shrink-0" />
+        <img src="/ttrg/ttrg-logo.png" alt="TTRG" className="w-12 h-12 rounded-full object-cover ring-2 ring-[#C41E2A]/30 flex-shrink-0" />
         <div className="min-w-0">
           <p className="text-white font-black text-sm tracking-tight">TEAM TRAINERS</p>
           <p className="text-[#C41E2A] text-[10px] font-bold tracking-wider">RESCUE GROUP</p>
@@ -195,7 +195,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Mobile Header */}
         <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#0f1b30] h-14 flex items-center justify-between px-4 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <img src="/ttrg/ttrg-logo.jpeg" alt="TTRG" className="w-9 h-9 rounded-full object-cover" />
+            <img src="/ttrg/ttrg-logo.png" alt="TTRG" className="w-9 h-9 rounded-full object-cover" />
             <span className="text-white text-sm font-bold">{meta.label}</span>
           </div>
           <button onClick={() => setMobileOpen(!mobileOpen)} className="text-white">

@@ -63,8 +63,8 @@ export default function TTRGFooter() {
             {/* Brand */}
             <div>
               <div className="mb-4">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#C41E2A]/30 shadow-lg bg-white">
-                  <img src="/ttrg/ttrg-logo.jpeg" alt="Team Trainers Rescue Group" className="w-full h-full object-cover" />
+                <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-[#C41E2A]/30 shadow-lg bg-white p-1">
+                  <img src="/ttrg/ttrg-logo.png" alt="Team Trainers Rescue Group" className="w-full h-full object-contain" />
                 </div>
               </div>
               <p className="text-white font-black text-sm tracking-tight mb-2">RESCUE. REHABILITATE. REHOME. REPEAT.</p>

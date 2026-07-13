@@ -107,7 +107,7 @@ export default function TTRGHomepage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <img src="/ttrg/ttrg-logo.jpeg" alt="TTRG" className="w-10 h-10 rounded-full object-cover" />
+            <img src="/ttrg/ttrg-logo.png" alt="TTRG" className="w-10 h-10 rounded-full object-cover" />
             <div className="hidden sm:block">
               <p className="text-[#1B2A4A] font-bold text-sm leading-tight">Team Trainers</p>
               <p className="text-[#C41E2A] text-[10px] font-semibold tracking-wider uppercase">Rescue Group</p>
@@ -463,7 +463,7 @@ export default function TTRGHomepage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src="/ttrg/ttrg-logo.jpeg" alt="TTRG" className="w-10 h-10 rounded-full" />
+                <img src="/ttrg/ttrg-logo.png" alt="TTRG" className="w-10 h-10 rounded-full" />
                 <div>
                   <p className="text-white font-bold text-sm">Team Trainers Rescue Group</p>
                   <p className="text-white/30 text-[10px]">Rescue. Rehab. Rehome. Repeat.</p>

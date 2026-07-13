@@ -151,18 +151,15 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
               {/* Progress */}
               <div className="mb-6">
                 <div className="flex justify-between items-end mb-2">
-                  <div>
-                    <p className="text-3xl font-black text-[#1B2A4A]">${profile.raisedAmount.toLocaleString()}</p>
-                    <p className="text-xs text-slate-400">raised of ${profile.goalAmount.toLocaleString()} goal</p>
-                  </div>
+                  <p className="text-lg font-black text-[#1B2A4A]">Training Fund Progress</p>
                   <p className={`text-2xl font-black ${isCompleted ? "text-emerald-600" : "text-[#D97706]"}`}>{pct}%</p>
                 </div>
                 <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
                   <div className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? "bg-emerald-500" : "bg-gradient-to-r from-[#D97706] to-[#F59E0B]"}`} style={{ width: `${pct}%` }} />
                 </div>
                 <div className="flex justify-between text-xs text-slate-400 mt-2">
-                  <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {profile.donorCount} donors</span>
-                  {!isCompleted && <span>${remaining.toLocaleString()} remaining</span>}
+                  <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {profile.donorCount} supporters</span>
+                  {!isCompleted && <span>{100 - pct}% still needed</span>}
                 </div>
               </div>
 

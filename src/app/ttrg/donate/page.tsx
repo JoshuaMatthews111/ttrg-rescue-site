@@ -77,7 +77,8 @@ function DonateInner() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [trainerReferral, setTrainerReferral] = useState("");
+  const [referralSource, setReferralSource] = useState("");
+  const [trainerName, setTrainerName] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -128,7 +129,8 @@ function DonateInner() {
           zip: zip || undefined,
           donationType,
           dogName: dogName || undefined,
-          trainerReferral: trainerReferral || undefined,
+          referralSource: referralSource || undefined,
+          trainerName: trainerName || undefined,
         }),
       });
       const data = await res.json();
@@ -250,17 +252,32 @@ function DonateInner() {
               <input type="text" placeholder="Last Name" required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputCls} />
             </div>
             <input type="email" placeholder="Email Address" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
-            <input type="tel" placeholder="Phone (optional)" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} />
-            <input type="text" placeholder="Trainer Referral (Who referred you?) *" required value={trainerReferral} onChange={(e) => setTrainerReferral(e.target.value)} className={inputCls} />
+            <input type="tel" placeholder="Phone *" required value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} />
+
+            {/* Who Referred You */}
+            <div>
+              <select required value={referralSource} onChange={(e) => { setReferralSource(e.target.value); if (e.target.value !== "Trainer Referral") setTrainerName(""); }} className={inputCls + " appearance-none"}>
+                <option value="" disabled>Who referred you? *</option>
+                <option value="Trainer Referral">Trainer Referral</option>
+                <option value="Google">Google</option>
+                <option value="YouTube">YouTube</option>
+                <option value="Instagram">Instagram</option>
+                <option value="Facebook">Facebook</option>
+                <option value="Other">Other</option>
+              </select>
+              {referralSource === "Trainer Referral" && (
+                <input type="text" placeholder="Trainer's Name *" required value={trainerName} onChange={(e) => setTrainerName(e.target.value)} className={inputCls + " mt-3"} />
+              )}
+            </div>
 
             {/* Billing Address */}
             <div className="pt-2">
               <p className="text-xs font-bold text-[#1B2A4A]/40 uppercase tracking-wider mb-3">Billing Address</p>
-              <input type="text" placeholder="Street Address" value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls + " mb-3"} />
+              <input type="text" placeholder="Street Address *" required value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls + " mb-3"} />
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={inputCls} />
-                <input type="text" placeholder="State" maxLength={2} value={state} onChange={(e) => setState(e.target.value.toUpperCase())} className={inputCls} />
-                <input type="text" placeholder="ZIP Code" value={zip} onChange={(e) => setZip(e.target.value)} className={inputCls} />
+                <input type="text" placeholder="City *" required value={city} onChange={(e) => setCity(e.target.value)} className={inputCls} />
+                <input type="text" placeholder="State *" required maxLength={2} value={state} onChange={(e) => setState(e.target.value.toUpperCase())} className={inputCls} />
+                <input type="text" placeholder="ZIP Code *" required value={zip} onChange={(e) => setZip(e.target.value)} className={inputCls} />
               </div>
             </div>
 
@@ -347,7 +364,7 @@ function DonateInner() {
             </button>
 
             <p className="text-center text-[10px] text-[#1B2A4A]/30 mt-2">
-              {donationType === "monthly" ? "Your card will be charged monthly until you cancel. Contact us anytime to modify or cancel." : "One-time secure charge to your credit card."}
+              {donationType === "monthly" ? "⚠️ RECURRING DONATION: Your card will be charged automatically every month for the amount shown above. You may cancel at any time by contacting us at info@teamtrainersrescuegroup.com or calling (866) 436-4959." : "One-time secure charge to your credit card."}
             </p>
 
             {/* Alt Contact */}

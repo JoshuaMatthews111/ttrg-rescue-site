@@ -23,6 +23,7 @@ const heroHeadlines = [
   { words: ["Support", "A", "Dog's", "Transformation."], accentIdx: 3 },
 ];
 const heroSubtitles = [
+  "Making training affordable for people with limited resources.",
   "Every dog deserves a second chance. Join our mission to rescue, heal, and find forever homes for dogs in need.",
   "From shelters to forever families — we provide rescue, medical care, training, and love every step of the way.",
   "Track every dog's transformation from rescue to rehome. Real stories, real impact, real results.",
@@ -243,7 +244,7 @@ export default function TTRGHome() {
           <div className="max-w-3xl py-12 sm:py-16">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl bg-white/10 backdrop-blur-md flex-shrink-0">
-                <img src="/ttrg/ttrg-logo.jpeg" alt="TTRG" className="w-full h-full object-cover" />
+                <img src="/ttrg/ttrg-logo.png" alt="TTRG" className="w-full h-full object-cover" />
               </div>
               <div>
                 <p className="text-white/60 text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase">501(c)(3) Nonprofit Rescue Mission</p>
@@ -660,7 +661,7 @@ export default function TTRGHome() {
             </button>
             <div className="rounded-2xl overflow-hidden shadow-2xl bg-black">
               <video controls autoPlay className="w-full aspect-video">
-                <source src="/ttrg/video/bo-brady.mov" type="video/mp4" />
+                <source src="/ttrg/video/bo-brady-web.mp4" type="video/mp4" />
               </video>
               <div className="p-5 bg-[#1B2A4A]">
                 <p className="text-white font-bold text-lg">Bo &amp; Brady&apos;s Rescue Journey</p>
