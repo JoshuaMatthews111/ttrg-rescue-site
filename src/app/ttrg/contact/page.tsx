@@ -29,17 +29,18 @@ export default function ContactPage() {
       read: false,
     };
     addContactMessage(msg);
-    // Also send to API to store in Supabase and notify info@teamtrainersrescuegroup.com
+    // Send via FormSubmit.co — emails info@teamtrainersrescuegroup.com directly
     try {
-      await fetch("/api/ttrg/contact", {
+      await fetch("https://formsubmit.co/ajax/info@teamtrainersrescuegroup.com", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({
           name: msg.name,
           email: msg.email,
-          phone: msg.phone,
+          phone: msg.phone || "N/A",
           subject: msg.subject,
           message: msg.message,
+          _subject: `New Contact: ${msg.subject || "Website Inquiry"} — from ${msg.name}`,
         }),
       });
     } catch { /* silently continue — local storage already saved */ }
