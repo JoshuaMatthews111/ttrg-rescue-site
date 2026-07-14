@@ -85,8 +85,8 @@ export default function TTRGNav() {
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
-            ? "bg-white/95 shadow-md py-2 backdrop-blur-md"
-            : "bg-white/40 backdrop-blur-sm py-3"
+            ? "bg-white/95 shadow-md py-1 backdrop-blur-md"
+            : "bg-white/40 backdrop-blur-sm py-1.5"
         }`}
       >
         <div className="max-w-6xl mx-auto px-3 sm:px-5 lg:px-6 flex items-center justify-between">

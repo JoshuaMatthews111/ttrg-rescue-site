@@ -232,8 +232,8 @@ export default function TTRGHome() {
 
   return (
     <div className="bg-[#FDFCFA]">
-      {/* Nav height spacer — sits right below fixed nav, no white gap */}
-      <div className="h-[5.5rem] sm:h-24" />
+      {/* Nav height spacer */}
+      <div className="h-16 sm:h-[4.75rem]" />
 
       {/* ═══════ 0. PERSISTENT SLIDING TICKER ═══════ */}
       <div className="py-2.5 overflow-hidden relative z-30 shadow-md" style={{ background: `linear-gradient(to right, ${tickerColor.from}, ${tickerColor.via}, ${tickerColor.to})` }}>
