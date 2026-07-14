@@ -17,13 +17,14 @@ import DogCard from "@/components/ttrg/DogCard";
 /* ─── HERO DATA — single video, rotating headlines ─── */
 const heroVideo = "/ttrg/video/lo-walkin-web.mp4";
 const heroHeadlines = [
+  { words: ["We", "Make", "Training", "Affordable."], accentIdx: 2 },
   { words: ["Rescue.", "Train.", "Rehome.", "Repeat."], accentIdx: 2 },
   { words: ["Every", "Dog", "Deserves", "A", "Happy", "Home."], accentIdx: 4 },
   { words: ["Follow", "Real", "Rescue", "Journeys."], accentIdx: 1 },
   { words: ["Support", "A", "Dog's", "Transformation."], accentIdx: 3 },
 ];
 const heroSubtitles = [
-  "Making training affordable for people with limited resources.",
+  "For people with limited resources — we provide training, support, and real results.",
   "Every dog deserves a second chance. Join our mission to rescue, heal, and find forever homes for dogs in need.",
   "From shelters to forever families — we provide rescue, medical care, training, and love every step of the way.",
   "Track every dog's transformation from rescue to rehome. Real stories, real impact, real results.",
@@ -213,7 +214,7 @@ export default function TTRGHome() {
   const statsSec = useInView();
 
   return (
-    <div className="bg-[#FDFCFA]">
+    <div className="bg-[#FDFCFA] pt-24">
 
       {/* ═══════ 0. PERSISTENT SLIDING TICKER ═══════ */}
       <div className="py-2.5 overflow-hidden relative z-30 shadow-md" style={{ background: `linear-gradient(to right, ${tickerColor.from}, ${tickerColor.via}, ${tickerColor.to})` }}>
@@ -403,7 +404,7 @@ export default function TTRGHome() {
               <HeartHandshake className="w-3.5 h-3.5 text-[#D97706]" />
               <span className="text-[#D97706] text-xs font-bold uppercase tracking-wider">The Family Preservation Journey</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1B2A4A] tracking-tight">Helping Families Keep Their Dogs</h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1B2A4A] tracking-tight">We Make Training Affordable for People with Limited Resources</h2>
             <p className="text-base text-[#1B2A4A]/50 mt-3 max-w-2xl mx-auto">Not every dog needs to be rescued from a shelter. Some dogs need help before they lose their home. When a family cannot afford the training needed to keep their dog, TTRG helps evaluate the situation, tell the story, raise support, fund the training, and report the results back to donors.</p>
           </div>
 

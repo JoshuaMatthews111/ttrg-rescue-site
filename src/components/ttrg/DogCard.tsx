@@ -4,6 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import { Heart, AlertTriangle, Clock, CheckCircle2, ArrowRight, Play } from "lucide-react";
 import type { Dog, journeyStages } from "@/lib/dogs";
+import { buildEmotionalSummary } from "@/lib/dog-constants";
 
 /* mini journey stages for the progress bar */
 const miniStages = [
@@ -117,7 +118,7 @@ export default function DogCard({ dog: raw }: { dog: Dog }) {
             {dog.age} · {dog.breed} · {dog.gender}
           </p>
           <p className="text-sm text-[#1B2A4A]/60 leading-relaxed mb-5 line-clamp-3">
-            {dog.story}
+            {(raw as unknown as Record<string, unknown>).rescueStory as string || dog.story || buildEmotionalSummary({ name: dog.name, breedOption: dog.breed, genderOption: dog.gender, dogStatus: (raw as unknown as Record<string, unknown>).dogStatus as string })}
           </p>
         </Link>
 

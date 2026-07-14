@@ -40,7 +40,7 @@ export default function MakeTrainingAffordable() {
             <span className="text-[#D97706] text-xs font-bold uppercase tracking-wider">Family Preservation Program</span>
           </div>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight mb-4">
-            Help Families <span className="text-[#D97706]">Keep Their Dogs</span>
+            We Make Training <span className="text-[#D97706]">Affordable</span>
           </h1>
           <p className="text-lg text-white/60 max-w-2xl mx-auto mb-10">
             Not every dog needs to be rescued from a shelter. Some dogs need help before they lose their home. Your donation funds professional training for families who can&apos;t afford it.
