@@ -89,11 +89,11 @@ export default function TTRGNav() {
             : "bg-white/40 backdrop-blur-sm py-3"
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-3 sm:px-5 lg:px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/ttrg" className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-slate-100 shadow-md flex-shrink-0 bg-white p-0.5">
-              <img src="/ttrg/ttrg-logo.png" alt="Team Trainers Rescue Group" className="w-full h-full object-contain rounded-full" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden shadow-md flex-shrink-0">
+              <img src="/ttrg/ttrg-logo.png" alt="Team Trainers Rescue Group" className="w-full h-full object-cover rounded-full" />
             </div>
             <div className="hidden md:block leading-tight">
               <p className="text-[#1B2A4A] font-black text-sm tracking-tight">TEAM TRAINERS</p>

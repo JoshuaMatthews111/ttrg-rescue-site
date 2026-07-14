@@ -231,7 +231,7 @@ export default function TTRGHome() {
   const statsSec = useInView();
 
   return (
-    <div className="bg-[#FDFCFA] pt-24">
+    <div className="bg-[#FDFCFA] pt-20">
 
       {/* ═══════ 0. PERSISTENT SLIDING TICKER ═══════ */}
       <div className="py-2.5 overflow-hidden relative z-30 shadow-md" style={{ background: `linear-gradient(to right, ${tickerColor.from}, ${tickerColor.via}, ${tickerColor.to})` }}>
@@ -698,10 +698,12 @@ export default function TTRGHome() {
             <button onClick={closePopup} className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors">
               <X className="w-4 h-4" />
             </button>
-            <div className="px-7 pt-8 pb-7">
-              <div className="w-16 h-16 rounded-full bg-[#C41E2A] flex items-center justify-center mx-auto mb-5 shadow-lg shadow-red-500/20">
-                <PawPrint className="w-8 h-8 text-white" />
-              </div>
+            {/* Sad puppy image */}
+            <div className="relative h-40 overflow-hidden bg-gradient-to-b from-slate-100 to-white">
+              <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=200&fit=crop&crop=faces&auto=format" alt="Puppy looking at you" className="w-full h-full object-cover object-top" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
+            </div>
+            <div className="px-7 pt-4 pb-7">
               {!popupSubmitted ? (
                 <>
                   <h3 className="text-xl font-black text-[#1B2A4A] text-center mb-2">
