@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
   try {
@@ -9,9 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Name, email, and message are required." }, { status: 400 });
     }
 
-    // Send email notification via Supabase Edge Function or direct SMTP
-    // For now, we'll use the Supabase REST API to insert into contact_messages
-    // and trigger a notification to info@teamtrainersrescuegroup.com
+    // 1. Store in Supabase
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -38,10 +39,34 @@ export async function POST(req: Request) {
       });
     }
 
-    // Send email notification using Resend or similar (if configured)
-    // Fallback: The admin panel will show the message, and
-    // Supabase can be configured with a database webhook to email
-    // info@teamtrainersrescuegroup.com on new inserts
+    // 2. Send email notification to TTRG
+    if (process.env.RESEND_API_KEY) {
+      await resend.emails.send({
+        from: "TTRG Contact Form <onboarding@resend.dev>",
+        to: ["info@teamtrainersrescuegroup.com"],
+        subject: `New Contact: ${subject || "Website Inquiry"} — from ${name}`,
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1B2A4A; border-bottom: 2px solid #C41E2A; padding-bottom: 8px;">
+              New Contact Form Submission
+            </h2>
+            <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+              <tr><td style="padding: 8px 0; font-weight: bold; color: #1B2A4A;">Name:</td><td style="padding: 8px 0;">${name}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold; color: #1B2A4A;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${email}">${email}</a></td></tr>
+              ${phone ? `<tr><td style="padding: 8px 0; font-weight: bold; color: #1B2A4A;">Phone:</td><td style="padding: 8px 0;">${phone}</td></tr>` : ""}
+              ${subject ? `<tr><td style="padding: 8px 0; font-weight: bold; color: #1B2A4A;">Subject:</td><td style="padding: 8px 0;">${subject}</td></tr>` : ""}
+            </table>
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-top: 12px;">
+              <p style="margin: 0 0 4px 0; font-weight: bold; color: #1B2A4A;">Message:</p>
+              <p style="margin: 0; color: #333; white-space: pre-wrap;">${message}</p>
+            </div>
+            <p style="margin-top: 20px; font-size: 12px; color: #888;">
+              Sent from the TTRG website contact form on ${new Date().toLocaleString("en-US", { timeZone: "America/New_York" })}
+            </p>
+          </div>
+        `,
+      });
+    }
 
     return NextResponse.json({
       success: true,
