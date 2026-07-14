@@ -31,13 +31,30 @@ const heroSubtitles = [
   "Your donation funds medical care, professional training, and safe shelter — giving every rescue dog the life they deserve.",
 ];
 
-/* ─── TICKER DATA ─── */
+/* ─── TICKER DATA (generated from real dogs) ─── */
+function buildDynamicTicker(dogList: typeof dogData): { text: string }[] {
+  const items: { text: string }[] = [];
+  const urgentDogs = dogList.filter(d => d.urgent);
+  const names = dogList.map(d => d.name).slice(0, 5);
+
+  if (dogList.length > 0) {
+    items.push({ text: `${dogList.length} Dogs Currently in Our Program — Each One Needs Your Support!` });
+  }
+  if (urgentDogs.length > 0) {
+    items.push({ text: `URGENT: ${urgentDogs.map(d => d.name).join(", ")} ${urgentDogs.length === 1 ? "needs" : "need"} immediate support!` });
+  }
+  if (names.length > 0) {
+    items.push({ text: `SUPPORT: ${names.join(", ")} — Real dogs that need your help today!` });
+  }
+  items.push({ text: "THANK YOU: Incredible Donors & Foster Families Making It Possible" });
+  items.push({ text: "IMPACT: Every Donation Directly Funds Training, Medical Care & Rescue" });
+
+  return items;
+}
 const missionUpdates = [
-  { text: "NEW: 3 Dogs Rescued This Week — Your Support Saves Lives!" },
-  { text: "MILESTONE: 400+ Dogs Successfully Trained & Rehabilitated" },
+  { text: "Dogs Currently in Our Program — Your Support Saves Lives!" },
   { text: "THANK YOU: Incredible Donors & Foster Families Making It Possible" },
-  { text: "URGENT: Emergency Foster Placements Needed — Can You Help?" },
-  { text: "IMPACT: Every Adoption Opens Space for the Next Dog Waiting" },
+  { text: "IMPACT: Every Donation Directly Funds Training, Medical Care & Rescue" },
 ];
 
 /* ─── IMPACT STATS ─── */
@@ -219,7 +236,7 @@ export default function TTRGHome() {
       {/* ═══════ 0. PERSISTENT SLIDING TICKER ═══════ */}
       <div className="py-2.5 overflow-hidden relative z-30 shadow-md" style={{ background: `linear-gradient(to right, ${tickerColor.from}, ${tickerColor.via}, ${tickerColor.to})` }}>
         <div className="flex animate-marquee whitespace-nowrap" style={{ "--marquee-duration": "35s" } as React.CSSProperties}>
-          {[...((tickerItems.length > 0 ? tickerItems : missionUpdates.map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active)), ...((tickerItems.length > 0 ? tickerItems : missionUpdates.map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active))].map((item, i) => (
+          {[...((tickerItems.length > 0 ? tickerItems : (dogs.length > 0 ? buildDynamicTicker(dogs) : missionUpdates).map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active)), ...((tickerItems.length > 0 ? tickerItems : (dogs.length > 0 ? buildDynamicTicker(dogs) : missionUpdates).map((m, i) => ({ id: `d${i}`, text: m.text, active: true, createdAt: "", type: "manual" as const }))).filter(t => t.active))].map((item, i) => (
             <span key={`${item.id}-${i}`} className="inline-flex items-center mx-8 sm:mx-12 text-white text-xs sm:text-sm font-semibold tracking-wide">
               <span className="w-2 h-2 rounded-full bg-white/80 mr-3 ticker-glow flex-shrink-0" />
               {item.text}

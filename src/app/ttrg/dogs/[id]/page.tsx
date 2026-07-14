@@ -27,6 +27,7 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
   const [rawDog, setRawDog] = useState<(Dog & Record<string, unknown>) | undefined>(staticDog as (Dog & Record<string, unknown>) | undefined);
   const [activeImage, setActiveImage] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
+  const [showFullStory, setShowFullStory] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,7 +90,9 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
     otherSpecialNeed: rawDog.otherSpecialNeed as string | undefined,
     specialNeedsNotes: rawDog.specialNeedsNotes as string | undefined,
     rescueDate: rawDog.rescueDate as string | undefined,
-    daysInRescue: rawDog.daysInRescue as number | undefined,
+    daysInRescue: (rawDog.daysInRescue && (rawDog.daysInRescue as number) > 0)
+      ? rawDog.daysInRescue as number
+      : Math.max(1, Math.floor((Date.now() - new Date((rawDog.publishedAt as string) || (rawDog.createdAt as string) || Date.now()).getTime()) / 86400000)),
     gallery: rawDog.gallery || [],
     image: rawDog.image || "",
     name: rawDog.name || "",
@@ -225,10 +228,28 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
                 )}
               </div>
 
-              {/* Emotional Summary */}
-              <p className="text-[#1B2A4A]/70 text-base leading-relaxed mb-6">
-                {emotionalSummary || dog.story}
+              {/* Short Story from Admin Panel */}
+              <p className="text-[#1B2A4A]/70 text-base leading-relaxed mb-4">
+                {dog.story || dog.rescueStory || emotionalSummary}
               </p>
+
+              {/* Expandable Full Story */}
+              {!isEmpty(dog.fullStory) && (
+                <div className="mb-6">
+                  {showFullStory && (
+                    <p className="text-[#1B2A4A]/70 text-sm leading-relaxed whitespace-pre-line mb-2">
+                      {dog.fullStory}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => setShowFullStory(!showFullStory)}
+                    className="text-[#C41E2A] text-sm font-semibold hover:underline flex items-center gap-1"
+                  >
+                    {showFullStory ? "Hide Full Story" : "View Full Story"}
+                    <ArrowRight className={`w-3.5 h-3.5 transition-transform ${showFullStory ? "rotate-90" : ""}`} />
+                  </button>
+                </div>
+              )}
 
               {/* Gallery thumbnails */}
               {dog.gallery.length > 1 && (

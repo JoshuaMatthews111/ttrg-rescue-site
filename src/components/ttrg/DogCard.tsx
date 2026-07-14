@@ -30,7 +30,7 @@ export default function DogCard({ dog: raw }: { dog: Dog }) {
   /* safe defaults for legacy admin dogs */
   const dog = {
     ...raw,
-    daysInRescue: raw.daysInRescue || 0,
+    daysInRescue: (raw.daysInRescue && raw.daysInRescue > 0) ? raw.daysInRescue : Math.max(1, Math.floor((Date.now() - new Date(((raw as unknown as Record<string, unknown>).publishedAt as string) || ((raw as unknown as Record<string, unknown>).createdAt as string) || Date.now()).getTime()) / 86400000)),
     currentJourneyStage: raw.currentJourneyStage || (oldStageMap[raw.stage] as Dog["currentJourneyStage"]) || "rescue",
     statusBadges: raw.statusBadges || (raw.urgent ? ["Urgent"] : []),
     videoUrl: (raw as unknown as Record<string, unknown>).videoUrl as string || (raw as unknown as Record<string, unknown>).video_url as string || "",
