@@ -299,20 +299,14 @@ export default function AdminDashboard() {
 /* ─── TRAINER DASHBOARD ─── */
 function TrainerDashboard() {
   const trainerStats = [
-    { label: "My Assigned Dogs", value: 5, sub: "+0 this week", icon: Dog, color: "from-blue-500 to-blue-700" },
-    { label: "Sessions Today", value: 3, sub: "of 5 scheduled", icon: GraduationCap, color: "from-emerald-500 to-emerald-700" },
-    { label: "Dogs in Training", value: 4, sub: "80% in training stage", icon: PawPrint, color: "from-amber-500 to-orange-600" },
-    { label: "Behavior Cases", value: 2, sub: "Need attention", icon: AlertTriangle, color: "from-red-500 to-red-700" },
-    { label: "Upcoming Check-ins", value: 7, sub: "Next 7 days", icon: Bell, color: "from-violet-500 to-purple-700" },
+    { label: "My Assigned Dogs", value: 0, sub: "No assignments yet", icon: Dog, color: "from-blue-500 to-blue-700" },
+    { label: "Sessions Today", value: 0, sub: "None scheduled", icon: GraduationCap, color: "from-emerald-500 to-emerald-700" },
+    { label: "Dogs in Training", value: 0, sub: "—", icon: PawPrint, color: "from-amber-500 to-orange-600" },
+    { label: "Behavior Cases", value: 0, sub: "—", icon: AlertTriangle, color: "from-red-500 to-red-700" },
+    { label: "Upcoming Check-ins", value: 0, sub: "—", icon: Bell, color: "from-violet-500 to-purple-700" },
   ];
 
-  const myDogs = [
-    { name: "K9 Rex", breed: "Belgian Malinois · 2 yrs", stage: "Training", milestone: "Off-Leash Recall", urgency: "HIGH" },
-    { name: "K9 Luna", breed: "German Shepherd · 2 yrs", stage: "Training", milestone: "Distraction Proofing", urgency: "MEDIUM" },
-    { name: "K9 Zeus", breed: "American Pit Bull · 1 yr", stage: "Training", milestone: "Leash Manners", urgency: "LOW" },
-    { name: "K9 Daisy", breed: "Dutch Shepherd · 3 yrs", stage: "Foster/Recovery", milestone: "Medical Recheck", urgency: "LOW" },
-    { name: "K9 Max", breed: "German Shepherd Mix · 1 yr", stage: "Rehabilitate", milestone: "Confidence Building", urgency: "HIGH" },
-  ];
+  const myDogs: { name: string; breed: string; stage: string; milestone: string; urgency: string }[] = [];
 
   return (
     <div className="p-5 sm:p-8 max-w-[1600px] mx-auto">
@@ -381,11 +375,11 @@ function TrainerDashboard() {
 /* ─── PARTNER DASHBOARD ─── */
 function PartnerDashboard() {
   const partnerStats = [
-    { label: "Corporate Partners", value: 48, sub: "+4 this month", icon: Building2, color: "from-blue-500 to-blue-700" },
-    { label: "Monthly Sponsors", value: 128, sub: "+15 this month", icon: Heart, color: "from-red-500 to-red-700" },
-    { label: "Referral Leads", value: 76, sub: "+12 this month", icon: Users, color: "from-amber-500 to-orange-600" },
-    { label: "Dogs Shared", value: 34, sub: "+6 this month", icon: Dog, color: "from-emerald-500 to-emerald-700" },
-    { label: "Funds Raised", value: "$87,450", sub: "+18.7% vs last month", icon: DollarSign, color: "from-violet-500 to-purple-700" },
+    { label: "Corporate Partners", value: 0, sub: "—", icon: Building2, color: "from-blue-500 to-blue-700" },
+    { label: "Monthly Sponsors", value: 0, sub: "—", icon: Heart, color: "from-red-500 to-red-700" },
+    { label: "Referral Leads", value: 0, sub: "—", icon: Users, color: "from-amber-500 to-orange-600" },
+    { label: "Dogs Shared", value: 0, sub: "—", icon: Dog, color: "from-emerald-500 to-emerald-700" },
+    { label: "Funds Raised", value: "$0", sub: "—", icon: DollarSign, color: "from-violet-500 to-purple-700" },
   ];
 
   return (

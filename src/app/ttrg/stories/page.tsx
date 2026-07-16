@@ -33,6 +33,7 @@ const videos = [
 export default function StoriesPage() {
   const [videoModal, setVideoModal] = useState<null | { src: string; title: string; quote: string }>(null);
   const [activeCategory, setActiveCategory] = useState("All Stories");
+  const [visibleCount, setVisibleCount] = useState(3);
 
   return (
     <div className="bg-white">
@@ -113,7 +114,7 @@ export default function StoriesPage() {
               if (activeCategory === "Client Testimonials") return vid.category === "Client Testimonial";
               const key = activeCategory.replace(" Stories", "").toLowerCase();
               return vid.category.toLowerCase().includes(key);
-            }).map((vid) => (
+            }).slice(0, visibleCount).map((vid) => (
               <button
                 key={vid.id}
                 onClick={() => setVideoModal(vid)}
@@ -140,11 +141,18 @@ export default function StoriesPage() {
             ))}
           </div>
 
-          <div className="text-center mt-12">
-            <button className="inline-flex items-center gap-2 border-2 border-slate-200 text-[#1B2A4A] px-8 py-3 rounded-full text-sm font-semibold hover:border-[#1B2A4A] transition-colors">
-              LOAD MORE STORIES <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
+          {visibleCount < videos.filter((vid) => {
+            if (activeCategory === "All Stories") return true;
+            if (activeCategory === "Client Testimonials") return vid.category === "Client Testimonial";
+            const key = activeCategory.replace(" Stories", "").toLowerCase();
+            return vid.category.toLowerCase().includes(key);
+          }).length && (
+            <div className="text-center mt-12">
+              <button onClick={() => setVisibleCount((c) => c + 3)} className="inline-flex items-center gap-2 border-2 border-slate-200 text-[#1B2A4A] px-8 py-3 rounded-full text-sm font-semibold hover:border-[#1B2A4A] transition-colors">
+                LOAD MORE STORIES <ChevronDown className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

@@ -2,16 +2,7 @@
 
 import { Bell, CheckCircle2, AlertTriangle, Heart, Users, Upload, FileText, Mail, Send } from "lucide-react";
 
-const notifications = [
-  { id: 1, type: "submission", icon: Upload, title: "New Dog Submission", desc: "Max (German Shepherd Mix) submitted by Houston Animal Shelter — Critical urgency", time: "2 hours ago", read: false },
-  { id: 2, type: "application", icon: FileText, title: "Foster Application", desc: "Sarah Mitchell applied to foster Tucker", time: "3 hours ago", read: false },
-  { id: 3, type: "donation", icon: Heart, title: "New Sponsorship", desc: "John Kim started $100/mo sponsorship for Daisy", time: "4 hours ago", read: false },
-  { id: 4, type: "alert", icon: AlertTriangle, title: "Urgent: Surgery Funding", desc: "Shadow's surgery fund is at 30% — needs $700 more", time: "6 hours ago", read: false },
-  { id: 5, type: "application", icon: Users, title: "Volunteer Application", desc: "Mike Torres wants to help with weekend events", time: "8 hours ago", read: false },
-  { id: 6, type: "update", icon: CheckCircle2, title: "Trainer Update", desc: "Lorenzo updated Bailey's training notes — 'Responding well to leash training'", time: "1 day ago", read: true },
-  { id: 7, type: "submission", icon: Upload, title: "Submission Approved", desc: "Admin approved Coco (Poodle Mix) for public listing", time: "1 day ago", read: true },
-  { id: 8, type: "contact", icon: Mail, title: "Contact Form", desc: "Partnership inquiry from PetCo Houston — corporate sponsorship", time: "2 days ago", read: true },
-];
+const notifications: { id: number; type: string; icon: typeof Bell; title: string; desc: string; time: string; read: boolean }[] = [];
 
 const typeColors: Record<string, string> = {
   submission: "bg-blue-100 text-blue-600",

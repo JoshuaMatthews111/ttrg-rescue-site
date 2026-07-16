@@ -113,20 +113,7 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 bg-[#FAFAF8] rounded-xl p-4 border border-slate-100">
-            <p className="text-[10px] font-bold text-[#1B2A4A]/40 uppercase tracking-wider mb-2">Test Mode Credentials</p>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <span className="text-[10px] text-[#1B2A4A]/40">Username:</span>
-                <p className="font-mono font-bold text-[#1B2A4A]">ttrg</p>
-              </div>
-              <div>
-                <span className="text-[10px] text-[#1B2A4A]/40">Password:</span>
-                <p className="font-mono font-bold text-[#1B2A4A]">ttrg</p>
-              </div>
-            </div>
-          </div>
+          <p className="text-[10px] text-[#1B2A4A]/30 text-center mt-5">Authorized staff only. Contact admin for access.</p>
         </div>
 
         <p className="text-white/20 text-[11px] text-center mt-6">

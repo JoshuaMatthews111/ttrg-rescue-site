@@ -14,7 +14,7 @@ const involvedDropdown = [
   { label: "Adopt a Dog", href: "/ttrg/adopt", icon: HandHeart },
   { label: "Foster a Dog", href: "/ttrg/foster", icon: Home },
   { label: "Volunteer", href: "/ttrg/volunteer", icon: Users },
-  { label: "Become a Trainer", href: "/ttrg/get-involved#trainer", icon: GraduationCap },
+  { label: "Become a Trainer", href: "https://lorenzosdogtrainingteam.com/become-a-trainer", icon: GraduationCap },
   { label: "Partner With Us", href: "/ttrg/get-involved#partner", icon: Building2 },
   { label: "Recommend a Dog", href: "/ttrg/submit", icon: PawPrint },
 ];
@@ -55,6 +55,7 @@ function Dropdown({ label, items, open, onToggle, onClose }: { label: string; it
                 key={item.label}
                 href={item.href}
                 onClick={() => { onClose(); }}
+                {...(item.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 className="relative z-10 flex items-center gap-3 px-4 py-2.5 text-[#1B2A4A] text-sm hover:bg-[#FFF0F0] hover:text-[#C41E2A] transition-colors"
               >
                 <item.icon className="w-4 h-4 text-[#C41E2A]/60" />

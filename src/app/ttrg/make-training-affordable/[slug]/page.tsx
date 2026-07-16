@@ -40,13 +40,22 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
   const remaining = Math.max(0, profile.goalAmount - profile.raisedAmount);
   const finalAmount = customAmount ? parseFloat(customAmount) : donateAmount || 0;
 
+  const [copied, setCopied] = useState(false);
   function share() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (typeof navigator !== "undefined" && navigator.share) {
-      navigator.share({ title: `Help ${profile!.dogName} — ${profile!.familyName}`, text: profile!.shortSummary, url }).catch(() => {});
-    } else if (typeof navigator !== "undefined") {
-      navigator.clipboard.writeText(url);
-      alert("Link copied!");
+      navigator.share({ title: `Help ${profile!.dogName} — ${profile!.familyName}`, text: profile!.shortSummary, url }).catch(() => {
+        fallbackCopy(url);
+      });
+    } else {
+      fallbackCopy(url);
+    }
+  }
+  function fallbackCopy(url: string) {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => { prompt("Copy this link:", url); });
+    } else {
+      prompt("Copy this link:", url);
     }
   }
 
@@ -201,7 +210,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
 
                   {/* Share */}
                   <button onClick={share} className="flex items-center justify-center gap-2 w-full mt-3 border-2 border-slate-200 text-[#1B2A4A] py-3 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all">
-                    <Share2 className="w-4 h-4" /> Share This Campaign
+                    <Share2 className="w-4 h-4" /> {copied ? "Link Copied!" : "Share This Campaign"}
                   </button>
                 </>
               ) : (

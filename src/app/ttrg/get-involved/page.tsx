@@ -48,7 +48,7 @@ const ways = [
     icon: GraduationCap,
     label: "Become a Trainer",
     desc: "Interested in a career in dog training? Trainer positions are managed through Lorenzo's Dog Training Team. Contact us for more information about the application process.",
-    href: "https://lorenzosdogtrainingteam.com",
+    href: "https://lorenzosdogtrainingteam.com/become-a-trainer",
     color: "bg-amber-50",
     cta: "Visit Lorenzo's Dog Training Team",
     apply: "Inquire About Training Careers",
