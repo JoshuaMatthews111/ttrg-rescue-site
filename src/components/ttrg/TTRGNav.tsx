@@ -93,8 +93,8 @@ export default function TTRGNav() {
         <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/ttrg" className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden shadow-md flex-shrink-0">
-              <img src="/ttrg/ttrg-logo.png" alt="Team Trainers Rescue Group" className="w-full h-full object-cover scale-125" />
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden shadow-md flex-shrink-0">
+              <img src="/ttrg/ttrg-logo-circle.png" alt="Team Trainers Rescue Group" className="w-full h-full object-cover scale-105" />
             </div>
             <div className="hidden md:block leading-tight">
               <p className="text-[#1B2A4A] font-black text-sm tracking-tight">TEAM TRAINERS</p>
@@ -163,7 +163,7 @@ export default function TTRGNav() {
             <div className="flex items-center justify-between p-5 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full overflow-hidden border border-[#C41E2A]/20">
-                  <img src="/ttrg/ttrg-logo.png" alt="TTRG" className="w-full h-full object-cover scale-125" />
+                  <img src="/ttrg/ttrg-logo-circle.png" alt="TTRG" className="w-full h-full object-cover scale-105" />
                 </div>
                 <span className="text-sm font-bold text-[#1B2A4A]">TTRG</span>
               </div>

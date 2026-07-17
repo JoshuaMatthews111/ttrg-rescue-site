@@ -261,7 +261,7 @@ export default function TTRGHome() {
           <div className="max-w-3xl py-12 sm:py-16">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl flex-shrink-0">
-                <img src="/ttrg/ttrg-logo.png" alt="TTRG" className="w-full h-full object-cover scale-110" />
+                <img src="/ttrg/ttrg-logo-circle.png" alt="TTRG" className="w-full h-full object-cover scale-105" />
               </div>
               <div>
                 <p className="text-white/60 text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase">501(c)(3) Nonprofit Rescue Mission</p>
