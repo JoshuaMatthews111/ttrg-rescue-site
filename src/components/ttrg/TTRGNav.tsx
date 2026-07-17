@@ -86,14 +86,14 @@ export default function TTRGNav() {
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
-            ? "bg-white/95 shadow-md py-1 backdrop-blur-md"
-            : "bg-white/40 backdrop-blur-sm py-1.5"
+            ? "bg-white/95 shadow-md py-0.5 backdrop-blur-md"
+            : "bg-white/40 backdrop-blur-sm py-1"
         }`}
       >
-        <div className="max-w-6xl mx-auto px-3 sm:px-5 lg:px-6 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 flex items-center justify-between">
           {/* Logo */}
           <Link href="/ttrg" className="flex items-center gap-3 flex-shrink-0">
-            <div className="w-14 h-14 sm:w-[4.5rem] sm:h-[4.5rem] rounded-full overflow-hidden shadow-md flex-shrink-0">
+            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full overflow-hidden shadow-md flex-shrink-0">
               <img src="/ttrg/ttrg-logo.png" alt="Team Trainers Rescue Group" className="w-full h-full object-cover rounded-full" />
             </div>
             <div className="hidden md:block leading-tight">

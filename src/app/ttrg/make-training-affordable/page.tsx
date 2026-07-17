@@ -25,45 +25,10 @@ export default function MakeTrainingAffordable() {
     return matchSearch;
   });
 
-  const totalRaised = profiles.reduce((s, p) => s + p.raisedAmount, 0);
-  const totalDonors = profiles.reduce((s, p) => s + p.donorCount, 0);
-  const familiesHelped = profiles.filter(p => p.status === "completed").length;
-
   return (
     <div className="bg-[#FDFCFA] min-h-screen">
-      {/* Hero */}
-      <section className="relative py-20 sm:py-28 bg-gradient-to-br from-[#1B2A4A] via-[#0f1a30] to-[#1B2A4A] overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-[#D97706]/20 rounded-full px-4 py-1.5 mb-6">
-            <HeartHandshake className="w-4 h-4 text-[#D97706]" />
-            <span className="text-[#D97706] text-xs font-bold uppercase tracking-wider">Family Preservation Program</span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight mb-4">
-            We Make Training <span className="text-[#D97706]">Affordable</span>
-          </h1>
-          <p className="text-lg text-white/60 max-w-2xl mx-auto mb-10">
-            Not every dog needs to be rescued from a shelter. Some dogs need help before they lose their home. Your donation funds professional training for families who can&apos;t afford it.
-          </p>
-          <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-            <div className="text-center">
-              <p className="text-3xl font-black text-[#D97706]">{profiles.length}</p>
-              <p className="text-[10px] text-white/40 uppercase font-bold">Families Supported</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-black text-white">{totalDonors}</p>
-              <p className="text-[10px] text-white/40 uppercase font-bold">Supporters</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-black text-emerald-400">{familiesHelped}</p>
-              <p className="text-[10px] text-white/40 uppercase font-bold">Goals Reached</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Disclaimer */}
-      <div className="bg-amber-50 border-b border-amber-200 py-3">
+      <div className="bg-amber-50 border-b border-amber-200 py-3 pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-[11px] text-amber-700 text-center font-medium">
             <AlertTriangle className="w-3 h-3 inline mr-1" />

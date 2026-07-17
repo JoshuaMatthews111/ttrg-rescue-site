@@ -10,6 +10,7 @@ import {
   getSession, insertAuditLog,
   type FamilyProfile, type FamilyProfileStatus,
 } from "@/lib/admin-store";
+import { uploadFile } from "@/lib/supabase-store";
 
 const statusColors: Record<FamilyProfileStatus, string> = {
   draft: "bg-gray-100 text-gray-600",
@@ -59,6 +60,7 @@ export default function AdminFamilyProfiles() {
   const [showModal, setShowModal] = useState(false);
   const [editProfile, setEditProfile] = useState<FamilyProfile | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => { setProfiles(getFamilyProfiles()); }, []);
 
@@ -290,7 +292,23 @@ export default function AdminFamilyProfiles() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Cover Image URL</label>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Cover Image</label>
+                <div className="flex gap-2 mb-2">
+                  <label className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition-colors ${uploading ? "bg-slate-100 text-slate-400" : "bg-[#D97706] hover:bg-[#B45309] text-white"}`}>
+                    {uploading ? "Uploading..." : "Upload Photo"}
+                    <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !editProfile) return;
+                      setUploading(true);
+                      const path = `family-profiles/${editProfile.id}/${Date.now()}-${file.name}`;
+                      const url = await uploadFile("media", path, file);
+                      if (url) setEditProfile({ ...editProfile, image: url });
+                      setUploading(false);
+                      e.target.value = "";
+                    }} />
+                  </label>
+                  <span className="text-[10px] text-slate-400 self-center">or paste URL below</span>
+                </div>
                 <input value={editProfile.image} onChange={e => setEditProfile({ ...editProfile, image: e.target.value })} className={inp} placeholder="https://..." />
                 {editProfile.image && <img src={editProfile.image} alt="" className="mt-2 h-24 rounded-lg object-cover" />}
               </div>
