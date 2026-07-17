@@ -9,8 +9,9 @@ import {
   Users, ArrowRight, Gift
 } from "lucide-react";
 import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
-import { shareSubject } from "@/lib/share-messages";
+import { shareSubject, dogStageTitle } from "@/lib/share-messages";
 import { getVideoEmbedUrl } from "@/lib/video-embed";
+import { fetchShareOverrides, type ShareOverride } from "@/lib/share-overrides";
 import { fetchDogById, subscribeToTable } from "@/lib/admin-store";
 import {
   formatAge, formatBreed, isEmpty, filterEmptyStrings, buildDisplayOptions,
@@ -32,10 +33,18 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
   const [showFullStory, setShowFullStory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
+  const [shareOverride, setShareOverride] = useState<ShareOverride | undefined>(undefined);
 
-  async function handleShare(d: { id: string; name: string; story?: string; rescueStory?: string; urgent?: boolean }) {
+  useEffect(() => {
+    fetchShareOverrides().then(map => setShareOverride(map[id]));
+  }, [id]);
+
+  async function handleShare(d: { id: string; name: string; story?: string; rescueStory?: string; urgent?: boolean; stage?: string }) {
     const result = await shareSubject(
-      { id: d.id, name: d.name, story: d.story || d.rescueStory || "", urgent: d.urgent },
+      {
+        id: d.id, name: d.name, story: d.story || d.rescueStory || "", urgent: d.urgent,
+        customTitle: shareOverride?.title || dogStageTitle(d.name, d.stage),
+      },
       window.location.href,
     );
     if (result === "copied") {

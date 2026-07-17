@@ -8,7 +8,7 @@ import {
   Star, ArrowRight,
 } from "lucide-react";
 import { getFamilyProfileBySlug, getPublishedFamilyProfiles, syncFamilyProfilesFromCloud, type FamilyProfile } from "@/lib/admin-store";
-import { shareSubject } from "@/lib/share-messages";
+import { shareSubject, familyStageTitle } from "@/lib/share-messages";
 import { getVideoEmbedUrl } from "@/lib/video-embed";
 
 const FAMILY_STAGES = [
@@ -78,7 +78,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
         donorCount: p.donorCount,
         familyName: p.familyName,
         location: p.location,
-        customTitle: p.shareTitle,
+        customTitle: p.shareTitle || familyStageTitle(p.dogName, p.familyName, effectiveStage(p)),
       },
       window.location.href,
     );

@@ -4,6 +4,34 @@
 // victim, progress/goal proximity, hero framing, social proof) so no two
 // campaigns read the same and none feel like a generic blast.
 
+// ── Stage-aware default share titles ────────────────────────────────────────
+// Each campaign's headline reflects where the dog actually is in the journey,
+// so a fundraising-stage share reads "Fund Drako's Training", not a generic
+// "Help Drako Stay With…". Admin-set custom titles always win over these.
+
+export function dogStageTitle(name: string, stage?: string): string {
+  switch (stage) {
+    case "rescue": return `Just Rescued: Help Us Save ${name}`;
+    case "rehabilitate": return `Help ${name} Heal — Fund Their Rehabilitation`;
+    case "train": return `Fund ${name}'s Training`;
+    case "recover": return `${name} Is Recovering — Help Finish the Journey`;
+    case "rehome": return `${name} Is Ready for a Forever Home`;
+    default: return `Help Us Save ${name}`;
+  }
+}
+
+/** stage 1–5 of the family journey (see FAMILY_STAGES on the profile page) */
+export function familyStageTitle(name: string, familyName: string, stage: number): string {
+  switch (stage) {
+    case 1: return `${familyName} Needs Help Keeping ${name}`;
+    case 2: return `TTRG Is Stepping In for ${name}`;
+    case 3: return `Meet ${name} — Their Campaign Just Launched`;
+    case 4: return `Fund ${name}'s Training`;
+    case 5: return `${name}'s Training Is Complete — See the Outcome`;
+    default: return `Help ${name} Stay With ${familyName}`;
+  }
+}
+
 function hashString(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;

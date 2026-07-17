@@ -16,6 +16,8 @@ import {
   createEmptyDog,
 } from "@/lib/dog-constants";
 import { MAX_UPLOAD_MB, VIDEO_TOO_BIG_MESSAGE } from "@/lib/video-embed";
+import { fetchShareOverrides, saveShareOverride } from "@/lib/share-overrides";
+import { dogStageTitle } from "@/lib/share-messages";
 
 const stageLabels: Record<string, string> = { rescue: "Rescued", rehabilitate: "In Rehab", train: "In Training", recover: "Recovering", rehome: "Ready for Home" };
 const stageColors: Record<string, string> = { rescue: "bg-red-100 text-red-700", rehabilitate: "bg-amber-100 text-amber-700", train: "bg-emerald-100 text-emerald-700", recover: "bg-blue-100 text-blue-700", rehome: "bg-violet-100 text-violet-700" };
@@ -35,6 +37,7 @@ export default function AdminDogsPage() {
   const [uploadProgress, setUploadProgress] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const [shareOverride, setShareOverride] = useState<{ title: string; image: string }>({ title: "", image: "" });
 
   const loadDogs = useCallback(async () => {
     const data = await fetchDogs();
@@ -54,10 +57,16 @@ export default function AdminDogsPage() {
   const openNew = () => {
     const id = "dog-" + Date.now().toString(36);
     setEditDog({ ...emptyDog, id, gallery: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), createdBy: "Admin" } as AdminDog);
+    setShareOverride({ title: "", image: "" });
     setShowModal(true);
   };
 
-  const openEdit = (dog: AdminDog) => { setEditDog({ ...dog, gallery: dog.gallery || [] }); setShowModal(true); };
+  const openEdit = (dog: AdminDog) => {
+    setEditDog({ ...dog, gallery: dog.gallery || [] });
+    setShareOverride({ title: "", image: "" });
+    fetchShareOverrides().then(map => { const o = map[dog.id]; if (o) setShareOverride({ title: o.title || "", image: o.image || "" }); });
+    setShowModal(true);
+  };
 
   // Map admin stage to journey stage + progress
   const stageToJourney: Record<string, { journeyStage: string; percent: number; label: string }> = {
@@ -293,6 +302,7 @@ export default function AdminDogsPage() {
     dog.currentNeeds = currentNeeds;
 
     await upsertDog(dog);
+    await saveShareOverride(dog.id, shareOverride);
     const session = getSession();
     await insertAuditLog({ userName: session?.name || "Admin", userRole: session?.role || "admin", action: "save_dog", entityType: "dog", entityId: dog.id, entityName: dog.name });
     await loadDogs();
@@ -797,6 +807,35 @@ export default function AdminDogsPage() {
                   </button>
                   <span className="text-[10px] text-[#1B2A4A]/30">or</span>
                   <input value={editDog.videoUrl || ""} onChange={(e) => setEditDog({ ...editDog, videoUrl: e.target.value })} placeholder="Paste video URL" className="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                </div>
+              </div>
+
+              {/* ── Share Settings ── */}
+              <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-black text-[#1B2A4A]/60 uppercase">Share Settings — how this campaign looks in texts &amp; social media</p>
+                <div>
+                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Share Title (optional)</label>
+                  <input value={shareOverride.title} onChange={(e) => setShareOverride({ ...shareOverride, title: e.target.value })} placeholder={`Default (by stage): "${dogStageTitle(editDog.name || "[dog]", editDog.stage)}"`} className="w-full h-9 px-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Share Thumbnail (optional — defaults to main photo)</label>
+                  <div className="flex items-center gap-2">
+                    <label className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors ${uploading ? "bg-slate-100 text-slate-400" : "bg-slate-100 hover:bg-slate-200 text-[#1B2A4A]/70"}`}>
+                      <Upload className="w-3 h-3" /> Upload
+                      <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file || !editDog) return;
+                        setUploading(true);
+                        setUploadProgress("Uploading share photo...");
+                        const url = await uploadFile("media", `dogs/${editDog.id}/share-${Date.now()}-${file.name}`, file);
+                        if (url) setShareOverride({ ...shareOverride, image: url });
+                        setUploading(false); setUploadProgress("");
+                        e.target.value = "";
+                      }} />
+                    </label>
+                    <input value={shareOverride.image} onChange={(e) => setShareOverride({ ...shareOverride, image: e.target.value })} placeholder="or paste image URL" className="flex-1 h-9 px-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20" />
+                  </div>
+                  {shareOverride.image && <img src={shareOverride.image} alt="" className="mt-2 h-20 rounded-lg object-cover" />}
                 </div>
               </div>
               <div>

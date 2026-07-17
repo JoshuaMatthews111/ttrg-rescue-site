@@ -356,7 +356,28 @@ export default function AdminFamilyProfiles() {
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Share Title (optional)</label>
                 <input value={editProfile.shareTitle || ""} onChange={e => setEditProfile({ ...editProfile, shareTitle: e.target.value })} className={inp} placeholder={`Default: "Help ${editProfile.dogName || "[dog]"} Stay With ${editProfile.familyName || "[family]"}" — e.g. "Fund ${editProfile.dogName || "[dog]"}'s Training"`} />
-                <p className="text-[10px] text-slate-400 mt-1 mb-3">Shown as the headline when the campaign link is shared in texts and social media.</p>
+                <p className="text-[10px] text-slate-400 mt-1 mb-3">Shown as the headline when the campaign link is shared in texts and social media. Leave blank to auto-match the journey stage (e.g. stage 4 → &quot;Fund {editProfile.dogName || "[dog]"}&apos;s Training&quot;).</p>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Share Thumbnail (optional)</label>
+                <div className="flex gap-2 mb-2">
+                  <label className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition-colors ${uploading ? "bg-slate-100 text-slate-400" : "bg-[#D97706] hover:bg-[#B45309] text-white"}`}>
+                    {uploading ? "Uploading..." : "Upload Share Image"}
+                    <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !editProfile) return;
+                      setUploading(true);
+                      const path = `family-profiles/${editProfile.id}/share-${Date.now()}-${file.name}`;
+                      const url = await uploadFile("media", path, file);
+                      if (url) setEditProfile({ ...editProfile, shareImage: url });
+                      setUploading(false);
+                      e.target.value = "";
+                    }} />
+                  </label>
+                  <span className="text-[10px] text-slate-400 self-center">defaults to the cover image</span>
+                </div>
+                <input value={editProfile.shareImage || ""} onChange={e => setEditProfile({ ...editProfile, shareImage: e.target.value })} className={inp} placeholder="https://..." />
+                {editProfile.shareImage && <img src={editProfile.shareImage} alt="" className="mt-2 h-20 rounded-lg object-cover" />}
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Short Summary</label>
