@@ -232,9 +232,6 @@ export default function TTRGHome() {
 
   return (
     <div className="bg-[#FDFCFA]">
-      {/* Nav height spacer */}
-      <div className="h-14 sm:h-16" />
-
       {/* ═══════ 0. PERSISTENT SLIDING TICKER ═══════ */}
       <div className="py-2.5 overflow-hidden relative z-30 shadow-md" style={{ background: `linear-gradient(to right, ${tickerColor.from}, ${tickerColor.via}, ${tickerColor.to})` }}>
         <div className="flex animate-marquee whitespace-nowrap" style={{ "--marquee-duration": "35s" } as React.CSSProperties}>
