@@ -510,6 +510,9 @@ export interface FamilyProfile {
   image: string;
   gallery: string[];
   videoUrl?: string;
+  /** Journey stage 1–5: Family in Need, Situation Evaluated, Support Profile
+   *  Created, Training Funds Raised, Training Completed */
+  currentStage?: number;
   story: string;
   shortSummary: string;
   behaviorIssues: string;

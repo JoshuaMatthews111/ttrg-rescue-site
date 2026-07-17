@@ -38,6 +38,8 @@ function emptyProfile(): FamilyProfile {
     location: "",
     image: "",
     gallery: [],
+    videoUrl: "",
+    currentStage: 1,
     story: "",
     shortSummary: "",
     behaviorIssues: "",
@@ -311,6 +313,37 @@ export default function AdminFamilyProfiles() {
                 </div>
                 <input value={editProfile.image} onChange={e => setEditProfile({ ...editProfile, image: e.target.value })} className={inp} placeholder="https://..." />
                 {editProfile.image && <img src={editProfile.image} alt="" className="mt-2 h-24 rounded-lg object-cover" />}
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Video (optional)</label>
+                <div className="flex gap-2 mb-2">
+                  <label className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition-colors ${uploading ? "bg-slate-100 text-slate-400" : "bg-[#1B2A4A] hover:bg-[#152238] text-white"}`}>
+                    {uploading ? "Uploading..." : "Upload Video"}
+                    <input type="file" accept="video/*" className="hidden" disabled={uploading} onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !editProfile) return;
+                      setUploading(true);
+                      const path = `family-profiles/${editProfile.id}/${Date.now()}-${file.name}`;
+                      const url = await uploadFile("media", path, file);
+                      if (url) setEditProfile({ ...editProfile, videoUrl: url });
+                      setUploading(false);
+                      e.target.value = "";
+                    }} />
+                  </label>
+                  <span className="text-[10px] text-slate-400 self-center">MP4/MOV — or paste URL below</span>
+                </div>
+                <input value={editProfile.videoUrl || ""} onChange={e => setEditProfile({ ...editProfile, videoUrl: e.target.value })} className={inp} placeholder="https://..." />
+                {editProfile.videoUrl && <video src={editProfile.videoUrl} controls preload="metadata" className="mt-2 h-32 rounded-lg" />}
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Journey Stage</label>
+                <select value={editProfile.currentStage || 1} onChange={e => setEditProfile({ ...editProfile, currentStage: Number(e.target.value) })} className={inp}>
+                  <option value={1}>1 — Family in Need</option>
+                  <option value={2}>2 — Situation Evaluated</option>
+                  <option value={3}>3 — Support Profile Created</option>
+                  <option value={4}>4 — Training Funds Raised</option>
+                  <option value={5}>5 — Training Completed</option>
+                </select>
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Short Summary</label>

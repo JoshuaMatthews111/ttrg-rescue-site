@@ -10,6 +10,23 @@ import {
 import { getFamilyProfileBySlug, getPublishedFamilyProfiles, type FamilyProfile } from "@/lib/admin-store";
 import { shareSubject } from "@/lib/share-messages";
 
+const FAMILY_STAGES = [
+  { title: "Family in Need", description: "A family with limited resources needs help keeping their dog." },
+  { title: "Situation Evaluated", description: "TTRG reviews the family, the dog, the behavior issues, and the training need." },
+  { title: "Support Profile Created", description: "Photos, videos, and the family's story are gathered into an individual fundraising profile." },
+  { title: "Training Funds Raised", description: "The campaign is shared with donors until the needed training support is funded." },
+  { title: "Training Completed", description: "The dog receives training, the family gives a final testimony, and donors see the outcome." },
+] as const;
+
+// Stage comes from the admin panel when set; otherwise derived from status.
+function effectiveStage(p: FamilyProfile): number {
+  if (p.currentStage && p.currentStage >= 1 && p.currentStage <= 5) return p.currentStage;
+  if (p.status === "completed") return 5;
+  if (p.status === "funded" || (p.goalAmount > 0 && p.raisedAmount >= p.goalAmount)) return 4;
+  if (p.status === "published") return 4;
+  return 3;
+}
+
 export default function FamilyProfileDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const [profile, setProfile] = useState<FamilyProfile | null>(null);
@@ -99,6 +116,48 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
                   <Share2 className="w-4 h-4" />
                   {copied ? "Message Copied!" : `Share ${profile.dogName}`}
                 </button>
+              </div>
+            </div>
+
+            {/* Video */}
+            {profile.videoUrl && (
+              <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100">
+                <h2 className="text-xl font-black text-[#1B2A4A] mb-4 px-2">Meet {profile.dogName}</h2>
+                <video src={profile.videoUrl} controls playsInline preload="metadata" poster={profile.image || undefined} className="w-full rounded-2xl bg-black" />
+              </div>
+            )}
+
+            {/* Journey stages */}
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100">
+              <h2 className="text-xl font-black text-[#1B2A4A] mb-6">{profile.dogName}&apos;s Journey</h2>
+              <div className="space-y-0">
+                {FAMILY_STAGES.map((stage, i) => {
+                  const stageNum = i + 1;
+                  const current = effectiveStage(profile);
+                  const done = stageNum < current;
+                  const active = stageNum === current;
+                  return (
+                    <div key={stage.title} className="flex gap-4">
+                      {/* Marker + connector */}
+                      <div className="flex flex-col items-center">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0 transition-colors ${done ? "bg-emerald-500 text-white" : active ? "bg-[#D97706] text-white ring-4 ring-[#D97706]/20" : "bg-slate-100 text-slate-400"}`}>
+                          {done ? <CheckCircle className="w-5 h-5" /> : stageNum}
+                        </div>
+                        {i < FAMILY_STAGES.length - 1 && (
+                          <div className={`w-0.5 flex-1 min-h-6 ${done ? "bg-emerald-400" : "bg-slate-200"}`} />
+                        )}
+                      </div>
+                      {/* Copy */}
+                      <div className={`pb-6 ${i === FAMILY_STAGES.length - 1 ? "pb-0" : ""}`}>
+                        <p className={`text-sm font-black uppercase tracking-wide ${active ? "text-[#D97706]" : done ? "text-emerald-600" : "text-[#1B2A4A]"}`}>
+                          {stage.title}
+                          {active && <span className="ml-2 text-[10px] bg-[#D97706]/10 text-[#D97706] px-2 py-0.5 rounded-full normal-case">Current Stage</span>}
+                        </p>
+                        <p className="text-[#1B2A4A]/60 text-sm leading-relaxed mt-1">{stage.description}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
