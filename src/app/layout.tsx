@@ -24,15 +24,17 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Lorenzo's Dog Training Team | Transform Chaos Into Confidence",
+  title: "Team Trainers Rescue Group — Rescue. Train. Rehome. Repeat.",
   description:
-    "Professional dog training that restores peace, obedience, and trust between you and your dog. Over 40 years of experience. All breeds welcome. Serving nationwide.",
-  keywords:
-    "dog training, obedience training, behavioral modification, service dog training, Lorenzo's Dog Training Team",
+    "Nonprofit dog rescue in Cleveland, OH. We rescue, train, rehabilitate, and rehome dogs in need.",
+  icons: {
+    icon: "/favicon-ttrg.png",
+    apple: "/favicon-ttrg.png",
+  },
   openGraph: {
-    title: "Lorenzo's Dog Training Team | Transform Chaos Into Confidence",
+    title: "Team Trainers Rescue Group — Rescue. Train. Rehome. Repeat.",
     description:
-      "Professional dog training that restores peace, obedience, and trust between you and your dog.",
+      "Nonprofit dog rescue in Cleveland, OH. We rescue, train, rehabilitate, and rehome dogs in need.",
     type: "website",
   },
 };

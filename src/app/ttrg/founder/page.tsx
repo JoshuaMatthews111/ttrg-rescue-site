@@ -28,7 +28,7 @@ export default function FounderPage() {
 
             {/* Right — Heading + opening story */}
             <div className="lg:col-span-3">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1B2A4A] leading-tight mb-4">Lorenzo Miller -- Founder</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#1B2A4A] leading-tight mb-4">Lorenzo Miller - Founder</h1>
               <p className="text-[#1B2A4A]/60 text-base sm:text-lg mb-2">40+ years dedicated to dogs — from training to rescue to changing lives.</p>
               <p className="text-[#1B2A4A]/40 text-sm mb-6">Founder of Team Trainers Rescue Group · Cleveland, OH · 501(c)(3) · EIN: 46-1426142</p>
               <div className="space-y-4 text-[#1B2A4A]/70 text-base leading-relaxed">
