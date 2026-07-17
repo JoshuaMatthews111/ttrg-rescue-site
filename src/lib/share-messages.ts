@@ -28,6 +28,8 @@ export interface ShareSubject {
   donorCount?: number;
   familyName?: string;   // set for family campaigns
   location?: string;
+  /** admin-set custom headline; overrides the default title wording */
+  customTitle?: string;
 }
 
 export function buildShareMessage(s: ShareSubject, url: string): { title: string; text: string; url: string } {
@@ -59,9 +61,8 @@ export function buildShareMessage(s: ShareSubject, url: string): { title: string
   ];
 
   const pick = templates[hashString(s.id + s.name) % templates.length]();
-  const title = s.familyName
-    ? `Help ${s.name} stay with ${s.familyName}`
-    : `Help us save ${s.name}`;
+  const title = s.customTitle
+    || (s.familyName ? `Help ${s.name} stay with ${s.familyName}` : `Help us save ${s.name}`);
   return { title, text: pick, url };
 }
 

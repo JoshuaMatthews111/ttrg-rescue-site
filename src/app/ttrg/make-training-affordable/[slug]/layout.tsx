@@ -21,7 +21,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const p = await findProfile(slug);
 
-  const title = p ? `Help ${p.dogName} Stay With ${p.familyName} — TTRG` : "Help a Family Keep Their Dog — Team Trainers Rescue Group";
+  const title = p?.shareTitle
+    ? `${p.shareTitle} — TTRG`
+    : p ? `Help ${p.dogName} Stay With ${p.familyName} — TTRG` : "Help a Family Keep Their Dog — Team Trainers Rescue Group";
   const description = p?.shortSummary || p?.story?.slice(0, 160) || "When training costs would force a family to give up their dog, we step in. Read their story and help keep this family together.";
   const image = p?.image || "/ttrg/ttrg-logo-circle.png";
 

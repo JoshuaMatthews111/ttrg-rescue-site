@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
 import { shareSubject } from "@/lib/share-messages";
+import { getVideoEmbedUrl } from "@/lib/video-embed";
 import { fetchDogById, subscribeToTable } from "@/lib/admin-store";
 import {
   formatAge, formatBreed, isEmpty, filterEmptyStrings, buildDisplayOptions,
@@ -314,7 +315,11 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
         {showVideo && dogVideoUrl && (
           <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setShowVideo(false)}>
             <div className="relative w-full max-w-3xl aspect-video bg-black rounded-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-              <video src={dogVideoUrl} controls autoPlay playsInline className="w-full h-full" />
+              {getVideoEmbedUrl(dogVideoUrl) ? (
+                <iframe src={getVideoEmbedUrl(dogVideoUrl)!} allow="autoplay; encrypted-media; fullscreen" allowFullScreen className="w-full h-full border-0" title={`Video of ${dog.name}`} />
+              ) : (
+                <video src={dogVideoUrl} controls autoPlay playsInline className="w-full h-full" />
+              )}
               <button onClick={() => setShowVideo(false)} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors">
                 <X className="w-5 h-5" />
               </button>

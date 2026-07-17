@@ -7,7 +7,10 @@ import {
 } from "lucide-react";
 import {
   getFamilyProfiles, upsertFamilyProfile, deleteFamilyProfile,
-  getSession, insertAuditLog,
+  syncFamilyProfilesFromCloud, getSession, insertAuditLog,
+} from "@/lib/admin-store";
+import { MAX_UPLOAD_MB, VIDEO_TOO_BIG_MESSAGE } from "@/lib/video-embed";
+import {
   type FamilyProfile, type FamilyProfileStatus,
 } from "@/lib/admin-store";
 import { uploadFile } from "@/lib/supabase-store";
@@ -64,7 +67,10 @@ export default function AdminFamilyProfiles() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  useEffect(() => { setProfiles(getFamilyProfiles()); }, []);
+  useEffect(() => {
+    setProfiles(getFamilyProfiles());
+    syncFamilyProfilesFromCloud().then(() => setProfiles(getFamilyProfiles()));
+  }, []);
 
   const filtered = profiles.filter(p => {
     const q = search.toLowerCase();
@@ -322,17 +328,19 @@ export default function AdminFamilyProfiles() {
                     <input type="file" accept="video/*" className="hidden" disabled={uploading} onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file || !editProfile) return;
+                      if (file.size > MAX_UPLOAD_MB * 1024 * 1024) { alert(VIDEO_TOO_BIG_MESSAGE); e.target.value = ""; return; }
                       setUploading(true);
                       const path = `family-profiles/${editProfile.id}/${Date.now()}-${file.name}`;
                       const url = await uploadFile("media", path, file);
                       if (url) setEditProfile({ ...editProfile, videoUrl: url });
+                      else alert("Video upload failed. " + VIDEO_TOO_BIG_MESSAGE);
                       setUploading(false);
                       e.target.value = "";
                     }} />
                   </label>
-                  <span className="text-[10px] text-slate-400 self-center">MP4/MOV — or paste URL below</span>
+                  <span className="text-[10px] text-slate-400 self-center">Under {MAX_UPLOAD_MB} MB — bigger videos: paste a Google Drive or YouTube link below</span>
                 </div>
-                <input value={editProfile.videoUrl || ""} onChange={e => setEditProfile({ ...editProfile, videoUrl: e.target.value })} className={inp} placeholder="https://..." />
+                <input value={editProfile.videoUrl || ""} onChange={e => setEditProfile({ ...editProfile, videoUrl: e.target.value })} className={inp} placeholder="https://drive.google.com/... or https://youtube.com/..." />
                 {editProfile.videoUrl && <video src={editProfile.videoUrl} controls preload="metadata" className="mt-2 h-32 rounded-lg" />}
               </div>
               <div>
@@ -344,6 +352,11 @@ export default function AdminFamilyProfiles() {
                   <option value={4}>4 — Training Funds Raised</option>
                   <option value={5}>5 — Training Completed</option>
                 </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Share Title (optional)</label>
+                <input value={editProfile.shareTitle || ""} onChange={e => setEditProfile({ ...editProfile, shareTitle: e.target.value })} className={inp} placeholder={`Default: "Help ${editProfile.dogName || "[dog]"} Stay With ${editProfile.familyName || "[family]"}" — e.g. "Fund ${editProfile.dogName || "[dog]"}'s Training"`} />
+                <p className="text-[10px] text-slate-400 mt-1 mb-3">Shown as the headline when the campaign link is shared in texts and social media.</p>
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Short Summary</label>

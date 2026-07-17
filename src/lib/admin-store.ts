@@ -515,6 +515,9 @@ export interface FamilyProfile {
   currentStage?: number;
   story: string;
   shortSummary: string;
+  /** Optional custom title for link previews & shares (e.g. "Fund Drako's
+   *  Training") — overrides the default "Help X Stay With Y" wording. */
+  shareTitle?: string;
   behaviorIssues: string;
   trainingNeeded: string;
   goalAmount: number;

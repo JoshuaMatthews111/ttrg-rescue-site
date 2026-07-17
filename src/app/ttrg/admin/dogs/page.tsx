@@ -15,6 +15,7 @@ import {
   DOG_STATUS_COLORS, formatAge, formatBreed, isEmpty, getTimelineIndex, getTimelineKey,
   createEmptyDog,
 } from "@/lib/dog-constants";
+import { MAX_UPLOAD_MB, VIDEO_TOO_BIG_MESSAGE } from "@/lib/video-embed";
 
 const stageLabels: Record<string, string> = { rescue: "Rescued", rehabilitate: "In Rehab", train: "In Training", recover: "Recovering", rehome: "Ready for Home" };
 const stageColors: Record<string, string> = { rescue: "bg-red-100 text-red-700", rehabilitate: "bg-amber-100 text-amber-700", train: "bg-emerald-100 text-emerald-700", recover: "bg-blue-100 text-blue-700", rehome: "bg-violet-100 text-violet-700" };
@@ -349,11 +350,17 @@ export default function AdminDogsPage() {
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editDog) return;
+    if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+      alert(VIDEO_TOO_BIG_MESSAGE);
+      if (videoInputRef.current) videoInputRef.current.value = "";
+      return;
+    }
     setUploading(true);
     setUploadProgress(`Uploading video (${(file.size / 1024 / 1024).toFixed(1)} MB)...`);
     const path = `dogs/${editDog.id}/video-${Date.now()}-${file.name}`;
     const url = await uploadFile("media", path, file);
     if (url) setEditDog({ ...editDog, videoUrl: url });
+    else alert("Video upload failed. " + VIDEO_TOO_BIG_MESSAGE);
     setUploading(false);
     setUploadProgress("");
     if (videoInputRef.current) videoInputRef.current.value = "";
