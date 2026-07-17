@@ -9,30 +9,6 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "tueevdgdqkkrjylxvutp.supabase.co" },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/",
-        has: [{ type: "host", value: "teamtrainersrescuegroup.com" }],
-        destination: "/ttrg",
-      },
-      {
-        source: "/",
-        has: [{ type: "host", value: "www.teamtrainersrescuegroup.com" }],
-        destination: "/ttrg",
-      },
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "teamtrainersrescuegroup.com" }],
-        destination: "/ttrg/:path*",
-      },
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "www.teamtrainersrescuegroup.com" }],
-        destination: "/ttrg/:path*",
-      },
-    ];
-  },
 };
 
 export default nextConfig;

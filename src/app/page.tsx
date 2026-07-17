@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
+import TTRGHome from "./ttrg/page";
 
-export default function Home() {
-  redirect("/ttrg");
-}
+export default TTRGHome;

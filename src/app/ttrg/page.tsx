@@ -233,7 +233,7 @@ export default function TTRGHome() {
   return (
     <div className="bg-[#FDFCFA]">
       {/* Nav height spacer */}
-      <div className="h-16 sm:h-[4.75rem]" />
+      <div className="h-14 sm:h-16" />
 
       {/* ═══════ 0. PERSISTENT SLIDING TICKER ═══════ */}
       <div className="py-2.5 overflow-hidden relative z-30 shadow-md" style={{ background: `linear-gradient(to right, ${tickerColor.from}, ${tickerColor.via}, ${tickerColor.to})` }}>
@@ -263,8 +263,8 @@ export default function TTRGHome() {
         <div className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full ${heroSec.visible ? "animate-fade-up" : "opacity-0"}`}>
           <div className="max-w-3xl py-12 sm:py-16">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl bg-[#1B3A6B] flex-shrink-0">
-                <img src="/ttrg/ttrg-logo.png" alt="TTRG" className="w-full h-full object-contain" />
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl flex-shrink-0">
+                <img src="/ttrg/ttrg-logo.png" alt="TTRG" className="w-full h-full object-cover scale-110" />
               </div>
               <div>
                 <p className="text-white/60 text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase">501(c)(3) Nonprofit Rescue Mission</p>
