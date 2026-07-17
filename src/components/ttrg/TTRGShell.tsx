@@ -15,7 +15,7 @@ export default function TTRGShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white flex flex-col" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
       <TTRGNav />
-      <main className="flex-1 pt-16 sm:pt-[72px]">{children}</main>
+      <main className="flex-1 pt-[72px] sm:pt-[88px]">{children}</main>
       <TTRGFooter />
     </div>
   );

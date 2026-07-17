@@ -260,8 +260,8 @@ export default function TTRGHome() {
         <div className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full ${heroSec.visible ? "animate-fade-up" : "opacity-0"}`}>
           <div className="max-w-3xl py-12 sm:py-16">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-2 border-white/20 shadow-2xl flex-shrink-0">
-                <img src="/ttrg/ttrg-logo-circle.png" alt="TTRG" className="w-full h-full object-cover scale-105" />
+              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden shadow-2xl flex-shrink-0">
+                <img src="/ttrg/ttrg-logo-circle.png" alt="TTRG" className="w-full h-full object-cover" />
               </div>
               <div>
                 <p className="text-white/60 text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase">501(c)(3) Nonprofit Rescue Mission</p>
