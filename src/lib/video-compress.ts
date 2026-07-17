@@ -48,8 +48,9 @@ export async function compressVideoInBrowser(
     srcNode.connect(dest);
     dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
 
+    // NOTE: explicit codec strings (e.g. avc1.42E01E) pass isTypeSupported in
+    // Chromium but record 0 bytes — tested. Plain container mimes work.
     const mime = [
-      'video/mp4;codecs="avc1.42E01E,mp4a.40.2"',
       "video/mp4",
       'video/webm;codecs="vp9,opus"',
       "video/webm",
