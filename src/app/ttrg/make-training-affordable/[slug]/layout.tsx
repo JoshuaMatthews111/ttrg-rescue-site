@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { getFamilyProfileBySlug } from "@/lib/admin-store";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -14,9 +15,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .eq("slug", slug)
     .single();
 
-  const title = data ? `Help ${data.dog_name} — ${data.family_name}` : "Make Training Affordable";
-  const description = data?.short_summary || "Support a family and their dog through TTRG's training program.";
-  const image = data?.photo_url || "/ttrg/ttrg-logo.png";
+  const local = data ? undefined : getFamilyProfileBySlug(slug);
+
+  const dogName = data?.dog_name || local?.dogName;
+  const familyName = data?.family_name || local?.familyName;
+  const title = dogName && familyName ? `Help ${dogName} — ${familyName}` : "Make Training Affordable";
+  const description = data?.short_summary || local?.shortSummary || "Support a family and their dog through TTRG's training program.";
+  const image = data?.photo_url || local?.image || "/ttrg/ttrg-logo.png";
 
   return {
     title: `${title} — Team Trainers Rescue Group`,
