@@ -8,6 +8,7 @@ import {
   Star, ArrowRight,
 } from "lucide-react";
 import { getFamilyProfileBySlug, getPublishedFamilyProfiles, type FamilyProfile } from "@/lib/admin-store";
+import { shareSubject } from "@/lib/share-messages";
 
 export default function FamilyProfileDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -41,22 +42,23 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
   const remaining = Math.max(0, profile.goalAmount - profile.raisedAmount);
   const finalAmount = customAmount ? parseFloat(customAmount) : donateAmount || 0;
 
-  function share() {
-    const url = typeof window !== "undefined" ? window.location.href : "";
-    if (typeof navigator !== "undefined" && navigator.share) {
-      navigator.share({ title: `Help ${profile!.dogName} — ${profile!.familyName}`, text: profile!.shortSummary, url }).catch(() => {
-        fallbackCopy(url);
-      });
-    } else {
-      fallbackCopy(url);
-    }
-  }
-  function fallbackCopy(url: string) {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(url).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(() => { prompt("Copy this link:", url); });
-    } else {
-      prompt("Copy this link:", url);
-    }
+  async function share() {
+    const p = profile!;
+    const result = await shareSubject(
+      {
+        id: p.slug,
+        name: p.dogName,
+        story: p.shortSummary || p.story,
+        urgent: p.urgent,
+        goalAmount: p.goalAmount,
+        raisedAmount: p.raisedAmount,
+        donorCount: p.donorCount,
+        familyName: p.familyName,
+        location: p.location,
+      },
+      window.location.href,
+    );
+    if (result === "copied") { setCopied(true); setTimeout(() => setCopied(false), 2500); }
   }
 
   return (
@@ -82,12 +84,21 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
                 {profile.urgent && <span className="flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"><AlertTriangle className="w-3.5 h-3.5" /> URGENT</span>}
                 {isCompleted && <span className="flex items-center gap-1 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"><CheckCircle className="w-3.5 h-3.5" /> COMPLETED</span>}
               </div>
-              <div className="absolute bottom-6 left-6 right-6">
-                <p className="text-[#D97706] text-xs font-bold uppercase tracking-wider mb-1">{profile.familyName}</p>
-                <h1 className="text-3xl sm:text-4xl font-black text-white mb-1">{profile.dogName}</h1>
-                <p className="text-white/70 text-sm flex items-center gap-2">
-                  {profile.dogBreed} · <MapPin className="w-3.5 h-3.5" /> {profile.location}
-                </p>
+              <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[#D97706] text-xs font-bold uppercase tracking-wider mb-1">{profile.familyName}</p>
+                  <h1 className="text-3xl sm:text-4xl font-black text-white mb-1">{profile.dogName}</h1>
+                  <p className="text-white/70 text-sm flex items-center gap-2">
+                    {profile.dogBreed} · <MapPin className="w-3.5 h-3.5" /> {profile.location}
+                  </p>
+                </div>
+                <button
+                  onClick={share}
+                  className="inline-flex items-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-5 py-3 rounded-full text-sm font-bold shadow-xl shadow-black/30 transition-all hover:scale-105 flex-shrink-0"
+                >
+                  <Share2 className="w-4 h-4" />
+                  {copied ? "Message Copied!" : `Share ${profile.dogName}`}
+                </button>
               </div>
             </div>
 

@@ -9,6 +9,7 @@ import {
   Users, ArrowRight, Gift
 } from "lucide-react";
 import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
+import { shareSubject } from "@/lib/share-messages";
 import { fetchDogById, subscribeToTable } from "@/lib/admin-store";
 import {
   formatAge, formatBreed, isEmpty, filterEmptyStrings, buildDisplayOptions,
@@ -29,6 +30,18 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
   const [showVideo, setShowVideo] = useState(false);
   const [showFullStory, setShowFullStory] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
+
+  async function handleShare(d: { id: string; name: string; story?: string; rescueStory?: string; urgent?: boolean }) {
+    const result = await shareSubject(
+      { id: d.id, name: d.name, story: d.story || d.rescueStory || "", urgent: d.urgent },
+      window.location.href,
+    );
+    if (result === "copied") {
+      setShareState("copied");
+      setTimeout(() => setShareState("idle"), 2500);
+    }
+  }
 
   useEffect(() => {
     fetchDogById(id).then((supabaseDog) => {
@@ -196,6 +209,14 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
                   </span>
                 </div>
               )}
+              {/* Prominent share button on the photo */}
+              <button
+                onClick={() => handleShare(dog)}
+                className="absolute bottom-4 right-4 inline-flex items-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-5 py-3 rounded-full text-sm font-bold shadow-xl shadow-black/30 transition-all hover:scale-105"
+              >
+                <Share2 className="w-4 h-4" />
+                {shareState === "copied" ? "Message Copied!" : `Share ${dog.name}`}
+              </button>
             </div>
 
             {/* Right: Info */}
@@ -642,7 +663,7 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
             </div>
           </Link>
 
-          <button onClick={() => navigator.share?.({ title: `Support ${dog.name} at TTRG`, url: window.location.href }).catch(() => {})} className="bg-white rounded-2xl p-4 border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow text-left">
+          <button onClick={() => handleShare(dog)} className="bg-white rounded-2xl p-4 border border-slate-100 flex items-center gap-3 hover:shadow-md transition-shadow text-left">
             <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
               <Share2 className="w-5 h-5 text-[#1B2A4A]" />
             </div>

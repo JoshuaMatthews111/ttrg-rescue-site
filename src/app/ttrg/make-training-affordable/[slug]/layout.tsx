@@ -19,9 +19,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const dogName = data?.dog_name || local?.dogName;
   const familyName = data?.family_name || local?.familyName;
-  const title = dogName && familyName ? `Help ${dogName} — ${familyName}` : "Make Training Affordable";
-  const description = data?.short_summary || local?.shortSummary || "Support a family and their dog through TTRG's training program.";
-  const image = data?.photo_url || local?.image || "/ttrg/ttrg-logo.png";
+  const title = dogName && familyName ? `Help ${dogName} Stay With ${familyName} — TTRG` : "Help a Family Keep Their Dog — Team Trainers Rescue Group";
+  const description = data?.short_summary || local?.shortSummary || "When training costs would force a family to give up their dog, we step in. Read their story and help keep this family together.";
+  const image = data?.photo_url || local?.image || "/ttrg/ttrg-logo-circle.png";
 
   return {
     title: `${title} — Team Trainers Rescue Group`,

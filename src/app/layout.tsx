@@ -24,6 +24,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://teamtrainersrescuegroup.com"),
   title: "Team Trainers Rescue Group — Rescue. Train. Rehome. Repeat.",
   description:
     "Nonprofit dog rescue in Cleveland, OH. We rescue, train, rehabilitate, and rehome dogs in need.",
