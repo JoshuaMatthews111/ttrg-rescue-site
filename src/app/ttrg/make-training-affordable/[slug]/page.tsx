@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { getFamilyProfileBySlug, getPublishedFamilyProfiles, syncFamilyProfilesFromCloud, type FamilyProfile } from "@/lib/admin-store";
 import { shareSubject, familyStageTitle } from "@/lib/share-messages";
-import { getVideoEmbedUrl } from "@/lib/video-embed";
+import { getVideoEmbedUrl, getDirectVideoUrl } from "@/lib/video-embed";
 
 const FAMILY_STAGES = [
   { title: "Family in Need", description: "A family with limited resources needs help keeping their dog." },
@@ -139,7 +139,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
                     title={`Video of ${profile.dogName}`}
                   />
                 ) : (
-                  <video src={profile.videoUrl} controls playsInline preload="metadata" poster={profile.image || undefined} className="w-full rounded-2xl bg-black" />
+                  <video src={getDirectVideoUrl(profile.videoUrl)} controls playsInline preload="metadata" poster={profile.image || undefined} className="w-full rounded-2xl bg-black" />
                 )}
               </div>
             )}

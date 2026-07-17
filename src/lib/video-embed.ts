@@ -13,15 +13,35 @@ export function getVideoEmbedUrl(url: string | undefined | null): string | null 
   const drive = url.match(/drive\.google\.com\/(?:file\/d\/([\w-]+)|.*[?&]id=([\w-]+))/);
   if (drive) return `https://drive.google.com/file/d/${drive[1] || drive[2]}/preview`;
 
-  // YouTube: watch?v=, youtu.be/, shorts/
-  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{6,})/);
+  // YouTube: watch?v=, youtu.be/, shorts/, live/, embed/ (incl. music./m./nocookie)
+  const yt = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([\w-]{6,})/);
   if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
 
   // Vimeo
   const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
   if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
 
+  // Loom
+  const loom = url.match(/loom\.com\/(?:share|embed)\/([a-f0-9]{16,})/);
+  if (loom) return `https://www.loom.com/embed/${loom[1]}`;
+
+  // Streamable
+  const str = url.match(/streamable\.com\/(?:e\/)?(\w+)/);
+  if (str) return `https://streamable.com/e/${str[1]}`;
+
   return null; // direct file (mp4/mov/webm…) — play with a <video> tag
+}
+
+// Some hosts serve direct video files behind share-page URLs. Rewrite those
+// so a <video> tag can stream them; anything else passes through unchanged.
+export function getDirectVideoUrl(url: string): string {
+  // Dropbox share pages → direct-content host
+  if (/dropbox\.com\/(s|scl\/fi)\//.test(url)) {
+    return url
+      .replace(/www\.dropbox\.com/, "dl.dropboxusercontent.com")
+      .replace(/([?&])dl=0/, "$1raw=1");
+  }
+  return url;
 }
 
 /** Max direct-upload size on the current Supabase plan (tested: 45 MB ok, 60 MB rejected). */

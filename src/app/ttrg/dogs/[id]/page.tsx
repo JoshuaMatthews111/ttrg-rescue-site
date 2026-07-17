@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
 import { shareSubject, dogStageTitle } from "@/lib/share-messages";
-import { getVideoEmbedUrl } from "@/lib/video-embed";
+import { getVideoEmbedUrl, getDirectVideoUrl } from "@/lib/video-embed";
 import { fetchShareOverrides, type ShareOverride } from "@/lib/share-overrides";
 import { fetchDogById, subscribeToTable } from "@/lib/admin-store";
 import {
@@ -327,7 +327,7 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
               {getVideoEmbedUrl(dogVideoUrl) ? (
                 <iframe src={getVideoEmbedUrl(dogVideoUrl)!} allow="autoplay; encrypted-media; fullscreen" allowFullScreen className="w-full h-full border-0" title={`Video of ${dog.name}`} />
               ) : (
-                <video src={dogVideoUrl} controls autoPlay playsInline className="w-full h-full" />
+                <video src={getDirectVideoUrl(dogVideoUrl)} controls autoPlay playsInline className="w-full h-full" />
               )}
               <button onClick={() => setShowVideo(false)} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-colors">
                 <X className="w-5 h-5" />
