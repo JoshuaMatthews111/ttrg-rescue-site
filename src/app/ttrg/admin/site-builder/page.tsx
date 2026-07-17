@@ -1,817 +1,377 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+// ═══════════════════════════════════════════════════════════════════════════
+// TTRG Visual Site Builder — click-to-edit the REAL site.
+//
+// The right pane is the actual live site in an iframe (same origin, so we
+// drive its DOM directly). In edit mode, staff click any text to retype it,
+// click any photo to swap it, change the logo and font from the sidebar,
+// resize text, or hide a section. Publish saves the patches to Supabase and
+// every visitor's browser applies them on load (see LiveEditsApplier).
+// ═══════════════════════════════════════════════════════════════════════════
+
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import {
-  ArrowLeft, Save, Eye, Globe, Undo2, Redo2, Monitor, Tablet, Smartphone,
-  Plus, GripVertical, Trash2, Copy, EyeOff, Eye as EyeIcon, ChevronRight,
-  Upload, X, Layers, Settings, FileText, Image as ImageIcon, Type,
-  Palette, Link as LinkIcon, Hash, ToggleLeft, Check,
+  ArrowLeft, Monitor, Smartphone, MousePointerClick, Eye,
+  Type, Image as ImageIcon, Trash2, Check, Loader2, RotateCcw, Globe,
 } from "lucide-react";
 import { getSession } from "@/lib/admin-store";
+import { uploadFile } from "@/lib/supabase-store";
 import {
-  getPages, getPage, savePage, addSection, removeSection, duplicateSection,
-  reorderSections, updateSectionField, toggleSectionVisibility, publishPage,
-  saveVersion, addAuditLog, getBuilderPermissions, SECTION_TEMPLATES,
-  type BuilderPage, type PageSection, type SectionType, type SectionField,
-} from "@/lib/site-builder-store";
+  fetchLiveEdits, saveLiveEdits, applyLiveEdits, normalizePath, cssPath,
+  type LiveEdit,
+} from "@/lib/live-edits";
 
-// ─── VIEWPORT MODES ──────────────────────────────────────────────────────────
-type Viewport = "desktop" | "tablet" | "mobile";
-const viewportWidths: Record<Viewport, string> = { desktop: "100%", tablet: "768px", mobile: "375px" };
+const PAGES = [
+  { label: "Home", path: "/ttrg" },
+  { label: "Our Dogs", path: "/ttrg/sponsor" },
+  { label: "Make Training Affordable", path: "/ttrg/make-training-affordable" },
+  { label: "Success Stories", path: "/ttrg/stories" },
+  { label: "Founder", path: "/ttrg/founder" },
+  { label: "Get Involved", path: "/ttrg/get-involved" },
+  { label: "Donate", path: "/ttrg/donate" },
+  { label: "Contact", path: "/ttrg/contact" },
+];
 
-// ─── UNDO/REDO ───────────────────────────────────────────────────────────────
-interface HistoryEntry { sections: PageSection[] }
+const FONTS = [
+  { label: "Inter (default)", value: "'Inter', system-ui, sans-serif" },
+  { label: "Poppins", value: "'Poppins', system-ui, sans-serif" },
+  { label: "Playfair Display", value: "'Playfair Display', Georgia, serif" },
+  { label: "Georgia", value: "Georgia, 'Times New Roman', serif" },
+  { label: "Helvetica", value: "'Helvetica Neue', Helvetica, Arial, sans-serif" },
+  { label: "Trebuchet", value: "'Trebuchet MS', Verdana, sans-serif" },
+];
+
+const TEXT_TAGS = new Set(["H1", "H2", "H3", "H4", "H5", "H6", "P", "SPAN", "A", "BUTTON", "LI", "STRONG", "EM", "BLOCKQUOTE", "FIGCAPTION", "LABEL"]);
+
+interface SelectedImage { key: string; src: string }
+interface SelectedText { key: string }
 
 export default function SiteBuilderPage() {
   const router = useRouter();
-  const [pages, setPages] = useState<BuilderPage[]>([]);
-  const [activePage, setActivePage] = useState<BuilderPage | null>(null);
-  const [activeSection, setActiveSection] = useState<PageSection | null>(null);
-  const [viewport, setViewport] = useState<Viewport>("desktop");
-  const [showAddPanel, setShowAddPanel] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [published, setPublished] = useState(false);
-  const [userName, setUserName] = useState("Admin");
-  const [userRole, setUserRole] = useState("super_admin");
-  const [permissions, setPermissions] = useState<string[]>([]);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [authed, setAuthed] = useState(false);
+  const [page, setPage] = useState(PAGES[0]);
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [editMode, setEditMode] = useState(true);
+  const [edits, setEdits] = useState<LiveEdit[]>([]);
+  const [dirty, setDirty] = useState(false);
+  const [publishing, setPublishing] = useState<"idle" | "saving" | "saved">("idle");
+  const [selectedImg, setSelectedImg] = useState<SelectedImage | null>(null);
+  const [selectedText, setSelectedText] = useState<SelectedText | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);
 
-  // Undo/Redo
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [historyIdx, setHistoryIdx] = useState(-1);
-  const skipHistoryRef = useRef(false);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  );
+  const editModeRef = useRef(editMode);
+  editModeRef.current = editMode;
+  const editsRef = useRef(edits);
+  editsRef.current = edits;
 
   useEffect(() => {
     const session = getSession();
-    if (session) {
-      setUserName(session.name);
-      setUserRole(session.role);
-      setPermissions(getBuilderPermissions(session.role));
-    }
-    const allPages = getPages();
-    setPages(allPages);
-    if (allPages.length > 0) {
-      setActivePage(allPages[0]);
-      setHistory([{ sections: JSON.parse(JSON.stringify(allPages[0].sections)) }]);
-      setHistoryIdx(0);
-    }
+    if (!session) { router.push("/ttrg/admin/login"); return; }
+    setAuthed(true);
+    fetchLiveEdits().then(setEdits);
+  }, [router]);
+
+  // Upsert an edit (one per selector+type+page) and apply it to the iframe.
+  const recordEdit = useCallback((edit: LiveEdit) => {
+    setEdits(prev => {
+      const rest = prev.filter(e => !(e.t === edit.t && e.k === edit.k && e.page === edit.page));
+      return [...rest, edit];
+    });
+    setDirty(true);
+    const doc = iframeRef.current?.contentDocument;
+    if (doc) applyLiveEdits([edit], doc, edit.page === "*" ? "/ttrg" : edit.page);
   }, []);
 
-  const pushHistory = useCallback((sections: PageSection[]) => {
-    if (skipHistoryRef.current) { skipHistoryRef.current = false; return; }
-    setHistory((prev) => {
-      const sliced = prev.slice(0, historyIdx + 1);
-      sliced.push({ sections: JSON.parse(JSON.stringify(sections)) });
-      if (sliced.length > 50) sliced.shift();
-      return sliced;
-    });
-    setHistoryIdx((prev) => Math.min(prev + 1, 50));
-  }, [historyIdx]);
+  // ── Editor injection: runs every time the iframe finishes loading ────────
+  const injectEditor = useCallback(() => {
+    const iframe = iframeRef.current;
+    const doc = iframe?.contentDocument;
+    const win = iframe?.contentWindow;
+    if (!doc || !win) return;
 
-  const undo = useCallback(() => {
-    if (historyIdx <= 0 || !activePage) return;
-    const newIdx = historyIdx - 1;
-    skipHistoryRef.current = true;
-    const restored = JSON.parse(JSON.stringify(history[newIdx].sections));
-    setActivePage({ ...activePage, sections: restored });
-    savePage({ ...activePage, sections: restored });
-    setHistoryIdx(newIdx);
-  }, [historyIdx, history, activePage]);
+    const pagePath = normalizePath(win.location.pathname);
 
-  const redo = useCallback(() => {
-    if (historyIdx >= history.length - 1 || !activePage) return;
-    const newIdx = historyIdx + 1;
-    skipHistoryRef.current = true;
-    const restored = JSON.parse(JSON.stringify(history[newIdx].sections));
-    setActivePage({ ...activePage, sections: restored });
-    savePage({ ...activePage, sections: restored });
-    setHistoryIdx(newIdx);
-  }, [historyIdx, history, activePage]);
+    // Re-apply pending (unpublished) edits so the preview stays truthful.
+    setTimeout(() => applyLiveEdits(editsRef.current, doc, pagePath), 300);
+    setTimeout(() => applyLiveEdits(editsRef.current, doc, pagePath), 1500);
 
-  const refreshPage = useCallback(() => {
-    if (!activePage) return;
-    const fresh = getPage(activePage.id);
-    if (fresh) { setActivePage(fresh); pushHistory(fresh.sections); }
-  }, [activePage, pushHistory]);
+    if (doc.getElementById("__ttrg-editor-style")) return; // already injected
+    const style = doc.createElement("style");
+    style.id = "__ttrg-editor-style";
+    style.textContent = `
+      .__ttrg-hover { outline: 2px dashed #C41E2A !important; outline-offset: 2px; cursor: pointer !important; }
+      .__ttrg-editing { outline: 2px solid #D97706 !important; outline-offset: 2px; background: rgba(217,119,6,.06); }
+    `;
+    doc.head.appendChild(style);
 
-  // ─── ACTIONS ─────────────────────────────────────────────────────────────
-  const handleDragEnd = (event: DragEndEvent) => {
-    if (!activePage) return;
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIdx = activePage.sections.findIndex((s) => s.id === active.id);
-    const newIdx = activePage.sections.findIndex((s) => s.id === over.id);
-    const reordered = arrayMove(activePage.sections, oldIdx, newIdx);
-    reordered.forEach((s, i) => { s.order = i; });
-    const updated = { ...activePage, sections: reordered, updatedAt: new Date().toISOString() };
-    setActivePage(updated);
-    savePage(updated);
-    pushHistory(reordered);
-    addAuditLog({ userId: "current", userName, pageId: activePage.id, pageTitle: activePage.title, action: "reorder", status: "draft" });
-  };
+    let hovered: HTMLElement | null = null;
 
-  const handleAddSection = (type: SectionType) => {
-    if (!activePage) return;
-    addSection(activePage.id, type);
-    refreshPage();
-    setShowAddPanel(false);
-    addAuditLog({ userId: "current", userName, pageId: activePage.id, pageTitle: activePage.title, action: "create", sectionLabel: SECTION_TEMPLATES[type].label, status: "draft" });
-  };
+    const isEditable = (el: HTMLElement) =>
+      TEXT_TAGS.has(el.tagName) || el.tagName === "IMG";
 
-  const handleRemoveSection = (sectionId: string) => {
-    if (!activePage) return;
-    const section = activePage.sections.find((s) => s.id === sectionId);
-    removeSection(activePage.id, sectionId);
-    refreshPage();
-    if (activeSection?.id === sectionId) setActiveSection(null);
-    addAuditLog({ userId: "current", userName, pageId: activePage.id, pageTitle: activePage.title, action: "delete", sectionLabel: section?.label, status: "draft" });
-  };
+    doc.addEventListener("mouseover", (e) => {
+      if (!editModeRef.current) return;
+      const el = e.target as HTMLElement;
+      if (hovered) hovered.classList.remove("__ttrg-hover");
+      if (isEditable(el)) { hovered = el; el.classList.add("__ttrg-hover"); }
+    }, true);
 
-  const handleDuplicateSection = (sectionId: string) => {
-    if (!activePage) return;
-    duplicateSection(activePage.id, sectionId);
-    refreshPage();
-  };
+    doc.addEventListener("click", (e) => {
+      if (!editModeRef.current) return;
+      const el = e.target as HTMLElement;
+      if (!isEditable(el)) return;
+      e.preventDefault();
+      e.stopPropagation();
 
-  const handleToggleVisibility = (sectionId: string) => {
-    if (!activePage) return;
-    toggleSectionVisibility(activePage.id, sectionId);
-    refreshPage();
-  };
+      if (el.tagName === "IMG") {
+        el.classList.remove("__ttrg-hover");
+        setSelectedText(null);
+        setSelectedImg({ key: cssPath(el), src: (el as HTMLImageElement).src });
+        return;
+      }
 
-  const handleFieldChange = (sectionId: string, fieldKey: string, value: string) => {
-    if (!activePage) return;
-    updateSectionField(activePage.id, sectionId, fieldKey, value);
-    refreshPage();
-  };
+      // Text: edit in place
+      setSelectedImg(null);
+      setSelectedText({ key: cssPath(el) });
+      el.classList.remove("__ttrg-hover");
+      el.classList.add("__ttrg-editing");
+      el.setAttribute("contenteditable", "plaintext-only");
+      el.focus();
 
-  const handleSaveDraft = () => {
-    if (!activePage) return;
-    saveVersion(activePage.id, userName, "Draft saved");
-    addAuditLog({ userId: "current", userName, pageId: activePage.id, pageTitle: activePage.title, action: "save_draft", status: "draft" });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+      const commit = () => {
+        el.removeAttribute("contenteditable");
+        el.classList.remove("__ttrg-editing");
+        const v = el.innerText.trim();
+        recordEdit({ t: "text", page: pagePath, k: cssPath(el), v, label: v.slice(0, 42) || "(empty text)" });
+        el.removeEventListener("blur", commit);
+      };
+      el.addEventListener("blur", commit);
+      el.addEventListener("keydown", (ke) => {
+        const kev = ke as KeyboardEvent;
+        if (kev.key === "Enter" && el.tagName !== "P") { kev.preventDefault(); el.blur(); }
+      });
+    }, true);
+  }, [recordEdit]);
 
-  const handlePublish = () => {
-    if (!activePage || !permissions.includes("publish")) return;
-    publishPage(activePage.id, userName);
-    refreshPage();
-    addAuditLog({ userId: "current", userName, pageId: activePage.id, pageTitle: activePage.title, action: "publish", status: "published" });
-    setPublished(true);
-    setTimeout(() => setPublished(false), 2500);
-  };
-
-  const canEdit = permissions.includes("edit");
-
-  if (!activePage) {
-    return <div className="h-full flex items-center justify-center text-white/50 text-sm">Loading builder...</div>;
+  async function publish() {
+    setPublishing("saving");
+    const ok = await saveLiveEdits(edits);
+    setPublishing(ok ? "saved" : "idle");
+    if (ok) { setDirty(false); setTimeout(() => setPublishing("idle"), 2500); }
+    else alert("Save failed — check your connection and try again.");
   }
 
+  async function discardUnpublished() {
+    const published = await fetchLiveEdits();
+    setEdits(published);
+    setDirty(false);
+    setSelectedImg(null); setSelectedText(null);
+    setIframeKey(k => k + 1); // reload preview clean
+  }
+
+  function removeEdit(edit: LiveEdit) {
+    setEdits(prev => prev.filter(e => e !== edit));
+    setDirty(true);
+    setIframeKey(k => k + 1);
+  }
+
+  async function resetAll() {
+    if (!confirm("Remove ALL published site edits and restore the original site?")) return;
+    setEdits([]);
+    await saveLiveEdits([]);
+    setDirty(false);
+    setIframeKey(k => k + 1);
+  }
+
+  // ── Image swap tools ──────────────────────────────────────────────────────
+  async function uploadImageFor(key: string, file: File) {
+    setUploading(true);
+    const url = await uploadFile("media", `site-builder/${Date.now()}-${file.name}`, file);
+    setUploading(false);
+    if (!url) { alert("Upload failed"); return; }
+    applyImage(key, url);
+  }
+  function applyImage(key: string, url: string) {
+    const pagePath = normalizePath(iframeRef.current?.contentWindow?.location.pathname || page.path);
+    recordEdit({ t: "img", page: pagePath, k: key, v: url, label: "Image changed" });
+    setSelectedImg(s => (s ? { ...s, src: url } : s));
+  }
+
+  // ── Text sizing / layout ──────────────────────────────────────────────────
+  function setTextSize(px: number) {
+    if (!selectedText) return;
+    const pagePath = normalizePath(iframeRef.current?.contentWindow?.location.pathname || page.path);
+    recordEdit({ t: "style", page: pagePath, k: selectedText.key, v: `font-size:${px}px`, label: `Text size ${px}px` });
+  }
+  function hideSelected() {
+    if (!selectedText) return;
+    const pagePath = normalizePath(iframeRef.current?.contentWindow?.location.pathname || page.path);
+    recordEdit({ t: "style", page: pagePath, k: selectedText.key, v: "display:none", label: "Element hidden" });
+    setSelectedText(null);
+  }
+
+  // ── Global: logo + font ───────────────────────────────────────────────────
+  async function uploadLogo(file: File) {
+    setLogoUploading(true);
+    const url = await uploadFile("media", `site-builder/logo-${Date.now()}-${file.name}`, file);
+    setLogoUploading(false);
+    if (!url) { alert("Upload failed"); return; }
+    recordEdit({ t: "global", page: "*", k: "logo", v: url, label: "New logo" });
+  }
+
+  const currentFont = edits.find(e => e.t === "global" && e.k === "font")?.v || FONTS[0].value;
+  const currentLogoScale = edits.find(e => e.t === "global" && e.k === "logoScale")?.v || "1";
+
+  if (!authed) return null;
+
+  const inp = "w-full px-3 py-2 border border-slate-200 rounded-lg text-sm";
+
   return (
-    <>
-      {/* ═══ TOP TOOLBAR ═══ */}
-      <div className="h-14 bg-[#1a1f2e] border-b border-white/10 flex items-center px-4 gap-3 flex-shrink-0 z-50">
-        {/* Back */}
-        <Link href="/ttrg/admin" className="flex items-center gap-2 text-white/60 hover:text-white text-xs font-medium transition-colors mr-2">
-          <ArrowLeft className="w-4 h-4" /> Back to Admin
+    <div className="h-screen flex flex-col bg-slate-100">
+      {/* ── TOP BAR ── */}
+      <div className="bg-[#1B2A4A] text-white px-4 py-2.5 flex items-center gap-4 flex-shrink-0 flex-wrap">
+        <Link href="/ttrg/admin/portal" className="flex items-center gap-1.5 text-sm text-white/70 hover:text-white">
+          <ArrowLeft className="w-4 h-4" /> Admin
         </Link>
+        <span className="font-black text-sm tracking-wide">SITE BUILDER</span>
 
-        <div className="w-px h-6 bg-white/10" />
+        <select
+          value={page.path}
+          onChange={e => { const p = PAGES.find(x => x.path === e.target.value)!; setPage(p); setSelectedImg(null); setSelectedText(null); }}
+          className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-sm"
+        >
+          {PAGES.map(p => <option key={p.path} value={p.path} className="text-black">{p.label}</option>)}
+        </select>
 
-        {/* Page selector */}
-        <div className="flex items-center gap-2 ml-2">
-          <FileText className="w-3.5 h-3.5 text-white/40" />
-          <select
-            value={activePage.id}
-            onChange={(e) => {
-              const p = pages.find((pg) => pg.id === e.target.value);
-              if (p) { setActivePage(p); setActiveSection(null); }
-            }}
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-white text-xs font-medium focus:outline-none focus:ring-1 focus:ring-[#C41E2A]/50"
-          >
-            {pages.map((p) => <option key={p.id} value={p.id} className="bg-[#1a1f2e]">{p.title}</option>)}
-          </select>
+        <div className="flex rounded-lg overflow-hidden border border-white/20">
+          <button onClick={() => setDevice("desktop")} className={`px-3 py-1.5 ${device === "desktop" ? "bg-white/25" : "hover:bg-white/10"}`}><Monitor className="w-4 h-4" /></button>
+          <button onClick={() => setDevice("mobile")} className={`px-3 py-1.5 ${device === "mobile" ? "bg-white/25" : "hover:bg-white/10"}`}><Smartphone className="w-4 h-4" /></button>
         </div>
+
+        <button
+          onClick={() => setEditMode(m => !m)}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${editMode ? "bg-[#C41E2A]" : "bg-white/10 hover:bg-white/20"}`}
+        >
+          {editMode ? <MousePointerClick className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {editMode ? "Edit Mode: ON — click anything" : "Browse Mode"}
+        </button>
 
         <div className="flex-1" />
 
-        {/* Viewport */}
-        <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1">
-          {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as [Viewport, typeof Monitor][]).map(([vp, Icon]) => (
-            <button key={vp} onClick={() => setViewport(vp)} className={`p-1.5 rounded-md transition-colors ${viewport === vp ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"}`}>
-              <Icon className="w-4 h-4" />
-            </button>
-          ))}
-        </div>
-
-        <div className="w-px h-6 bg-white/10" />
-
-        {/* Undo/Redo */}
-        <button onClick={undo} disabled={historyIdx <= 0} className="p-1.5 text-white/40 hover:text-white disabled:opacity-30 transition-colors">
-          <Undo2 className="w-4 h-4" />
+        {dirty && <span className="text-xs text-amber-300 font-bold">Unpublished changes</span>}
+        <button onClick={discardUnpublished} disabled={!dirty} className="px-3 py-1.5 rounded-lg text-sm bg-white/10 hover:bg-white/20 disabled:opacity-40">Discard</button>
+        <button
+          onClick={publish}
+          disabled={publishing === "saving" || !dirty}
+          className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50"
+        >
+          {publishing === "saving" ? <Loader2 className="w-4 h-4 animate-spin" /> : publishing === "saved" ? <Check className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+          {publishing === "saved" ? "Live!" : "Publish Live"}
         </button>
-        <button onClick={redo} disabled={historyIdx >= history.length - 1} className="p-1.5 text-white/40 hover:text-white disabled:opacity-30 transition-colors">
-          <Redo2 className="w-4 h-4" />
-        </button>
-
-        <div className="w-px h-6 bg-white/10" />
-
-        {/* Actions */}
-        {canEdit && (
-          <>
-            <button onClick={handleSaveDraft} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${saved ? "bg-emerald-500 text-white" : "bg-white/10 text-white hover:bg-white/20"}`}>
-              {saved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
-              {saved ? "Saved!" : "Save Draft"}
-            </button>
-            {permissions.includes("publish") && (
-              <button onClick={handlePublish} className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${published ? "bg-emerald-500 text-white" : "bg-[#C41E2A] text-white hover:bg-[#a01825]"}`}>
-                {published ? <Check className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
-                {published ? "Published!" : "Publish"}
-              </button>
-            )}
-          </>
-        )}
       </div>
 
-      {/* ═══ MAIN BODY ═══ */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-h-0">
+        {/* ── SIDEBAR ── */}
+        <div className="w-80 bg-white border-r border-slate-200 overflow-y-auto flex-shrink-0 p-4 space-y-5">
 
-        {/* ─── LEFT SIDEBAR: Sections List ─── */}
-        <div className="w-64 bg-[#141824] border-r border-white/5 flex flex-col overflow-hidden flex-shrink-0">
-          <div className="p-4 border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#C41E2A]" />
-              <span className="text-white text-xs font-bold uppercase tracking-wider">Sections</span>
-            </div>
-            {canEdit && (
-              <button onClick={() => setShowAddPanel(!showAddPanel)} className="w-7 h-7 rounded-lg bg-[#C41E2A] hover:bg-[#a01825] flex items-center justify-center transition-colors">
-                <Plus className="w-3.5 h-3.5 text-white" />
-              </button>
-            )}
+          {/* How-to */}
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-900 leading-relaxed">
+            <b>Click any text</b> on the site to retype it (fix spelling, change wording).<br />
+            <b>Click any photo</b> to replace it.<br />
+            Then hit <b>Publish Live</b> — changes appear for every visitor instantly.
           </div>
 
-          {/* Add Section Panel */}
-          {showAddPanel && (
-            <div className="p-3 border-b border-white/5 bg-black/20 max-h-64 overflow-y-auto">
-              <p className="text-white/40 text-[10px] font-bold uppercase tracking-wider mb-2 px-1">Add Block</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {(Object.entries(SECTION_TEMPLATES) as [SectionType, typeof SECTION_TEMPLATES[SectionType]][]).map(([type, tmpl]) => (
-                  <button
-                    key={type}
-                    onClick={() => handleAddSection(type)}
-                    className="flex flex-col items-center gap-1 p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all text-center"
-                  >
-                    <span className="text-base">{tmpl.icon}</span>
-                    <span className="text-[9px] font-medium leading-tight">{tmpl.label}</span>
-                  </button>
-                ))}
-              </div>
+          {/* Image tools */}
+          {selectedImg && (
+            <div className="border border-slate-200 rounded-xl p-3 space-y-2">
+              <p className="text-xs font-black text-slate-500 uppercase flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> Selected Photo</p>
+              <img src={selectedImg.src} alt="" className="w-full h-28 object-cover rounded-lg" />
+              <label className={`block text-center px-3 py-2 rounded-lg text-sm font-bold cursor-pointer ${uploading ? "bg-slate-100 text-slate-400" : "bg-[#C41E2A] text-white hover:bg-[#A01825]"}`}>
+                {uploading ? "Uploading…" : "Upload Replacement"}
+                <input type="file" accept="image/*" className="hidden" disabled={uploading}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadImageFor(selectedImg.key, f); e.target.value = ""; }} />
+              </label>
+              <input className={inp} placeholder="…or paste image URL, press Enter"
+                onKeyDown={e => { if (e.key === "Enter") applyImage(selectedImg.key, (e.target as HTMLInputElement).value); }} />
             </div>
           )}
 
-          {/* Sections List (Sortable) */}
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={activePage.sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-                {activePage.sections.map((section) => (
-                  <SortableSectionItem
-                    key={section.id}
-                    section={section}
-                    isActive={activeSection?.id === section.id}
-                    onClick={() => setActiveSection(section)}
-                    onRemove={() => handleRemoveSection(section.id)}
-                    onDuplicate={() => handleDuplicateSection(section.id)}
-                    onToggleVisibility={() => handleToggleVisibility(section.id)}
-                    canEdit={canEdit}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-            {activePage.sections.length === 0 && (
-              <p className="text-white/30 text-xs text-center py-8">No sections yet. Click + to add one.</p>
-            )}
-          </div>
-        </div>
-
-        {/* ─── CENTER: Canvas Preview ─── */}
-        <div className="flex-1 bg-[#0a0e18] flex items-start justify-center overflow-auto p-6">
-          <div
-            className="bg-white rounded-xl shadow-2xl overflow-hidden transition-all duration-300 min-h-[600px]"
-            style={{ width: viewportWidths[viewport], maxWidth: "100%" }}
-          >
-            {activePage.sections.filter((s) => s.visible).map((section) => (
-              <CanvasSection
-                key={section.id}
-                section={section}
-                isSelected={activeSection?.id === section.id}
-                onSelect={() => setActiveSection(section)}
-                onFieldChange={(fieldKey, value) => handleFieldChange(section.id, fieldKey, value)}
-                canEdit={canEdit}
-              />
-            ))}
-            {activePage.sections.filter((s) => s.visible).length === 0 && (
-              <div className="flex items-center justify-center h-96 text-slate-400 text-sm">
-                No visible sections. Add or show sections from the left panel.
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ─── RIGHT: Settings Panel ─── */}
-        <div className="w-72 bg-[#141824] border-l border-white/5 flex flex-col overflow-hidden flex-shrink-0">
-          <div className="p-4 border-b border-white/5 flex items-center gap-2">
-            <Settings className="w-4 h-4 text-[#C41E2A]" />
-            <span className="text-white text-xs font-bold uppercase tracking-wider">Settings</span>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4">
-            {activeSection ? (
-              <SectionSettings
-                section={activeSection}
-                onFieldChange={(fieldKey, value) => handleFieldChange(activeSection.id, fieldKey, value)}
-                canEdit={canEdit}
-              />
-            ) : (
-              <div className="text-white/30 text-xs text-center py-12">
-                Select a section to edit its settings.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SORTABLE SECTION ITEM (Left Sidebar)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function SortableSectionItem({
-  section, isActive, onClick, onRemove, onDuplicate, onToggleVisibility, canEdit,
-}: {
-  section: PageSection; isActive: boolean; onClick: () => void;
-  onRemove: () => void; onDuplicate: () => void; onToggleVisibility: () => void; canEdit: boolean;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id });
-  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
-  const tmpl = SECTION_TEMPLATES[section.type];
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      onClick={onClick}
-      className={`flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all group ${
-        isActive ? "bg-[#C41E2A]/20 border border-[#C41E2A]/40" : "hover:bg-white/5 border border-transparent"
-      } ${!section.visible ? "opacity-40" : ""}`}
-    >
-      {canEdit && (
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-0.5">
-          <GripVertical className="w-3.5 h-3.5 text-white/30" />
-        </div>
-      )}
-      <span className="text-sm flex-shrink-0">{tmpl?.icon || "📄"}</span>
-      <span className="text-white/80 text-xs font-medium flex-1 truncate">{section.label}</span>
-      {canEdit && (
-        <div className="hidden group-hover:flex items-center gap-0.5">
-          <button onClick={(e) => { e.stopPropagation(); onToggleVisibility(); }} className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-white/70 transition-colors">
-            {section.visible ? <EyeIcon className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="p-1 rounded hover:bg-white/10 text-white/30 hover:text-white/70 transition-colors">
-            <Copy className="w-3 h-3" />
-          </button>
-          <button onClick={(e) => { e.stopPropagation(); onRemove(); }} className="p-1 rounded hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-colors">
-            <Trash2 className="w-3 h-3" />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// CANVAS SECTION (Center Preview)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function CanvasSection({
-  section, isSelected, onSelect, onFieldChange, canEdit,
-}: {
-  section: PageSection; isSelected: boolean; onSelect: () => void;
-  onFieldChange: (fieldKey: string, value: string) => void; canEdit: boolean;
-}) {
-  const tmpl = SECTION_TEMPLATES[section.type];
-
-  return (
-    <div
-      onClick={onSelect}
-      className={`relative border-2 transition-all cursor-pointer ${
-        isSelected ? "border-[#C41E2A]/60 shadow-[0_0_0_2px_rgba(196,30,42,0.15)]" : "border-transparent hover:border-blue-400/30"
-      }`}
-    >
-      {/* Section type badge */}
-      {isSelected && (
-        <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 bg-[#C41E2A] text-white px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-lg">
-          <span>{tmpl?.icon}</span> {section.label}
-        </div>
-      )}
-
-      {/* Rendered preview */}
-      <SectionPreview section={section} onFieldChange={onFieldChange} canEdit={canEdit} />
-    </div>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SECTION PREVIEW (Visual rendering in canvas)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function SectionPreview({
-  section, onFieldChange, canEdit,
-}: {
-  section: PageSection; onFieldChange: (fieldKey: string, value: string) => void; canEdit: boolean;
-}) {
-  const fields = Object.fromEntries(section.fields.map((f) => [f.label, f]));
-
-  const EditableText = ({ field, className, tag = "p" }: { field?: SectionField; className?: string; tag?: string }) => {
-    if (!field) return null;
-    const props = {
-      contentEditable: canEdit,
-      suppressContentEditableWarning: true,
-      onBlur: (e: React.FocusEvent<HTMLElement>) => {
-        if (canEdit && e.currentTarget.textContent !== field.value) {
-          onFieldChange(field.key, e.currentTarget.textContent || "");
-        }
-      },
-      className: `outline-none focus:ring-2 focus:ring-[#C41E2A]/30 focus:bg-[#C41E2A]/5 rounded px-1 -mx-1 transition-all ${className || ""}`,
-      children: field.value,
-    };
-    switch (tag) {
-      case "h1": return <h1 {...props} />;
-      case "h2": return <h2 {...props} />;
-      case "h3": return <h3 {...props} />;
-      case "span": return <span {...props} />;
-      default: return <p {...props} />;
-    }
-  };
-
-  switch (section.type) {
-    case "hero":
-      return (
-        <div className="relative min-h-[320px] bg-gradient-to-br from-[#0a1628] via-[#1a3a2a] to-[#0a1628] flex items-center p-8 sm:p-12">
-          <div className="relative z-10 max-w-lg">
-            <EditableText field={fields["Headline"]} className="text-white text-3xl sm:text-4xl font-black mb-3" tag="h1" />
-            <EditableText field={fields["Subheadline"]} className="text-white/60 text-base sm:text-lg mb-6" />
-            <div className="inline-flex items-center gap-2 bg-[#C41E2A] text-white px-6 py-3 rounded-full text-sm font-bold">
-              <EditableText field={fields["CTA Button Text"]} className="text-white" tag="span" />
+          {/* Text tools */}
+          {selectedText && (
+            <div className="border border-slate-200 rounded-xl p-3 space-y-2">
+              <p className="text-xs font-black text-slate-500 uppercase flex items-center gap-1.5"><Type className="w-3.5 h-3.5" /> Selected Text</p>
+              <label className="text-xs text-slate-500">Text size</label>
+              <input type="range" min={12} max={72} defaultValue={20} className="w-full accent-[#C41E2A]"
+                onChange={e => setTextSize(Number(e.target.value))} />
+              <button onClick={hideSelected} className="w-full px-3 py-2 rounded-lg text-sm font-bold border border-red-200 text-red-600 hover:bg-red-50">
+                Hide This Element
+              </button>
             </div>
-          </div>
-        </div>
-      );
-
-    case "stats":
-      return (
-        <div className="py-12 px-8 bg-gradient-to-br from-[#eef4ee] to-[#f0f5ee]">
-          <EditableText field={fields["Section Title"]} className="text-[#1B2A4A] text-2xl font-black text-center mb-8" tag="h2" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {["Dogs Rescued", "Dogs Trained", "Forever Homes", "Active Fosters"].map((label) => (
-              <div key={label} className="bg-white/80 rounded-xl p-4 text-center border border-[#2d5a3d]/10">
-                <EditableText field={fields[label]} className="text-3xl font-black text-[#1B2A4A]" tag="p" />
-                <p className="text-xs text-[#1B2A4A]/50 mt-1 font-semibold uppercase">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case "rescue_journey":
-      return (
-        <div className="py-12 px-8 bg-white">
-          <EditableText field={fields["Section Title"]} className="text-[#1B2A4A] text-2xl font-black text-center mb-3" tag="h2" />
-          <EditableText field={fields["Subtitle"]} className="text-[#1B2A4A]/50 text-sm text-center max-w-xl mx-auto" />
-          <div className="flex justify-between mt-8 gap-2">
-            {["Rescue", "Medical", "Training", "Foster", "Adopt"].map((step, i) => (
-              <div key={step} className="flex-1 text-center">
-                <div className="w-10 h-10 rounded-full bg-[#C41E2A]/10 flex items-center justify-center mx-auto mb-2">
-                  <span className="text-[#C41E2A] font-bold text-sm">{i + 1}</span>
-                </div>
-                <p className="text-xs font-semibold text-[#1B2A4A]">{step}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case "dog_grid":
-      return (
-        <div className="py-12 px-8 bg-[#f9f7f4]">
-          <EditableText field={fields["Section Title"]} className="text-[#1B2A4A] text-2xl font-black text-center mb-3" tag="h2" />
-          <EditableText field={fields["Subtitle"]} className="text-[#1B2A4A]/50 text-sm text-center mb-8" />
-          <div className="grid grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-xl overflow-hidden border border-slate-100 shadow-sm">
-                <div className="h-32 bg-gradient-to-br from-slate-200 to-slate-100 flex items-center justify-center">
-                  <span className="text-3xl">🐕</span>
-                </div>
-                <div className="p-3">
-                  <p className="text-sm font-bold text-[#1B2A4A]">Dog Name {i}</p>
-                  <p className="text-xs text-[#1B2A4A]/50">Breed · Age</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case "founder_feature":
-      return (
-        <div className="py-12 px-8 bg-gradient-to-br from-white via-[#f2f7f0] to-[#eef4ee]">
-          <div className="flex flex-col sm:flex-row items-center gap-8">
-            <div className="w-32 h-32 rounded-2xl overflow-hidden shadow-xl flex-shrink-0 bg-slate-200">
-              {fields["Photo"]?.value && (
-                <img src={fields["Photo"].value} alt="Founder" className="w-full h-full object-cover" />
-              )}
-            </div>
-            <div className="flex-1">
-              <EditableText field={fields["Title"]} className="text-[#C41E2A] text-xs font-bold uppercase tracking-wider mb-1" tag="p" />
-              <EditableText field={fields["Name"]} className="text-[#1B2A4A] text-2xl font-black mb-2" tag="h3" />
-              <EditableText field={fields["Bio Excerpt"]} className="text-[#1B2A4A]/60 text-sm leading-relaxed" />
-            </div>
-          </div>
-        </div>
-      );
-
-    case "donation_tiers":
-      return (
-        <div className="py-12 px-8 bg-white">
-          <EditableText field={fields["Section Title"]} className="text-[#1B2A4A] text-2xl font-black text-center mb-8" tag="h2" />
-          <div className="grid grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border border-slate-200 rounded-xl p-5 text-center hover:shadow-lg transition-shadow">
-                <p className="text-2xl font-black text-[#C41E2A] mb-2">${fields[`Tier ${i} Amount`]?.value || "0"}</p>
-                <EditableText field={fields[`Tier ${i} Label`]} className="text-sm font-semibold text-[#1B2A4A]" tag="p" />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case "testimonial_slider":
-      return (
-        <div className="py-12 px-8 bg-[#eef4ee]">
-          <EditableText field={fields["Section Title"]} className="text-[#1B2A4A] text-2xl font-black text-center mb-8" tag="h2" />
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 max-w-lg mx-auto">
-            <EditableText field={fields["Testimonial 1"]} className="text-[#1B2A4A]/70 text-sm italic mb-3" />
-            <EditableText field={fields["Author 1"]} className="text-[#1B2A4A] text-xs font-bold" tag="p" />
-          </div>
-        </div>
-      );
-
-    case "video_feature":
-      return (
-        <div className="py-12 px-8 bg-[#0a1628]">
-          <EditableText field={fields["Title"]} className="text-white text-2xl font-black text-center mb-4" tag="h2" />
-          <div className="max-w-lg mx-auto aspect-video rounded-xl overflow-hidden bg-slate-800 flex items-center justify-center">
-            <span className="text-4xl">▶️</span>
-          </div>
-          <EditableText field={fields["Description"]} className="text-white/60 text-sm text-center mt-4 max-w-md mx-auto" />
-        </div>
-      );
-
-    case "rescue_alert":
-      return (
-        <div className="py-4 px-8" style={{ backgroundColor: fields["Background Color"]?.value || "#C41E2A" }}>
-          <EditableText field={fields["Alert Text"]} className="text-white text-sm font-bold text-center" tag="p" />
-        </div>
-      );
-
-    case "contact_cta":
-    case "adoption_cta":
-    case "foster_cta":
-    case "sponsor_cta":
-      return (
-        <div className="py-12 px-8 bg-white text-center">
-          <EditableText field={fields["Headline"]} className="text-[#1B2A4A] text-2xl font-black mb-2" tag="h2" />
-          <EditableText field={fields["Subtitle"]} className="text-[#1B2A4A]/50 text-sm mb-6" />
-          <div className="inline-flex items-center gap-2 bg-[#1B2A4A] text-white px-6 py-3 rounded-full text-sm font-bold">
-            <EditableText field={fields["Button Text"]} className="text-white" tag="span" />
-          </div>
-        </div>
-      );
-
-    case "image_text_split":
-      return (
-        <div className="py-12 px-8 bg-white">
-          <div className="flex flex-col sm:flex-row items-center gap-8">
-            <div className="w-full sm:w-1/2 h-48 rounded-xl bg-slate-100 overflow-hidden">
-              {fields["Image"]?.value && <img src={fields["Image"].value} alt="" className="w-full h-full object-cover" />}
-            </div>
-            <div className="flex-1">
-              <EditableText field={fields["Headline"]} className="text-[#1B2A4A] text-2xl font-black mb-3" tag="h2" />
-              <EditableText field={fields["Body Text"]} className="text-[#1B2A4A]/60 text-sm leading-relaxed" />
-            </div>
-          </div>
-        </div>
-      );
-
-    case "faq":
-      return (
-        <div className="py-12 px-8 bg-[#FAFAF8]">
-          <EditableText field={fields["Section Title"]} className="text-[#1B2A4A] text-2xl font-black text-center mb-8" tag="h2" />
-          <div className="max-w-lg mx-auto space-y-4">
-            {["Q1", "Q2"].map((qKey) => (
-              <div key={qKey} className="border border-slate-200 rounded-xl p-4 bg-white">
-                <EditableText field={fields[qKey]} className="text-[#1B2A4A] text-sm font-bold mb-2" tag="p" />
-                <EditableText field={fields[qKey.replace("Q", "A")]} className="text-[#1B2A4A]/60 text-sm" />
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case "success_stories":
-      return (
-        <div className="py-12 px-8 bg-[#eef4ee]">
-          <EditableText field={fields["Section Title"]} className="text-[#1B2A4A] text-2xl font-black text-center mb-3" tag="h2" />
-          <EditableText field={fields["Subtitle"]} className="text-[#1B2A4A]/50 text-sm text-center" />
-          <div className="grid grid-cols-3 gap-4 mt-8">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-xl h-28 flex items-center justify-center border border-slate-100 shadow-sm">
-                <span className="text-2xl">🎬</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case "partners":
-      return (
-        <div className="py-8 px-8 bg-white border-y border-slate-100">
-          <EditableText field={fields["Section Title"]} className="text-[#1B2A4A]/40 text-xs font-bold uppercase tracking-wider text-center mb-4" tag="p" />
-          <div className="flex justify-center gap-8 opacity-50">
-            {["🏥", "🏫", "🏢", "🏠", "🤝"].map((icon, i) => (
-              <span key={i} className="text-2xl">{icon}</span>
-            ))}
-          </div>
-        </div>
-      );
-
-    case "announcements":
-      return (
-        <div className="py-12 px-8 bg-[#1B2A4A]">
-          <EditableText field={fields["Popup Title"]} className="text-white text-2xl font-black text-center mb-3" tag="h2" />
-          <EditableText field={fields["Popup Body"]} className="text-white/60 text-sm text-center mb-6 max-w-md mx-auto" />
-          <div className="text-center">
-            <span className="inline-flex items-center gap-2 bg-[#C41E2A] text-white px-6 py-3 rounded-full text-sm font-bold">
-              <EditableText field={fields["Button Text"]} className="text-white" tag="span" />
-            </span>
-          </div>
-        </div>
-      );
-
-    case "custom_html":
-      return (
-        <div className="py-8 px-8 bg-white">
-          <EditableText field={fields["Content"]} className="text-[#1B2A4A] text-sm prose" />
-        </div>
-      );
-
-    default:
-      return (
-        <div className="py-8 px-8 bg-slate-50 text-center">
-          <p className="text-slate-400 text-sm">{section.label} — Preview not available</p>
-        </div>
-      );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SECTION SETTINGS (Right Panel)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function SectionSettings({
-  section, onFieldChange, canEdit,
-}: {
-  section: PageSection; onFieldChange: (fieldKey: string, value: string) => void; canEdit: boolean;
-}) {
-  const tmpl = SECTION_TEMPLATES[section.type];
-
-  const fieldIcon = (type: SectionField["type"]) => {
-    switch (type) {
-      case "text": return <Type className="w-3.5 h-3.5" />;
-      case "richtext": return <FileText className="w-3.5 h-3.5" />;
-      case "image": return <ImageIcon className="w-3.5 h-3.5" />;
-      case "video": return <ImageIcon className="w-3.5 h-3.5" />;
-      case "link": return <LinkIcon className="w-3.5 h-3.5" />;
-      case "color": return <Palette className="w-3.5 h-3.5" />;
-      case "number": return <Hash className="w-3.5 h-3.5" />;
-      case "boolean": return <ToggleLeft className="w-3.5 h-3.5" />;
-      default: return <Type className="w-3.5 h-3.5" />;
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 pb-3 border-b border-white/5">
-        <span className="text-lg">{tmpl?.icon}</span>
-        <div>
-          <p className="text-white text-sm font-bold">{section.label}</p>
-          <p className="text-white/40 text-[10px] uppercase tracking-wider">{section.type}</p>
-        </div>
-      </div>
-
-      {section.fields.map((field) => (
-        <div key={field.key} className="space-y-1.5">
-          <div className="flex items-center gap-1.5 text-white/50">
-            {fieldIcon(field.type)}
-            <label className="text-[10px] font-bold uppercase tracking-wider">{field.label}</label>
-          </div>
-
-          {field.type === "boolean" ? (
-            <button
-              onClick={() => canEdit && onFieldChange(field.key, field.value === "true" ? "false" : "true")}
-              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                field.value === "true" ? "bg-emerald-500/20 text-emerald-400" : "bg-white/5 text-white/40"
-              }`}
-            >
-              {field.value === "true" ? "✓ Enabled" : "✗ Disabled"}
-            </button>
-          ) : field.type === "color" ? (
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={field.value}
-                onChange={(e) => canEdit && onFieldChange(field.key, e.target.value)}
-                disabled={!canEdit}
-                className="w-8 h-8 rounded-lg border border-white/10 cursor-pointer"
-              />
-              <input
-                type="text"
-                value={field.value}
-                onChange={(e) => canEdit && onFieldChange(field.key, e.target.value)}
-                disabled={!canEdit}
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:ring-1 focus:ring-[#C41E2A]/50 disabled:opacity-50"
-              />
-            </div>
-          ) : field.type === "richtext" ? (
-            <textarea
-              value={field.value}
-              onChange={(e) => canEdit && onFieldChange(field.key, e.target.value)}
-              disabled={!canEdit}
-              rows={3}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:ring-1 focus:ring-[#C41E2A]/50 resize-none disabled:opacity-50"
-            />
-          ) : field.type === "image" || field.type === "video" ? (
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={field.value}
-                onChange={(e) => canEdit && onFieldChange(field.key, e.target.value)}
-                disabled={!canEdit}
-                placeholder="URL or path..."
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:ring-1 focus:ring-[#C41E2A]/50 disabled:opacity-50"
-              />
-              {field.type === "image" && field.value && (
-                <div className="w-full h-20 rounded-lg overflow-hidden bg-slate-800">
-                  <img src={field.value} alt="" className="w-full h-full object-cover" />
-                </div>
-              )}
-              {canEdit && (
-                <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer text-white/60 hover:text-white text-xs font-medium transition-colors">
-                  <Upload className="w-3.5 h-3.5" /> Upload File
-                  <input type="file" accept={field.type === "image" ? "image/*" : "video/*"} className="hidden" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file || !canEdit) return;
-                    const url = URL.createObjectURL(file);
-                    onFieldChange(field.key, url);
-                  }} />
-                </label>
-              )}
-            </div>
-          ) : (
-            <input
-              type={field.type === "number" ? "number" : "text"}
-              value={field.value}
-              onChange={(e) => canEdit && onFieldChange(field.key, e.target.value)}
-              disabled={!canEdit}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:ring-1 focus:ring-[#C41E2A]/50 disabled:opacity-50"
-            />
           )}
+
+          {/* Logo */}
+          <div className="border border-slate-200 rounded-xl p-3 space-y-2">
+            <p className="text-xs font-black text-slate-500 uppercase">Logo</p>
+            <label className={`block text-center px-3 py-2 rounded-lg text-sm font-bold cursor-pointer ${logoUploading ? "bg-slate-100 text-slate-400" : "bg-[#1B2A4A] text-white hover:bg-[#152238]"}`}>
+              {logoUploading ? "Uploading…" : "Upload New Logo"}
+              <input type="file" accept="image/*" className="hidden" disabled={logoUploading}
+                onChange={e => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = ""; }} />
+            </label>
+            <label className="text-xs text-slate-500">Logo size ({Math.round(Number(currentLogoScale) * 100)}%)</label>
+            <input type="range" min={0.7} max={1.6} step={0.05} value={Number(currentLogoScale)} className="w-full accent-[#1B2A4A]"
+              onChange={e => recordEdit({ t: "global", page: "*", k: "logoScale", v: e.target.value, label: `Logo size ${Math.round(Number(e.target.value) * 100)}%` })} />
+          </div>
+
+          {/* Font */}
+          <div className="border border-slate-200 rounded-xl p-3 space-y-2">
+            <p className="text-xs font-black text-slate-500 uppercase">Site Font</p>
+            <select value={currentFont} className={inp}
+              onChange={e => recordEdit({ t: "global", page: "*", k: "font", v: e.target.value, label: `Font: ${FONTS.find(f => f.value === e.target.value)?.label}` })}>
+              {FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+            </select>
+          </div>
+
+          {/* Change list */}
+          <div className="border border-slate-200 rounded-xl p-3">
+            <p className="text-xs font-black text-slate-500 uppercase mb-2">Changes ({edits.length})</p>
+            {edits.length === 0 && <p className="text-xs text-slate-400">No changes yet — click something on the site →</p>}
+            <ul className="space-y-1.5 max-h-64 overflow-y-auto">
+              {edits.map((e, i) => (
+                <li key={i} className="flex items-center gap-2 text-xs bg-slate-50 rounded-lg px-2 py-1.5">
+                  <span className={`px-1.5 py-0.5 rounded font-bold ${e.t === "text" ? "bg-blue-100 text-blue-700" : e.t === "img" ? "bg-purple-100 text-purple-700" : e.t === "global" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{e.t}</span>
+                  <span className="flex-1 truncate text-slate-600">{e.label || e.k}</span>
+                  <button onClick={() => removeEdit(e)} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                </li>
+              ))}
+            </ul>
+            {edits.length > 0 && (
+              <button onClick={resetAll} className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border border-slate-200 text-slate-500 hover:bg-slate-50">
+                <RotateCcw className="w-3.5 h-3.5" /> Reset Everything (restore original site)
+              </button>
+            )}
+          </div>
         </div>
-      ))}
+
+        {/* ── LIVE PREVIEW ── */}
+        <div className="flex-1 flex items-start justify-center overflow-auto p-4">
+          <div className="bg-white rounded-xl shadow-xl overflow-hidden transition-all" style={{ width: device === "mobile" ? 390 : "100%", height: "100%" }}>
+            <iframe
+              key={`${page.path}-${iframeKey}`}
+              ref={iframeRef}
+              src={page.path}
+              onLoad={injectEditor}
+              className="w-full h-full border-0"
+              title="Live site preview"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
