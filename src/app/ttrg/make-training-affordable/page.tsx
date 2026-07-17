@@ -6,7 +6,7 @@ import {
   HeartHandshake, Heart, ArrowRight, MapPin, Users, AlertTriangle,
   CheckCircle, DollarSign, Star, Search, Filter,
 } from "lucide-react";
-import { getPublishedFamilyProfiles, type FamilyProfile } from "@/lib/admin-store";
+import { getPublishedFamilyProfiles, syncFamilyProfilesFromCloud, type FamilyProfile } from "@/lib/admin-store";
 
 export default function MakeTrainingAffordable() {
   const [profiles, setProfiles] = useState<FamilyProfile[]>([]);
@@ -15,6 +15,7 @@ export default function MakeTrainingAffordable() {
 
   useEffect(() => {
     setProfiles(getPublishedFamilyProfiles());
+    syncFamilyProfilesFromCloud().then(() => setProfiles(getPublishedFamilyProfiles()));
   }, []);
 
   const filtered = profiles.filter(p => {

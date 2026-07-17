@@ -3,7 +3,7 @@
 
 import {
   insertSubmission, insertContactMessage, insertFosterApplication,
-  insertSponsorInterest, insertTickerItem, insertDonation,
+  insertSponsorInterest, insertTickerItem, insertDonation, uploadFile,
 } from "./supabase-store";
 
 export type DogStatus = "draft" | "pending_review" | "published" | "hidden" | "adopted" | "urgent" | "archived";
@@ -635,10 +635,46 @@ export function upsertFamilyProfile(profile: FamilyProfile) {
   if (idx >= 0) profiles[idx] = profile;
   else profiles.unshift(profile);
   saveFamilyProfiles(profiles);
+  void saveFamilyProfilesToCloud();
 }
 
 export function deleteFamilyProfile(id: string) {
   saveFamilyProfiles(getFamilyProfiles().filter(p => p.id !== id));
+  void saveFamilyProfilesToCloud();
+}
+
+// ── Cloud sync ──────────────────────────────────────────────────────────────
+// There is no family_profiles table in Supabase; profiles used to live only
+// in the admin's browser (localStorage), invisible to visitors and to link
+// previews. The shared source of truth is a JSON file in the public storage
+// bucket: every save uploads it, every page view syncs from it, and the OG
+// metadata layout reads the same file server-side.
+const FAMILY_CLOUD_PATH = "site-data/family-profiles.json";
+
+export function familyProfilesCloudUrl(): string {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/${FAMILY_CLOUD_PATH}`;
+}
+
+export async function saveFamilyProfilesToCloud(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  const file = new File([JSON.stringify(getFamilyProfiles())], "family-profiles.json", { type: "application/json" });
+  const url = await uploadFile("media", FAMILY_CLOUD_PATH, file);
+  return !!url;
+}
+
+export async function syncFamilyProfilesFromCloud(): Promise<FamilyProfile[]> {
+  try {
+    // Cache-buster: the storage CDN caches the public URL for an hour.
+    const res = await fetch(`${familyProfilesCloudUrl()}?t=${Date.now()}`, { cache: "no-store" });
+    if (res.ok) {
+      const profiles = await res.json();
+      if (Array.isArray(profiles) && profiles.length > 0) {
+        if (typeof window !== "undefined") localStorage.setItem(FAMILY_KEY, JSON.stringify(profiles));
+        return profiles as FamilyProfile[];
+      }
+    }
+  } catch { /* offline or file not published yet — fall back to local */ }
+  return getFamilyProfiles();
 }
 
 // Auto-generate ticker from dog journey progress

@@ -7,7 +7,7 @@ import {
   CheckCircle, DollarSign, Share2, Clock, Stethoscope, GraduationCap,
   Star, ArrowRight,
 } from "lucide-react";
-import { getFamilyProfileBySlug, getPublishedFamilyProfiles, type FamilyProfile } from "@/lib/admin-store";
+import { getFamilyProfileBySlug, getPublishedFamilyProfiles, syncFamilyProfilesFromCloud, type FamilyProfile } from "@/lib/admin-store";
 import { shareSubject } from "@/lib/share-messages";
 
 const FAMILY_STAGES = [
@@ -36,9 +36,14 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    const p = getFamilyProfileBySlug(slug);
-    setProfile(p || null);
-    setOtherProfiles(getPublishedFamilyProfiles().filter(x => x.slug !== slug).slice(0, 2));
+    let active = true;
+    const load = () => {
+      setProfile(getFamilyProfileBySlug(slug) || null);
+      setOtherProfiles(getPublishedFamilyProfiles().filter(x => x.slug !== slug).slice(0, 2));
+    };
+    load(); // instant paint from local cache
+    syncFamilyProfilesFromCloud().then(() => { if (active) load(); });
+    return () => { active = false; };
   }, [slug]);
 
   if (!profile) {

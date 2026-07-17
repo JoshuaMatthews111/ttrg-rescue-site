@@ -9,11 +9,11 @@ const supabase = createClient(
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const { data } = await supabase.from("dogs").select("name, breed, story, image, rescue_story").eq("id", id).single();
+  const { data } = await supabase.from("dogs").select("name, breed, story, image, full_story").eq("id", id).single();
   const staticDog = data ? undefined : getDogById(id);
 
   const name = data?.name || staticDog?.name;
-  const description = data?.story || data?.rescue_story || staticDog?.story || (name ? `Meet ${name} at Team Trainers Rescue Group. Support their journey today.` : "Every dog deserves a second chance. Meet the dogs we're rescuing, training, and rehoming — and help write their happy ending.");
+  const description = data?.story || data?.full_story || staticDog?.story || (name ? `Meet ${name} at Team Trainers Rescue Group. Support their journey today.` : "Every dog deserves a second chance. Meet the dogs we're rescuing, training, and rehoming — and help write their happy ending.");
   const image = data?.image || staticDog?.image || "/ttrg/ttrg-logo-circle.png";
 
   const title = name ? `Help Us Save ${name} — Team Trainers Rescue Group` : "Help Us Save a Rescue Dog — Team Trainers Rescue Group";

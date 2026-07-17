@@ -1,30 +1,32 @@
 import type { Metadata } from "next";
-import { createClient } from "@supabase/supabase-js";
-import { getFamilyProfileBySlug } from "@/lib/admin-store";
+import { getFamilyProfileBySlug, familyProfilesCloudUrl, type FamilyProfile } from "@/lib/admin-store";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
-);
+// Family profiles have no Supabase table — the shared source of truth is a
+// JSON file in public storage, uploaded by the admin panel on every save.
+// Read it here so link previews (iMessage/WhatsApp/Facebook) always see the
+// same data visitors do, including newly created campaigns.
+async function findProfile(slug: string): Promise<FamilyProfile | undefined> {
+  try {
+    const res = await fetch(`${familyProfilesCloudUrl()}?t=${Date.now()}`, { cache: "no-store" });
+    if (res.ok) {
+      const profiles = (await res.json()) as FamilyProfile[];
+      const match = Array.isArray(profiles) ? profiles.find(p => p.slug === slug) : undefined;
+      if (match) return match;
+    }
+  } catch { /* storage unreachable — fall back to bundled demo data */ }
+  return getFamilyProfileBySlug(slug);
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await supabase
-    .from("family_profiles")
-    .select("family_name, dog_name, short_summary, photo_url")
-    .eq("slug", slug)
-    .single();
+  const p = await findProfile(slug);
 
-  const local = data ? undefined : getFamilyProfileBySlug(slug);
-
-  const dogName = data?.dog_name || local?.dogName;
-  const familyName = data?.family_name || local?.familyName;
-  const title = dogName && familyName ? `Help ${dogName} Stay With ${familyName} — TTRG` : "Help a Family Keep Their Dog — Team Trainers Rescue Group";
-  const description = data?.short_summary || local?.shortSummary || "When training costs would force a family to give up their dog, we step in. Read their story and help keep this family together.";
-  const image = data?.photo_url || local?.image || "/ttrg/ttrg-logo-circle.png";
+  const title = p ? `Help ${p.dogName} Stay With ${p.familyName} — TTRG` : "Help a Family Keep Their Dog — Team Trainers Rescue Group";
+  const description = p?.shortSummary || p?.story?.slice(0, 160) || "When training costs would force a family to give up their dog, we step in. Read their story and help keep this family together.";
+  const image = p?.image || "/ttrg/ttrg-logo-circle.png";
 
   return {
-    title: `${title} — Team Trainers Rescue Group`,
+    title,
     description,
     openGraph: {
       title,
