@@ -17,6 +17,7 @@ import {
 } from "@/lib/dog-constants";
 import { MAX_UPLOAD_MB, VIDEO_TOO_BIG_MESSAGE } from "@/lib/video-embed";
 import { fetchShareOverrides, saveShareOverride } from "@/lib/share-overrides";
+import { compressVideoInBrowser } from "@/lib/video-compress";
 import { dogStageTitle } from "@/lib/share-messages";
 
 const stageLabels: Record<string, string> = { rescue: "Rescued", rehabilitate: "In Rehab", train: "In Training", recover: "Recovering", rehome: "Ready for Home" };
@@ -358,12 +359,23 @@ export default function AdminDogsPage() {
 
   // Video upload
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file || !editDog) return;
     if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
-      alert(VIDEO_TOO_BIG_MESSAGE);
-      if (videoInputRef.current) videoInputRef.current.value = "";
-      return;
+      const mb = (file.size / 1024 / 1024).toFixed(0);
+      if (!confirm(`This video is ${mb} MB — over the ${MAX_UPLOAD_MB} MB upload limit.\n\nCompress it right here in your browser and upload the web-quality version? (Takes about as long as the video is — keep this tab open.)\n\nOr press Cancel and paste a Google Drive / YouTube link instead.`)) {
+        if (videoInputRef.current) videoInputRef.current.value = "";
+        return;
+      }
+      setUploading(true);
+      try {
+        file = await compressVideoInBrowser(file, setUploadProgress);
+      } catch {
+        alert("Compression didn't work in this browser. " + VIDEO_TOO_BIG_MESSAGE);
+        setUploading(false); setUploadProgress("");
+        if (videoInputRef.current) videoInputRef.current.value = "";
+        return;
+      }
     }
     setUploading(true);
     setUploadProgress(`Uploading video (${(file.size / 1024 / 1024).toFixed(1)} MB)...`);

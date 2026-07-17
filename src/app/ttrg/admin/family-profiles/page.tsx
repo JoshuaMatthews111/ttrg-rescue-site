@@ -10,6 +10,7 @@ import {
   syncFamilyProfilesFromCloud, getSession, insertAuditLog,
 } from "@/lib/admin-store";
 import { MAX_UPLOAD_MB, VIDEO_TOO_BIG_MESSAGE } from "@/lib/video-embed";
+import { compressVideoInBrowser } from "@/lib/video-compress";
 import {
   type FamilyProfile, type FamilyProfileStatus,
 } from "@/lib/admin-store";
@@ -66,6 +67,7 @@ export default function AdminFamilyProfiles() {
   const [editProfile, setEditProfile] = useState<FamilyProfile | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [videoProgress, setVideoProgress] = useState("");
 
   useEffect(() => {
     setProfiles(getFamilyProfiles());
@@ -324,17 +326,30 @@ export default function AdminFamilyProfiles() {
                 <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Video (optional)</label>
                 <div className="flex gap-2 mb-2">
                   <label className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer transition-colors ${uploading ? "bg-slate-100 text-slate-400" : "bg-[#1B2A4A] hover:bg-[#152238] text-white"}`}>
-                    {uploading ? "Uploading..." : "Upload Video"}
+                    {uploading ? (videoProgress || "Uploading...") : "Upload Video"}
                     <input type="file" accept="video/*" className="hidden" disabled={uploading} onChange={async (e) => {
-                      const file = e.target.files?.[0];
+                      let file = e.target.files?.[0];
                       if (!file || !editProfile) return;
-                      if (file.size > MAX_UPLOAD_MB * 1024 * 1024) { alert(VIDEO_TOO_BIG_MESSAGE); e.target.value = ""; return; }
+                      if (file.size > MAX_UPLOAD_MB * 1024 * 1024) {
+                        const mb = (file.size / 1024 / 1024).toFixed(0);
+                        if (!confirm(`This video is ${mb} MB — over the ${MAX_UPLOAD_MB} MB upload limit.\n\nCompress it right here in your browser and upload the web-quality version? (Takes about as long as the video is — keep this tab open.)\n\nOr press Cancel and paste a Google Drive / YouTube link instead.`)) { e.target.value = ""; return; }
+                        setUploading(true);
+                        try {
+                          file = await compressVideoInBrowser(file, setVideoProgress);
+                        } catch {
+                          alert("Compression didn't work in this browser. " + VIDEO_TOO_BIG_MESSAGE);
+                          setUploading(false); setVideoProgress(""); e.target.value = "";
+                          return;
+                        }
+                      }
                       setUploading(true);
+                      setVideoProgress(`Uploading (${(file.size / 1024 / 1024).toFixed(1)} MB)...`);
                       const path = `family-profiles/${editProfile.id}/${Date.now()}-${file.name}`;
                       const url = await uploadFile("media", path, file);
                       if (url) setEditProfile({ ...editProfile, videoUrl: url });
                       else alert("Video upload failed. " + VIDEO_TOO_BIG_MESSAGE);
                       setUploading(false);
+                      setVideoProgress("");
                       e.target.value = "";
                     }} />
                   </label>
