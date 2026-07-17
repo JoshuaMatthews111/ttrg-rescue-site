@@ -15,6 +15,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
   const [otherProfiles, setOtherProfiles] = useState<FamilyProfile[]>([]);
   const [donateAmount, setDonateAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const p = getFamilyProfileBySlug(slug);
@@ -40,7 +41,6 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
   const remaining = Math.max(0, profile.goalAmount - profile.raisedAmount);
   const finalAmount = customAmount ? parseFloat(customAmount) : donateAmount || 0;
 
-  const [copied, setCopied] = useState(false);
   function share() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     if (typeof navigator !== "undefined" && navigator.share) {
