@@ -30,7 +30,7 @@ export interface ShareSubject {
   location?: string;
 }
 
-export function buildShareMessage(s: ShareSubject, url: string): { title: string; text: string } {
+export function buildShareMessage(s: ShareSubject, url: string): { title: string; text: string; url: string } {
   const hook = firstSentence(s.story);
   const pct = s.goalAmount && s.goalAmount > 0 && s.raisedAmount !== undefined
     ? Math.min(100, Math.round((s.raisedAmount / s.goalAmount) * 100))
@@ -62,29 +62,31 @@ export function buildShareMessage(s: ShareSubject, url: string): { title: string
   const title = s.familyName
     ? `Help ${s.name} stay with ${s.familyName}`
     : `Help us save ${s.name}`;
-  return { title, text: `${pick}\n\n${url}` };
+  return { title, text: pick, url };
 }
 
 // Share with the native sheet when available; otherwise copy the full
 // message (text + link) so the user can paste it anywhere.
-export async function shareSubject(s: ShareSubject, url: string): Promise<"shared" | "copied" | "failed"> {
-  const { title, text } = buildShareMessage(s, url);
+export async function shareSubject(s: ShareSubject, shareUrl: string): Promise<"shared" | "copied" | "failed"> {
+  const { title, text, url } = buildShareMessage(s, shareUrl);
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
-      // iMessage/WhatsApp unfurl the URL inside `text`; passing `url`
-      // separately too makes some apps drop the text, so keep it in one field.
-      await navigator.share({ title, text });
+      // text and url MUST be separate fields: iMessage only renders the
+      // rich photo preview card when the URL arrives as its own component;
+      // a URL embedded in the text shows as a bare domain chip instead.
+      await navigator.share({ title, text, url });
       return "shared";
     } catch {
       /* user cancelled or unsupported — fall through to copy */
     }
   }
+  const full = `${text}\n\n${url}`;
   if (typeof navigator !== "undefined" && navigator.clipboard) {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(full);
       return "copied";
     } catch { /* ignore */ }
   }
-  if (typeof window !== "undefined") prompt("Copy this message:", text);
+  if (typeof window !== "undefined") prompt("Copy this message:", full);
   return "failed";
 }
