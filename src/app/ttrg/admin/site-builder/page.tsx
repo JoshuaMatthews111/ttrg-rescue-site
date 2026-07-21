@@ -46,8 +46,9 @@ const FONTS = [
 
 const TEXT_TAGS = new Set(["H1", "H2", "H3", "H4", "H5", "H6", "P", "SPAN", "A", "BUTTON", "LI", "STRONG", "EM", "BLOCKQUOTE", "FIGCAPTION", "LABEL"]);
 
-interface SelectedImage { key: string; src: string }
+interface SelectedImage { key: string; src: string; bg?: boolean }
 interface SelectedText { key: string }
+interface SelectedEl { key: string; tag: string }
 
 export default function SiteBuilderPage() {
   const router = useRouter();
@@ -61,6 +62,7 @@ export default function SiteBuilderPage() {
   const [publishing, setPublishing] = useState<"idle" | "saving" | "saved">("idle");
   const [selectedImg, setSelectedImg] = useState<SelectedImage | null>(null);
   const [selectedText, setSelectedText] = useState<SelectedText | null>(null);
+  const [selectedEl, setSelectedEl] = useState<SelectedEl | null>(null);
   const [uploading, setUploading] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
@@ -112,50 +114,87 @@ export default function SiteBuilderPage() {
 
     let hovered: HTMLElement | null = null;
 
-    const isEditable = (el: HTMLElement) =>
-      TEXT_TAGS.has(el.tagName) || el.tagName === "IMG";
+    const bgUrl = (el: HTMLElement): string | null => {
+      const bg = win.getComputedStyle(el).backgroundImage;
+      const m = bg && bg.match(/url\(["']?(.*?)["']?\)/);
+      return m ? m[1] : null;
+    };
+    // Resolve the best image target for a click: the element itself, a child
+    // <img>, or the nearest ancestor with a background-image (handles hero
+    // overlays where the click lands on a gradient div, not the photo).
+    const findImage = (el: HTMLElement): { el: HTMLElement; bg: boolean; src: string } | null => {
+      if (el.tagName === "IMG") return { el, bg: false, src: (el as HTMLImageElement).src };
+      const ownBg = bgUrl(el);
+      if (ownBg) return { el, bg: true, src: ownBg };
+      const childImg = el.querySelector?.("img") as HTMLImageElement | null;
+      if (childImg) return { el: childImg, bg: false, src: childImg.src };
+      let p = el.parentElement, depth = 0;
+      while (p && depth < 4) { const u = bgUrl(p); if (u) return { el: p, bg: true, src: u }; p = p.parentElement; depth++; }
+      return null;
+    };
+    const hasOwnText = (el: HTMLElement) =>
+      TEXT_TAGS.has(el.tagName) && !el.querySelector("img") &&
+      Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent?.trim());
 
     doc.addEventListener("mouseover", (e) => {
       if (!editModeRef.current) return;
       const el = e.target as HTMLElement;
       if (hovered) hovered.classList.remove("__ttrg-hover");
-      if (isEditable(el)) { hovered = el; el.classList.add("__ttrg-hover"); }
+      hovered = el; el.classList.add("__ttrg-hover");
     }, true);
+    doc.addEventListener("mouseout", () => { if (hovered) hovered.classList.remove("__ttrg-hover"); }, true);
 
     doc.addEventListener("click", (e) => {
       if (!editModeRef.current) return;
       const el = e.target as HTMLElement;
-      if (!isEditable(el)) return;
+
+      // 1) A nav/header internal link → navigate the PREVIEW to that page so
+      //    staff can edit any page just by clicking the menu.
+      const link = el.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (link && (link.closest("nav") || link.closest("header"))) {
+        const href = link.getAttribute("href") || "";
+        if (href.startsWith("/")) { e.preventDefault(); e.stopPropagation(); win.location.href = href; return; }
+      }
+
       e.preventDefault();
       e.stopPropagation();
+      el.classList.remove("__ttrg-hover");
 
-      if (el.tagName === "IMG") {
-        el.classList.remove("__ttrg-hover");
-        setSelectedText(null);
-        setSelectedImg({ key: cssPath(el), src: (el as HTMLImageElement).src });
+      // Every click also selects the element for layout tools (spacing, colors).
+      setSelectedEl({ key: cssPath(el), tag: el.tagName.toLowerCase() });
+
+      // 2) Text with its own text and no image → inline edit.
+      if (hasOwnText(el)) {
+        setSelectedImg(null);
+        setSelectedText({ key: cssPath(el) });
+        el.classList.add("__ttrg-editing");
+        el.setAttribute("contenteditable", "plaintext-only");
+        el.focus();
+        const commit = () => {
+          el.removeAttribute("contenteditable");
+          el.classList.remove("__ttrg-editing");
+          recordEdit({ t: "text", page: pagePath, k: cssPath(el), v: el.innerText.trim(), label: el.innerText.trim().slice(0, 42) || "(empty text)" });
+          el.removeEventListener("blur", commit);
+        };
+        el.addEventListener("blur", commit);
+        el.addEventListener("keydown", (ke) => {
+          const kev = ke as KeyboardEvent;
+          if (kev.key === "Enter" && el.tagName !== "P") { kev.preventDefault(); el.blur(); }
+        });
         return;
       }
 
-      // Text: edit in place
-      setSelectedImg(null);
-      setSelectedText({ key: cssPath(el) });
-      el.classList.remove("__ttrg-hover");
-      el.classList.add("__ttrg-editing");
-      el.setAttribute("contenteditable", "plaintext-only");
-      el.focus();
+      // 3) Image (real <img> or background-image).
+      const img = findImage(el);
+      if (img) {
+        setSelectedText(null);
+        setSelectedImg({ key: cssPath(img.el), src: img.src, bg: img.bg });
+        return;
+      }
 
-      const commit = () => {
-        el.removeAttribute("contenteditable");
-        el.classList.remove("__ttrg-editing");
-        const v = el.innerText.trim();
-        recordEdit({ t: "text", page: pagePath, k: cssPath(el), v, label: v.slice(0, 42) || "(empty text)" });
-        el.removeEventListener("blur", commit);
-      };
-      el.addEventListener("blur", commit);
-      el.addEventListener("keydown", (ke) => {
-        const kev = ke as KeyboardEvent;
-        if (kev.key === "Enter" && el.tagName !== "P") { kev.preventDefault(); el.blur(); }
-      });
+      // 4) Otherwise just the element (layout tools only).
+      setSelectedText(null);
+      setSelectedImg(null);
     }, true);
   }, [recordEdit]);
 
@@ -171,7 +210,7 @@ export default function SiteBuilderPage() {
     const published = await fetchLiveEdits();
     setEdits(published);
     setDirty(false);
-    setSelectedImg(null); setSelectedText(null);
+    setSelectedImg(null); setSelectedText(null); setSelectedEl(null);
     setIframeKey(k => k + 1); // reload preview clean
   }
 
@@ -189,31 +228,41 @@ export default function SiteBuilderPage() {
     setIframeKey(k => k + 1);
   }
 
-  // ── Image swap tools ──────────────────────────────────────────────────────
-  async function uploadImageFor(key: string, file: File) {
+  const curPath = () => normalizePath(iframeRef.current?.contentWindow?.location.pathname || page.path);
+
+  // ── Image swap tools (real <img> and background-image) ────────────────────
+  async function uploadImageFor(sel: SelectedImage, file: File) {
     setUploading(true);
     const url = await uploadFile("media", `site-builder/${Date.now()}-${file.name}`, file);
     setUploading(false);
     if (!url) { alert("Upload failed"); return; }
-    applyImage(key, url);
+    applyImage(sel, url);
   }
-  function applyImage(key: string, url: string) {
-    const pagePath = normalizePath(iframeRef.current?.contentWindow?.location.pathname || page.path);
-    recordEdit({ t: "img", page: pagePath, k: key, v: url, label: "Image changed" });
+  function applyImage(sel: SelectedImage, url: string) {
+    if (sel.bg) {
+      recordEdit({ t: "style", page: curPath(), k: sel.key, v: `background-image:url("${url}")`, label: "Background image changed" });
+    } else {
+      recordEdit({ t: "img", page: curPath(), k: sel.key, v: url, label: "Image changed" });
+    }
     setSelectedImg(s => (s ? { ...s, src: url } : s));
   }
 
-  // ── Text sizing / layout ──────────────────────────────────────────────────
+  // ── Text sizing ───────────────────────────────────────────────────────────
   function setTextSize(px: number) {
     if (!selectedText) return;
-    const pagePath = normalizePath(iframeRef.current?.contentWindow?.location.pathname || page.path);
-    recordEdit({ t: "style", page: pagePath, k: selectedText.key, v: `font-size:${px}px`, label: `Text size ${px}px` });
+    recordEdit({ t: "style", page: curPath(), k: selectedText.key, v: `font-size:${px}px`, label: `Text size ${px}px` });
+  }
+
+  // ── Element layout tools (spacing/height/colors/hide) ─────────────────────
+  function styleSelectedEl(css: string, label: string) {
+    if (!selectedEl) return;
+    recordEdit({ t: "style", page: curPath(), k: selectedEl.key, v: css, label });
   }
   function hideSelected() {
-    if (!selectedText) return;
-    const pagePath = normalizePath(iframeRef.current?.contentWindow?.location.pathname || page.path);
-    recordEdit({ t: "style", page: pagePath, k: selectedText.key, v: "display:none", label: "Element hidden" });
-    setSelectedText(null);
+    const key = selectedEl?.key || selectedText?.key;
+    if (!key) return;
+    recordEdit({ t: "style", page: curPath(), k: key, v: "display:none", label: "Element hidden" });
+    setSelectedText(null); setSelectedEl(null);
   }
 
   // ── Global: logo + font ───────────────────────────────────────────────────
@@ -243,7 +292,7 @@ export default function SiteBuilderPage() {
 
         <select
           value={page.path}
-          onChange={e => { const p = PAGES.find(x => x.path === e.target.value)!; setPage(p); setSelectedImg(null); setSelectedText(null); }}
+          onChange={e => { const p = PAGES.find(x => x.path === e.target.value)!; setPage(p); setSelectedImg(null); setSelectedText(null); setSelectedEl(null); }}
           className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-sm"
         >
           {PAGES.map(p => <option key={p.path} value={p.path} className="text-black">{p.label}</option>)}
@@ -282,23 +331,22 @@ export default function SiteBuilderPage() {
 
           {/* How-to */}
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-900 leading-relaxed">
-            <b>Click any text</b> on the site to retype it (fix spelling, change wording).<br />
-            <b>Click any photo</b> to replace it.<br />
-            Then hit <b>Publish Live</b> — changes appear for every visitor instantly.
+            <b>Click text</b> to retype it · <b>click a photo</b> to replace it · <b>click a menu tab</b> to jump to that page.<br />
+            Any element you click also shows <b>spacing &amp; color</b> tools below. Then hit <b>Publish Live</b>.
           </div>
 
           {/* Image tools */}
           {selectedImg && (
             <div className="border border-slate-200 rounded-xl p-3 space-y-2">
-              <p className="text-xs font-black text-slate-500 uppercase flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> Selected Photo</p>
+              <p className="text-xs font-black text-slate-500 uppercase flex items-center gap-1.5"><ImageIcon className="w-3.5 h-3.5" /> Selected {selectedImg.bg ? "Background" : "Photo"}</p>
               <img src={selectedImg.src} alt="" className="w-full h-28 object-cover rounded-lg" />
               <label className={`block text-center px-3 py-2 rounded-lg text-sm font-bold cursor-pointer ${uploading ? "bg-slate-100 text-slate-400" : "bg-[#C41E2A] text-white hover:bg-[#A01825]"}`}>
                 {uploading ? "Uploading…" : "Upload Replacement"}
                 <input type="file" accept="image/*" className="hidden" disabled={uploading}
-                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadImageFor(selectedImg.key, f); e.target.value = ""; }} />
+                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadImageFor(selectedImg, f); e.target.value = ""; }} />
               </label>
               <input className={inp} placeholder="…or paste image URL, press Enter"
-                onKeyDown={e => { if (e.key === "Enter") applyImage(selectedImg.key, (e.target as HTMLInputElement).value); }} />
+                onKeyDown={e => { if (e.key === "Enter") applyImage(selectedImg, (e.target as HTMLInputElement).value); }} />
             </div>
           )}
 
@@ -309,6 +357,33 @@ export default function SiteBuilderPage() {
               <label className="text-xs text-slate-500">Text size</label>
               <input type="range" min={12} max={72} defaultValue={20} className="w-full accent-[#C41E2A]"
                 onChange={e => setTextSize(Number(e.target.value))} />
+            </div>
+          )}
+
+          {/* Element layout tools — spacing (header height), colors, hide */}
+          {selectedEl && (
+            <div className="border border-slate-200 rounded-xl p-3 space-y-3">
+              <p className="text-xs font-black text-slate-500 uppercase flex items-center gap-1.5"><Type className="w-3.5 h-3.5" /> Selected: &lt;{selectedEl.tag}&gt;</p>
+              <div>
+                <label className="text-xs text-slate-500">Top &amp; bottom spacing / height</label>
+                <input type="range" min={0} max={140} defaultValue={16} className="w-full accent-[#1B2A4A]"
+                  onChange={e => styleSelectedEl(`padding-top:${e.target.value}px;padding-bottom:${e.target.value}px`, `Spacing ${e.target.value}px`)} />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-xs text-slate-500 flex-1">Text color
+                  <input type="color" className="block w-full h-8 mt-1 rounded cursor-pointer"
+                    onChange={e => styleSelectedEl(`color:${e.target.value}`, `Text color ${e.target.value}`)} />
+                </label>
+                <label className="text-xs text-slate-500 flex-1">Background
+                  <input type="color" className="block w-full h-8 mt-1 rounded cursor-pointer"
+                    onChange={e => styleSelectedEl(`background-color:${e.target.value}`, `Bg color ${e.target.value}`)} />
+                </label>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[["Left","text-align:left"],["Center","text-align:center"],["Right","text-align:right"]].map(([lbl, css]) => (
+                  <button key={lbl} onClick={() => styleSelectedEl(css, `Align ${lbl.toLowerCase()}`)} className="px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-600">{lbl}</button>
+                ))}
+              </div>
               <button onClick={hideSelected} className="w-full px-3 py-2 rounded-lg text-sm font-bold border border-red-200 text-red-600 hover:bg-red-50">
                 Hide This Element
               </button>

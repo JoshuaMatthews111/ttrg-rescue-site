@@ -40,7 +40,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
     let active = true;
     const load = () => {
       setProfile(getFamilyProfileBySlug(slug) || null);
-      setOtherProfiles(getPublishedFamilyProfiles().filter(x => x.slug !== slug).slice(0, 2));
+      setOtherProfiles(getPublishedFamilyProfiles().filter(x => x.slug !== slug).slice(0, 4));
     };
     load(); // instant paint from local cache
     syncFamilyProfilesFromCloud().then(() => { if (active) load(); });
@@ -97,35 +97,35 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Main content */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Hero image */}
-            <div className="relative rounded-3xl overflow-hidden h-72 sm:h-96">
-              <img src={profile.image || "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"} alt={profile.dogName} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-              <div className="absolute top-4 left-4 flex gap-2">
-                {profile.urgent && <span className="flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"><AlertTriangle className="w-3.5 h-3.5" /> URGENT</span>}
-                {isCompleted && <span className="flex items-center gap-1 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"><CheckCircle className="w-3.5 h-3.5" /> COMPLETED</span>}
-              </div>
-              <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-[#D97706] text-xs font-bold uppercase tracking-wider mb-1">{profile.familyName}</p>
-                  <h1 className="text-3xl sm:text-4xl font-black text-white mb-1">{profile.dogName}</h1>
-                  <p className="text-white/70 text-sm flex items-center gap-2">
-                    {profile.dogBreed} · <MapPin className="w-3.5 h-3.5" /> {profile.location}
-                  </p>
-                </div>
-                <button
-                  onClick={share}
-                  className="inline-flex items-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-5 py-3 rounded-full text-sm font-bold shadow-xl shadow-black/30 transition-all hover:scale-105 flex-shrink-0"
-                >
-                  <Share2 className="w-4 h-4" />
-                  {copied ? "Message Copied!" : `Share ${profile.dogName}`}
-                </button>
-              </div>
+        {/* Hero image (full width, top on all screens) */}
+        <div className="relative rounded-3xl overflow-hidden h-72 sm:h-96 mb-8">
+          <img src={profile.image || "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"} alt={profile.dogName} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+          <div className="absolute top-4 left-4 flex gap-2">
+            {profile.urgent && <span className="flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"><AlertTriangle className="w-3.5 h-3.5" /> URGENT</span>}
+            {isCompleted && <span className="flex items-center gap-1 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"><CheckCircle className="w-3.5 h-3.5" /> COMPLETED</span>}
+          </div>
+          <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[#D97706] text-xs font-bold uppercase tracking-wider mb-1">{profile.familyName}</p>
+              <h1 className="text-3xl sm:text-4xl font-black text-white mb-1">{profile.dogName}</h1>
+              <p className="text-white/70 text-sm flex items-center gap-2">
+                {profile.dogBreed} · <MapPin className="w-3.5 h-3.5" /> {profile.location}
+              </p>
             </div>
+            <button
+              onClick={share}
+              className="inline-flex items-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-5 py-3 rounded-full text-sm font-bold shadow-xl shadow-black/30 transition-all hover:scale-105 flex-shrink-0"
+            >
+              <Share2 className="w-4 h-4" />
+              {copied ? "Message Copied!" : `Share ${profile.dogName}`}
+            </button>
+          </div>
+        </div>
 
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Main content — second on mobile, left on desktop */}
+          <div className="lg:col-span-7 order-2 lg:order-1 space-y-6">
             {/* Video */}
             {profile.videoUrl && (
               <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100">
@@ -213,35 +213,10 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
               </div>
             )}
 
-            {/* Other profiles */}
-            {otherProfiles.length > 0 && (
-              <div>
-                <h3 className="text-lg font-black text-[#1B2A4A] mb-4">Other Families That Need Help</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {otherProfiles.map(op => {
-                    const opPct = op.goalAmount > 0 ? Math.min(100, Math.round((op.raisedAmount / op.goalAmount) * 100)) : 0;
-                    return (
-                      <Link key={op.id} href={`/ttrg/make-training-affordable/${op.slug}`} className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg transition-all">
-                        <div className="h-32 overflow-hidden">
-                          <img src={op.image} alt={op.dogName} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                        </div>
-                        <div className="p-4">
-                          <p className="font-bold text-[#1B2A4A] text-sm">{op.dogName} — {op.familyName}</p>
-                          <div className="h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
-                            <div className="h-full bg-[#D97706] rounded-full" style={{ width: `${opPct}%` }} />
-                          </div>
-                          <p className="text-[10px] text-slate-400 mt-1">{opPct}% of ${op.goalAmount.toLocaleString()}</p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Sidebar — Donation */}
-          <div className="lg:col-span-5 space-y-6">
+          {/* Sidebar — Donation — first on mobile, right on desktop */}
+          <div className="lg:col-span-5 order-1 lg:order-2 space-y-6">
             {/* Progress card */}
             <div className="bg-white rounded-3xl p-6 border border-slate-100 sticky top-24">
               {/* Progress */}
@@ -325,6 +300,32 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
             </div>
           </div>
         </div>
+
+        {/* Other profiles — full width, very bottom */}
+        {otherProfiles.length > 0 && (
+          <div className="mt-12">
+            <h3 className="text-lg font-black text-[#1B2A4A] mb-4">Other Families That Need Help</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {otherProfiles.map(op => {
+                const opPct = op.goalAmount > 0 ? Math.min(100, Math.round((op.raisedAmount / op.goalAmount) * 100)) : 0;
+                return (
+                  <Link key={op.id} href={`/ttrg/make-training-affordable/${op.slug}`} className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg transition-all">
+                    <div className="h-32 overflow-hidden">
+                      <img src={op.image} alt={op.dogName} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    </div>
+                    <div className="p-4">
+                      <p className="font-bold text-[#1B2A4A] text-sm">{op.dogName} — {op.familyName}</p>
+                      <div className="h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                        <div className="h-full bg-[#D97706] rounded-full" style={{ width: `${opPct}%` }} />
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1">{opPct}% of ${op.goalAmount.toLocaleString()}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

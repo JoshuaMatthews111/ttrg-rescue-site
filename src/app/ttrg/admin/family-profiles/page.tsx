@@ -301,6 +301,19 @@ export default function AdminFamilyProfiles() {
                   <input value={editProfile.location} onChange={e => setEditProfile({ ...editProfile, location: e.target.value })} className={inp} placeholder="Cleveland, OH" />
                 </div>
               </div>
+
+              {/* Journey Stage — the 5 stages shown on the public page */}
+              <div className="bg-[#FFF8F0] border border-[#D97706]/30 rounded-xl p-4">
+                <label className="text-xs font-black text-[#D97706] uppercase mb-1 block">Journey Stage — shown on the public campaign page</label>
+                <select value={editProfile.currentStage || 1} onChange={e => setEditProfile({ ...editProfile, currentStage: Number(e.target.value) })} className={`${inp} font-bold`}>
+                  <option value={1}>Stage 1 — Family in Need</option>
+                  <option value={2}>Stage 2 — Situation Evaluated</option>
+                  <option value={3}>Stage 3 — Support Profile Created</option>
+                  <option value={4}>Stage 4 — Training Funds Raised</option>
+                  <option value={5}>Stage 5 — Training Completed</option>
+                </select>
+                <p className="text-[10px] text-slate-500 mt-1.5">This drives the 5-stage tracker and the share-link headline. The &quot;Status&quot; field below only controls whether the campaign is visible (Draft/Published) — set the stage here.</p>
+              </div>
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Cover Image</label>
                 <div className="flex gap-2 mb-2">
@@ -357,16 +370,6 @@ export default function AdminFamilyProfiles() {
                 </div>
                 <input value={editProfile.videoUrl || ""} onChange={e => setEditProfile({ ...editProfile, videoUrl: e.target.value })} className={inp} placeholder="https://drive.google.com/... or https://youtube.com/..." />
                 {editProfile.videoUrl && <video src={editProfile.videoUrl} controls preload="metadata" className="mt-2 h-32 rounded-lg" />}
-              </div>
-              <div>
-                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Journey Stage</label>
-                <select value={editProfile.currentStage || 1} onChange={e => setEditProfile({ ...editProfile, currentStage: Number(e.target.value) })} className={inp}>
-                  <option value={1}>1 — Family in Need</option>
-                  <option value={2}>2 — Situation Evaluated</option>
-                  <option value={3}>3 — Support Profile Created</option>
-                  <option value={4}>4 — Training Funds Raised</option>
-                  <option value={5}>5 — Training Completed</option>
-                </select>
               </div>
               <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Share Title (optional)</label>

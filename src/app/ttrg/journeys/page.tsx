@@ -75,9 +75,11 @@ export default function JourneysPage() {
       {/* ═══ JOURNEY TIMELINE ═══ */}
       <section className="py-16 bg-[#FAFAF8] border-y border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            {journeySteps.map((step, i) => (
-              <div key={step.label} className="flex items-center gap-3 md:flex-col md:text-center flex-1">
+          <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            {/* Single connector line behind the icons (desktop only) */}
+            <div className="hidden md:block absolute top-8 left-[10%] right-[10%] h-px bg-slate-200 z-0" />
+            {journeySteps.map((step) => (
+              <div key={step.label} className="relative z-10 flex items-center gap-3 md:flex-col md:text-center flex-1">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full bg-[#FFF0F0] flex items-center justify-center">
                     <step.icon className="w-7 h-7 text-[#C41E2A]" />
@@ -88,9 +90,6 @@ export default function JourneysPage() {
                   <p className="font-bold text-[#1B2A4A] text-sm">{step.label}</p>
                   <p className="text-[11px] text-[#1B2A4A]/40 mt-1 max-w-[180px] hidden md:block">{step.desc}</p>
                 </div>
-                {i < journeySteps.length - 1 && (
-                  <div className="hidden md:block w-full h-px bg-slate-200 absolute" />
-                )}
               </div>
             ))}
           </div>
