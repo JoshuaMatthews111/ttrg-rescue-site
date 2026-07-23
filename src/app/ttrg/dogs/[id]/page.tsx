@@ -11,7 +11,7 @@ import {
 import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
 import { shareSubject, dogStageTitle } from "@/lib/share-messages";
 import { getVideoEmbedUrl, getDirectVideoUrl } from "@/lib/video-embed";
-import CampaignVideo from "@/components/ttrg/CampaignVideo";
+import MediaShowcase from "@/components/ttrg/MediaShowcase";
 import { fetchShareOverrides, type ShareOverride } from "@/lib/share-overrides";
 import { fetchDogById, subscribeToTable } from "@/lib/admin-store";
 import {
@@ -192,42 +192,33 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
         ═══════════════════════════════════════════════════════════════ */}
         <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm mb-8">
           <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Left: Image */}
-            <div className="relative aspect-square md:aspect-auto">
-              <img src={dog.gallery[activeImage] || dog.image} alt={dog.name} className="w-full h-full object-cover" />
-              {dog.gallery.length > 1 && (
-                <>
-                  <button onClick={() => setActiveImage((p) => (p - 1 + dog.gallery.length) % dog.gallery.length)} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors">
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button onClick={() => setActiveImage((p) => (p + 1) % dog.gallery.length)} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors">
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </>
-              )}
-              {/* Status Badge */}
-              {dog.dogStatus && (
-                <div className="absolute top-4 left-4">
+            {/* Left: Video first (auto-plays), photos as thumbnails below */}
+            <div className="p-4 sm:p-5">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {dog.dogStatus && (
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${DOG_STATUS_COLORS[dog.dogStatus] || "bg-slate-100 text-slate-700"}`}>
                     {dog.dogStatus}
                   </span>
-                </div>
-              )}
-              {dog.urgent && !dog.dogStatus?.includes("Urgent") && (
-                <div className="absolute top-4 right-4">
+                )}
+                {dog.urgent && !dog.dogStatus?.includes("Urgent") && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-red-100 text-red-700">
                     <AlertTriangle className="w-3.5 h-3.5" /> Urgent
                   </span>
-                </div>
-              )}
-              {/* Prominent share button on the photo */}
-              <button
-                onClick={() => handleShare(dog)}
-                className="absolute bottom-4 right-4 inline-flex items-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-5 py-3 rounded-full text-sm font-bold shadow-xl shadow-black/30 transition-all hover:scale-105"
-              >
-                <Share2 className="w-4 h-4" />
-                {shareState === "copied" ? "Message Copied!" : `Share ${dog.name}`}
-              </button>
+                )}
+                <button
+                  onClick={() => handleShare(dog)}
+                  className="ml-auto inline-flex items-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg transition-all hover:scale-105"
+                >
+                  <Share2 className="w-4 h-4" />
+                  {shareState === "copied" ? "Copied!" : `Share ${dog.name}`}
+                </button>
+              </div>
+              <MediaShowcase
+                videoUrl={dogVideoUrl || undefined}
+                images={[dog.image, ...(dog.gallery || [])]}
+                poster={dog.image}
+                title={dog.name}
+              />
             </div>
 
             {/* Right: Info */}
@@ -299,14 +290,11 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
                 </div>
               )}
 
-              {/* Video — plays automatically when a visitor lands here */}
+              {/* Full-screen playback of the video shown in the media panel */}
               {dogVideoUrl && (
-                <div className="mb-6">
-                  <CampaignVideo url={dogVideoUrl} poster={dog.image} title={`Video of ${dog.name}`} />
-                  <button onClick={() => setShowVideo(true)} className="flex items-center gap-2 text-[#C41E2A] font-semibold text-sm mt-3 hover:underline">
-                    <Film className="w-4 h-4" /> Watch {dog.name}&apos;s Video Full Screen
-                  </button>
-                </div>
+                <button onClick={() => setShowVideo(true)} className="flex items-center gap-2 text-[#C41E2A] font-semibold text-sm mb-6 hover:underline">
+                  <Film className="w-4 h-4" /> Watch {dog.name}&apos;s Video Full Screen
+                </button>
               )}
 
               {/* CTA Buttons */}

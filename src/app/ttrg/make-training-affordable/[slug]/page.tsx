@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { getFamilyProfileBySlug, getPublishedFamilyProfiles, syncFamilyProfilesFromCloud, type FamilyProfile } from "@/lib/admin-store";
 import { shareSubject, familyStageTitle } from "@/lib/share-messages";
-import CampaignVideo from "@/components/ttrg/CampaignVideo";
+import MediaShowcase from "@/components/ttrg/MediaShowcase";
 
 const FAMILY_STAGES = [
   { title: "Family in Need", description: "A family with limited resources needs help keeping their dog." },
@@ -97,43 +97,41 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero image (full width, top on all screens) */}
-        <div className="relative rounded-3xl overflow-hidden h-72 sm:h-96 mb-8">
-          <img src={profile.image || "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80"} alt={profile.dogName} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-          <div className="absolute top-4 left-4 flex gap-2">
-            {profile.urgent && <span className="flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"><AlertTriangle className="w-3.5 h-3.5" /> URGENT</span>}
-            {isCompleted && <span className="flex items-center gap-1 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full"><CheckCircle className="w-3.5 h-3.5" /> COMPLETED</span>}
-          </div>
-          <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4">
-            <div>
-              <p className="text-[#D97706] text-xs font-bold uppercase tracking-wider mb-1">{profile.familyName}</p>
-              <h1 className="text-3xl sm:text-4xl font-black text-white mb-1">{profile.dogName}</h1>
-              <p className="text-white/70 text-sm flex items-center gap-2">
-                {profile.dogBreed} · <MapPin className="w-3.5 h-3.5" /> {profile.location}
-              </p>
+        {/* Title row — kept above the media so the video is never covered */}
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-[#D97706] text-xs font-bold uppercase tracking-wider">{profile.familyName}</p>
+              {profile.urgent && <span className="flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full"><AlertTriangle className="w-3 h-3" /> URGENT</span>}
+              {isCompleted && <span className="flex items-center gap-1 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full"><CheckCircle className="w-3 h-3" /> COMPLETED</span>}
             </div>
-            <button
-              onClick={share}
-              className="inline-flex items-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-5 py-3 rounded-full text-sm font-bold shadow-xl shadow-black/30 transition-all hover:scale-105 flex-shrink-0"
-            >
-              <Share2 className="w-4 h-4" />
-              {copied ? "Message Copied!" : `Share ${profile.dogName}`}
-            </button>
+            <h1 className="text-3xl sm:text-4xl font-black text-[#1B2A4A] mb-1">{profile.dogName}</h1>
+            <p className="text-[#1B2A4A]/50 text-sm flex items-center gap-2">
+              {profile.dogBreed} · <MapPin className="w-3.5 h-3.5" /> {profile.location}
+            </p>
           </div>
+          <button
+            onClick={share}
+            className="inline-flex items-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] text-white px-5 py-3 rounded-full text-sm font-bold shadow-lg transition-all hover:scale-105 flex-shrink-0"
+          >
+            <Share2 className="w-4 h-4" />
+            {copied ? "Message Copied!" : `Share ${profile.dogName}`}
+          </button>
+        </div>
+
+        {/* Video plays right here at the top; photos are thumbnails below it */}
+        <div className="mb-8">
+          <MediaShowcase
+            videoUrl={profile.videoUrl}
+            images={[profile.image, ...(profile.gallery || [])]}
+            poster={profile.image}
+            title={`${profile.dogName} — ${profile.familyName}`}
+          />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main content — second on mobile, left on desktop */}
           <div className="lg:col-span-7 order-2 lg:order-1 space-y-6">
-            {/* Video */}
-            {profile.videoUrl && (
-              <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100">
-                <h2 className="text-xl font-black text-[#1B2A4A] mb-4 px-2">Meet {profile.dogName}</h2>
-                <CampaignVideo url={profile.videoUrl} poster={profile.image} title={`Video of ${profile.dogName}`} />
-              </div>
-            )}
-
             {/* Journey stages */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100">
               <h2 className="text-xl font-black text-[#1B2A4A] mb-6">{profile.dogName}&apos;s Journey</h2>

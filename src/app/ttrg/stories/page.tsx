@@ -219,7 +219,7 @@ export default function StoriesPage() {
           <div className="relative w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setVideoModal(null)} className="absolute -top-12 right-0 text-white/60 hover:text-white"><X className="w-8 h-8" /></button>
             <div className="rounded-2xl overflow-hidden shadow-2xl bg-black">
-              <video controls autoPlay className="w-full aspect-video">
+              <video controls autoPlay playsInline className="w-full aspect-video">
                 <source src={videoModal.src} type="video/mp4" />
               </video>
               <div className="p-5 bg-[#1B2A4A]">
