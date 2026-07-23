@@ -11,6 +11,7 @@ import {
 import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
 import { shareSubject, dogStageTitle } from "@/lib/share-messages";
 import { getVideoEmbedUrl, getDirectVideoUrl } from "@/lib/video-embed";
+import CampaignVideo from "@/components/ttrg/CampaignVideo";
 import { fetchShareOverrides, type ShareOverride } from "@/lib/share-overrides";
 import { fetchDogById, subscribeToTable } from "@/lib/admin-store";
 import {
@@ -298,11 +299,14 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
                 </div>
               )}
 
-              {/* Video button */}
+              {/* Video — plays automatically when a visitor lands here */}
               {dogVideoUrl && (
-                <button onClick={() => setShowVideo(true)} className="flex items-center gap-2 text-[#C41E2A] font-semibold text-sm mb-6 hover:underline">
-                  <Film className="w-4 h-4" /> Watch {dog.name}&apos;s Video
-                </button>
+                <div className="mb-6">
+                  <CampaignVideo url={dogVideoUrl} poster={dog.image} title={`Video of ${dog.name}`} />
+                  <button onClick={() => setShowVideo(true)} className="flex items-center gap-2 text-[#C41E2A] font-semibold text-sm mt-3 hover:underline">
+                    <Film className="w-4 h-4" /> Watch {dog.name}&apos;s Video Full Screen
+                  </button>
+                </div>
               )}
 
               {/* CTA Buttons */}

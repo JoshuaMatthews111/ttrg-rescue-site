@@ -17,7 +17,7 @@ import {
 } from "@/lib/dog-constants";
 import { MAX_UPLOAD_MB, VIDEO_TOO_BIG_MESSAGE } from "@/lib/video-embed";
 import { fetchShareOverrides, saveShareOverride } from "@/lib/share-overrides";
-import { compressVideoInBrowser } from "@/lib/video-compress";
+import { compressVideoInBrowser, NOT_APPLE_SAFE_WARNING } from "@/lib/video-compress";
 import { dogStageTitle } from "@/lib/share-messages";
 
 const stageLabels: Record<string, string> = { rescue: "Rescued", rehabilitate: "In Rehab", train: "In Training", recover: "Recovering", rehome: "Ready for Home" };
@@ -369,9 +369,15 @@ export default function AdminDogsPage() {
       }
       setUploading(true);
       try {
-        file = await compressVideoInBrowser(file, setUploadProgress);
-      } catch {
-        alert("Compression didn't work in this browser. " + VIDEO_TOO_BIG_MESSAGE);
+        const result = await compressVideoInBrowser(file, setUploadProgress);
+        if (!result.appleSafe && !confirm(NOT_APPLE_SAFE_WARNING)) {
+          setUploading(false); setUploadProgress("");
+          if (videoInputRef.current) videoInputRef.current.value = "";
+          return;
+        }
+        file = result.file;
+      } catch (err) {
+        alert((err instanceof Error ? err.message + "\n\n" : "Compression didn't work in this browser. ") + VIDEO_TOO_BIG_MESSAGE);
         setUploading(false); setUploadProgress("");
         if (videoInputRef.current) videoInputRef.current.value = "";
         return;

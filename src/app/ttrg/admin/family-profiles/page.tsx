@@ -10,7 +10,7 @@ import {
   syncFamilyProfilesFromCloud, getSession, insertAuditLog,
 } from "@/lib/admin-store";
 import { MAX_UPLOAD_MB, VIDEO_TOO_BIG_MESSAGE } from "@/lib/video-embed";
-import { compressVideoInBrowser } from "@/lib/video-compress";
+import { compressVideoInBrowser, NOT_APPLE_SAFE_WARNING } from "@/lib/video-compress";
 import {
   type FamilyProfile, type FamilyProfileStatus,
 } from "@/lib/admin-store";
@@ -348,9 +348,14 @@ export default function AdminFamilyProfiles() {
                         if (!confirm(`This video is ${mb} MB — over the ${MAX_UPLOAD_MB} MB upload limit.\n\nCompress it right here in your browser and upload the web-quality version? (Takes about as long as the video is — keep this tab open.)\n\nOr press Cancel and paste a Google Drive / YouTube link instead.`)) { e.target.value = ""; return; }
                         setUploading(true);
                         try {
-                          file = await compressVideoInBrowser(file, setVideoProgress);
-                        } catch {
-                          alert("Compression didn't work in this browser. " + VIDEO_TOO_BIG_MESSAGE);
+                          const result = await compressVideoInBrowser(file, setVideoProgress);
+                          if (!result.appleSafe && !confirm(NOT_APPLE_SAFE_WARNING)) {
+                            setUploading(false); setVideoProgress(""); e.target.value = "";
+                            return;
+                          }
+                          file = result.file;
+                        } catch (err) {
+                          alert((err instanceof Error ? err.message + "\n\n" : "Compression didn't work in this browser. ") + VIDEO_TOO_BIG_MESSAGE);
                           setUploading(false); setVideoProgress(""); e.target.value = "";
                           return;
                         }

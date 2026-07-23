@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { getFamilyProfileBySlug, getPublishedFamilyProfiles, syncFamilyProfilesFromCloud, type FamilyProfile } from "@/lib/admin-store";
 import { shareSubject, familyStageTitle } from "@/lib/share-messages";
-import { getVideoEmbedUrl, getDirectVideoUrl } from "@/lib/video-embed";
+import CampaignVideo from "@/components/ttrg/CampaignVideo";
 
 const FAMILY_STAGES = [
   { title: "Family in Need", description: "A family with limited resources needs help keeping their dog." },
@@ -130,17 +130,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
             {profile.videoUrl && (
               <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-100">
                 <h2 className="text-xl font-black text-[#1B2A4A] mb-4 px-2">Meet {profile.dogName}</h2>
-                {getVideoEmbedUrl(profile.videoUrl) ? (
-                  <iframe
-                    src={getVideoEmbedUrl(profile.videoUrl)!}
-                    allow="autoplay; encrypted-media; fullscreen"
-                    allowFullScreen
-                    className="w-full aspect-video rounded-2xl bg-black border-0"
-                    title={`Video of ${profile.dogName}`}
-                  />
-                ) : (
-                  <video src={getDirectVideoUrl(profile.videoUrl)} controls playsInline preload="metadata" poster={profile.image || undefined} className="w-full rounded-2xl bg-black" />
-                )}
+                <CampaignVideo url={profile.videoUrl} poster={profile.image} title={`Video of ${profile.dogName}`} />
               </div>
             )}
 

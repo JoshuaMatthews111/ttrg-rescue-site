@@ -32,6 +32,17 @@ export function getVideoEmbedUrl(url: string | undefined | null): string | null 
   return null; // direct file (mp4/mov/webm…) — play with a <video> tag
 }
 
+/** Add each host's autoplay+mute parameters so embeds start on page load. */
+export function withEmbedAutoplay(embedUrl: string): string {
+  const join = embedUrl.includes("?") ? "&" : "?";
+  if (embedUrl.includes("youtube.com/embed/")) return `${embedUrl}${join}autoplay=1&mute=1&playsinline=1&rel=0`;
+  if (embedUrl.includes("player.vimeo.com")) return `${embedUrl}${join}autoplay=1&muted=1&playsinline=1`;
+  if (embedUrl.includes("loom.com/embed/")) return `${embedUrl}${join}autoplay=1&muted=true`;
+  if (embedUrl.includes("streamable.com/e/")) return `${embedUrl}${join}autoplay=1&muted=1`;
+  // Google Drive's /preview player ignores autoplay params but still embeds.
+  return embedUrl;
+}
+
 // Some hosts serve direct video files behind share-page URLs. Rewrite those
 // so a <video> tag can stream them; anything else passes through unchanged.
 export function getDirectVideoUrl(url: string): string {
