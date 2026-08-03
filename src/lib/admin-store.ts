@@ -406,6 +406,52 @@ export interface Donation {
   date: string;
   status: "completed" | "failed" | "pending";
   last4?: string;
+  /* ── full donor details captured on the giving form ── */
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  referralSource?: string;
+  trainerName?: string;
+  transactionId?: string;
+  subscriptionId?: string;
+  cardType?: string;
+  notes?: string;
+}
+
+export interface Partner {
+  id: string;
+  name: string;
+  type: string;          // Corporate | Nonprofit | Business | Veterinary | Other
+  tier: string;          // Gold | Silver | Bronze | Active
+  region: string;
+  contribution: number;
+  contactName: string;
+  email: string;
+  phone?: string;
+  website?: string;
+  logoUrl?: string;
+  notes?: string;
+  active: boolean;
+  createdAt?: string;
+}
+
+export interface Story {
+  id: string;
+  title: string;
+  description: string;
+  quote?: string;
+  type: "video" | "story" | "youtube";
+  dogName?: string;
+  category: string;
+  thumbnail?: string;
+  videoSrc?: string;
+  duration?: string;
+  published: boolean;
+  featured: boolean;
+  sortOrder?: number;
+  createdAt?: string;
 }
 
 export interface SiteSettings {

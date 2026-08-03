@@ -145,6 +145,11 @@ function DonateInner() {
           date: new Date().toISOString(),
           status: "completed",
           last4: cardNumber.replace(/\s/g, "").slice(-4),
+          // Full donor details so staff can see who gave and how to reach them.
+          phone, address, city, state, zip,
+          referralSource, trainerName,
+          transactionId: data.transactionId || "",
+          subscriptionId: data.subscriptionId || "",
         });
         setSuccess(data);
       } else {

@@ -31,6 +31,18 @@ interface Donation {
   date: string;
   status: "paid" | "pending";
   receipt: boolean;
+  /* full details captured on the giving form */
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  referralSource?: string;
+  trainerName?: string;
+  transactionId?: string;
+  subscriptionId?: string;
+  last4?: string;
+  frequency?: string;
 }
 
 
@@ -46,6 +58,7 @@ export default function DonationsPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<DonationType | "all">("all");
   const [allDonations, setAllDonations] = useState<Donation[]>([]);
+  const [viewing, setViewing] = useState<Donation | null>(null);
 
   useEffect(() => {
     fetchRealDonations().then((real) => {
@@ -60,6 +73,10 @@ export default function DonationsPage() {
         date: r.date ? r.date.split("T")[0] : "",
         status: r.status === "completed" ? "paid" as const : "pending" as const,
         receipt: false,
+        phone: r.phone, address: r.address, city: r.city, state: r.state, zip: r.zip,
+        referralSource: r.referralSource, trainerName: r.trainerName,
+        transactionId: r.transactionId, subscriptionId: r.subscriptionId,
+        last4: r.last4, frequency: r.frequency,
       }));
       setAllDonations(mapped);
     });
@@ -127,7 +144,7 @@ export default function DonationsPage() {
           <div className="col-span-2">Type</div>
           <div className="col-span-2">Category</div>
           <div className="col-span-2">Date</div>
-          <div className="col-span-1">Receipt</div>
+          <div className="col-span-1">More Details</div>
         </div>
         {filtered.map((d) => (
           <div key={d.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 px-5 py-4 border-b border-white/5 hover:bg-white/[0.02] transition-colors">
@@ -153,11 +170,111 @@ export default function DonationsPage() {
               <span className="text-white/40 text-xs">{d.date}</span>
             </div>
             <div className="col-span-1 flex items-center">
-              {d.receipt ? <span className="text-emerald-400 text-xs">✓ Sent</span> : <button className="text-[#C41E2A] text-[10px] font-bold">Send</button>}
+              <button
+                onClick={() => setViewing(d)}
+                className="bg-[#C41E2A] hover:bg-[#A01825] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+              >
+                View
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Full donor details */}
+      {viewing && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center pt-10 overflow-y-auto p-4" onClick={() => setViewing(null)}>
+          <div className="bg-[#0f1b30] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-xs font-black">
+                  {viewing.donor.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                </div>
+                <div>
+                  <h2 className="text-base font-black text-white">{viewing.donor}</h2>
+                  <p className="text-white/40 text-[11px]">Donation details</p>
+                </div>
+              </div>
+              <button onClick={() => setViewing(null)} className="text-white/40 hover:text-white text-xl leading-none px-2">&times;</button>
+            </div>
+
+            <div className="p-5 space-y-5 max-h-[70vh] overflow-y-auto">
+              {/* Gift */}
+              <div className="bg-[#0b1524] rounded-xl p-4">
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3">The Gift</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Amount" value={`$${viewing.amount.toLocaleString()}`} strong />
+                  <Field label="Frequency" value={viewing.frequency === "monthly" ? "Monthly (recurring)" : "One-time"} />
+                  <Field label="Designation" value={viewing.dog ? `Dog Sponsor — ${viewing.dog}` : viewing.category} />
+                  <Field label="Status" value={viewing.status === "paid" ? "Completed" : "Pending"} />
+                  <Field label="Date" value={viewing.date} />
+                  <Field label="Card" value={viewing.last4 ? `•••• ${viewing.last4}` : "—"} />
+                </div>
+              </div>
+
+              {/* Donor */}
+              <div className="bg-[#0b1524] rounded-xl p-4">
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3">Donor &amp; Contact</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Full name" value={viewing.donor} />
+                  <Field label="Email" value={viewing.email} link={`mailto:${viewing.email}`} />
+                  <Field label="Phone" value={viewing.phone} link={viewing.phone ? `tel:${viewing.phone}` : undefined} />
+                  <Field label="Referred by" value={viewing.referralSource} />
+                  <Field label="Trainer named" value={viewing.trainerName} />
+                </div>
+                <div className="mt-4">
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider mb-1">Mailing address</p>
+                  {viewing.address || viewing.city || viewing.zip ? (
+                    <p className="text-white text-sm leading-relaxed">
+                      {viewing.address}<br />
+                      {[viewing.city, viewing.state].filter(Boolean).join(", ")} {viewing.zip}
+                    </p>
+                  ) : (
+                    <p className="text-white/30 text-sm italic">Not captured for this donation</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Payment references */}
+              <div className="bg-[#0b1524] rounded-xl p-4">
+                <p className="text-[10px] font-bold text-white/40 uppercase tracking-wider mb-3">Payment References</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Record ID" value={viewing.id} mono />
+                  <Field label="Transaction ID" value={viewing.transactionId} mono />
+                  <Field label="Subscription ID" value={viewing.subscriptionId} mono />
+                </div>
+              </div>
+
+              <p className="text-[10px] text-white/30 leading-relaxed">
+                Address, phone and referral details are stored for donations made after the donor-details
+                update. Older records show &ldquo;Not captured&rdquo;.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 p-5 border-t border-white/10">
+              <a href={`mailto:${viewing.email}`} className="px-4 py-2 text-xs font-bold text-white/60 hover:text-white">Email Donor</a>
+              <button onClick={() => setViewing(null)} className="bg-[#C41E2A] hover:bg-[#A01825] text-white text-xs font-bold px-5 py-2 rounded-lg">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Field({ label, value, link, mono, strong }: { label: string; value?: string; link?: string; mono?: boolean; strong?: boolean }) {
+  return (
+    <div>
+      <p className="text-[10px] text-white/40 uppercase tracking-wider mb-0.5">{label}</p>
+      {value ? (
+        link ? (
+          <a href={link} className={`text-[#C41E2A] hover:underline break-all ${mono ? "font-mono text-xs" : "text-sm"}`}>{value}</a>
+        ) : (
+          <p className={`text-white break-all ${mono ? "font-mono text-xs" : strong ? "text-lg font-black text-emerald-400" : "text-sm"}`}>{value}</p>
+        )
+      ) : (
+        <p className="text-white/30 text-sm italic">—</p>
+      )}
     </div>
   );
 }

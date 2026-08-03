@@ -6,7 +6,7 @@ import { supabase } from "./supabase";
 import type {
   AdminDog, AdminUser, Submission, ContactMessage,
   FosterApplication, SponsorInterest, TickerItem, Donation,
-  SiteSettings, DogStatus, UserRole,
+  SiteSettings, DogStatus, UserRole, Partner, Story,
 } from "./admin-store";
 
 // ─── Helper: convert snake_case DB row → camelCase AdminDog ───
@@ -340,17 +340,113 @@ export async function fetchDonations(): Promise<Donation[]> {
     amount: r.amount, frequency: r.frequency,
     dogName: r.dog_name, date: r.date,
     status: r.status, last4: r.last4,
+    phone: r.phone, address: r.address, city: r.city, state: r.state, zip: r.zip,
+    referralSource: r.referral_source, trainerName: r.trainer_name,
+    transactionId: r.transaction_id, subscriptionId: r.subscription_id,
+    cardType: r.card_type, notes: r.notes,
   })) as Donation[];
 }
 
 export async function insertDonation(donation: Donation): Promise<void> {
-  const { error } = await supabase.from("donations").insert({
+  const base = {
     id: donation.id, name: donation.name, email: donation.email,
     amount: donation.amount, frequency: donation.frequency,
     dog_name: donation.dogName, date: donation.date,
     status: donation.status, last4: donation.last4,
-  });
-  if (error) console.error("insertDonation error:", error.message);
+  };
+  // Full donor details live in columns added by supabase-admin-upgrade.sql.
+  // If that migration hasn't been run yet, the insert would fail on unknown
+  // columns — so fall back to the base row rather than losing the donation.
+  const detailed = {
+    ...base,
+    phone: donation.phone || "",
+    address: donation.address || "",
+    city: donation.city || "",
+    state: donation.state || "",
+    zip: donation.zip || "",
+    referral_source: donation.referralSource || "",
+    trainer_name: donation.trainerName || "",
+    transaction_id: donation.transactionId || "",
+    subscription_id: donation.subscriptionId || "",
+    card_type: donation.cardType || "",
+    notes: donation.notes || "",
+  };
+  const { error } = await supabase.from("donations").insert(detailed);
+  if (!error) return;
+  const { error: fallbackError } = await supabase.from("donations").insert(base);
+  if (fallbackError) console.error("insertDonation error:", fallbackError.message);
+  else console.warn("insertDonation: saved without donor details — run supabase-admin-upgrade.sql");
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PARTNERS
+// ═══════════════════════════════════════════════════════════════
+export async function fetchPartners(): Promise<Partner[]> {
+  const { data, error } = await supabase.from("partners").select("*").order("contribution", { ascending: false });
+  if (error) { console.error("fetchPartners error:", error.message); return []; }
+  return (data || []).map((r) => ({
+    id: r.id, name: r.name, type: r.type, tier: r.tier, region: r.region,
+    contribution: Number(r.contribution) || 0, contactName: r.contact_name,
+    email: r.email, phone: r.phone, website: r.website, logoUrl: r.logo_url,
+    notes: r.notes, active: r.active !== false, createdAt: r.created_at,
+  })) as Partner[];
+}
+
+export async function upsertPartner(p: Partner): Promise<boolean> {
+  const { error } = await supabase.from("partners").upsert({
+    id: p.id, name: p.name, type: p.type, tier: p.tier, region: p.region,
+    contribution: p.contribution, contact_name: p.contactName, email: p.email,
+    phone: p.phone || "", website: p.website || "", logo_url: p.logoUrl || "",
+    notes: p.notes || "", active: p.active, updated_at: new Date().toISOString(),
+  }, { onConflict: "id" });
+  if (error) { console.error("upsertPartner error:", error.message); return false; }
+  return true;
+}
+
+export async function deletePartner(id: string): Promise<void> {
+  const { error } = await supabase.from("partners").delete().eq("id", id);
+  if (error) console.error("deletePartner error:", error.message);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STORIES & VIDEOS
+// ═══════════════════════════════════════════════════════════════
+export async function fetchStories(): Promise<Story[]> {
+  const { data, error } = await supabase.from("stories").select("*").order("sort_order", { ascending: true });
+  if (error) { console.error("fetchStories error:", error.message); return []; }
+  return (data || []).map((r) => ({
+    id: r.id, title: r.title, description: r.description, quote: r.quote,
+    type: r.type, dogName: r.dog_name, category: r.category,
+    thumbnail: r.thumbnail, videoSrc: r.video_src, duration: r.duration,
+    published: r.published !== false, featured: !!r.featured,
+    sortOrder: r.sort_order, createdAt: r.created_at,
+  })) as Story[];
+}
+
+export async function upsertStory(s: Story): Promise<boolean> {
+  const { error } = await supabase.from("stories").upsert({
+    id: s.id, title: s.title, description: s.description, quote: s.quote || s.description,
+    type: s.type, dog_name: s.dogName || "", category: s.category,
+    thumbnail: s.thumbnail || "", video_src: s.videoSrc || "", duration: s.duration || "",
+    published: s.published, featured: s.featured, sort_order: s.sortOrder ?? 0,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: "id" });
+  if (error) { console.error("upsertStory error:", error.message); return false; }
+  return true;
+}
+
+export async function deleteStory(id: string): Promise<void> {
+  const { error } = await supabase.from("stories").delete().eq("id", id);
+  if (error) console.error("deleteStory error:", error.message);
+}
+
+/** HEAD-check a media URL so admins can spot dead links and remove them. */
+export async function checkMediaAlive(url: string): Promise<boolean> {
+  if (!url) return false;
+  try {
+    const res = await fetch(url, { method: "HEAD", cache: "no-store" });
+    return res.ok;
+  } catch { return false; }
 }
 
 // ═══════════════════════════════════════════════════════════════

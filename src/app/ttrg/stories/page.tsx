@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, Play, X, ChevronDown, PawPrint, ChevronRight, Sparkles, HandHeart, Users } from "lucide-react";
+import { fetchStories } from "@/lib/supabase-store";
 
 const categories = [
   { label: "All Stories", icon: PawPrint, active: true },
@@ -21,7 +22,9 @@ const featuredVideo = {
   category: "Rescue Story",
 };
 
-const videos = [
+// Fallback list — used only until the `stories` table is populated, so the
+// page is never empty. Admin-managed stories replace these once they exist.
+const fallbackVideos = [
   { id: 1, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/testimonial-2.mp4", title: "Tucker's Second Chance", quote: "From neglect to thriving — a training success story.", duration: "2:18", category: "Training Story" },
   { id: 2, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/trefz-family.mp4", title: "A Bond That Heals", quote: "How one family and one dog changed each other forever.", duration: "2:07", category: "Adoption Story" },
   { id: 3, src: "https://tueevdgdqkkrjylxvutp.supabase.co/storage/v1/object/public/ttrg-media/videos/just-the-2-of-us.mp4", title: "Braveheart's New Beginning", quote: "Patience, training, and a second chance at life.", duration: "1:56", category: "Rescue Story" },
@@ -34,6 +37,24 @@ export default function StoriesPage() {
   const [videoModal, setVideoModal] = useState<null | { src: string; title: string; quote: string }>(null);
   const [activeCategory, setActiveCategory] = useState("All Stories");
   const [visibleCount, setVisibleCount] = useState(3);
+  const [videos, setVideos] = useState(fallbackVideos);
+
+  // Stories managed in the admin panel are the source of truth.
+  useEffect(() => {
+    fetchStories().then(rows => {
+      const live = rows.filter(s => s.published && s.videoSrc);
+      if (live.length > 0) {
+        setVideos(live.map((s, i) => ({
+          id: i + 1,
+          src: s.videoSrc!,
+          title: s.title,
+          quote: s.quote || s.description,
+          duration: s.duration || "",
+          category: s.category,
+        })));
+      }
+    });
+  }, []);
 
   return (
     <div className="bg-white">
