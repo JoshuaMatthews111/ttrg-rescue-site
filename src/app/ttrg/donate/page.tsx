@@ -103,6 +103,9 @@ function DonateInner() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    // The browser's `required` accepts a single space, so check for real names.
+    if (!firstName.trim()) { setError("Please enter your first name."); return; }
+    if (!lastName.trim()) { setError("Please enter your last name."); return; }
     if (finalAmount < 1) { setError("Please select or enter a donation amount."); return; }
 
     // Format expiry from MM/YY to MMYY
@@ -253,8 +256,8 @@ function DonateInner() {
           <form ref={formRef} className="space-y-4" onSubmit={handleSubmit}>
             {/* Personal Info */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <input type="text" placeholder="First Name" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputCls} />
-              <input type="text" placeholder="Last Name" required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputCls} />
+              <input type="text" placeholder="First Name *" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className={inputCls} />
+              <input type="text" placeholder="Last Name *" required value={lastName} onChange={(e) => setLastName(e.target.value)} className={inputCls} />
             </div>
             <input type="email" placeholder="Email Address" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
             <input type="tel" placeholder="Phone *" required value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} />
