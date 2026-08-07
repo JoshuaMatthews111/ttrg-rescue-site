@@ -677,7 +677,7 @@ export default function TTRGHome() {
               <X className="w-8 h-8" />
             </button>
             <div className="rounded-2xl overflow-hidden shadow-2xl bg-black">
-              <video controls autoPlay className="w-full aspect-video">
+              <video controls autoPlay playsInline className="w-full aspect-video">
                 <source src="/ttrg/video/bo-brady-web.mp4" type="video/mp4" />
               </video>
               <div className="p-5 bg-[#1B2A4A]">

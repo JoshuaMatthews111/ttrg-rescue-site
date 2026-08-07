@@ -32,11 +32,16 @@ export function getVideoEmbedUrl(url: string | undefined | null): string | null 
   return null; // direct file (mp4/mov/webm…) — play with a <video> tag
 }
 
-/** Add each host's autoplay+mute parameters so embeds start on page load. */
+/**
+ * Add each host's autoplay parameters so embeds start on page load.
+ * Autoplay is only permitted while muted, so we start muted and switch the
+ * sound on at the first visitor interaction (see CampaignVideo) — for that
+ * we need the player APIs enabled.
+ */
 export function withEmbedAutoplay(embedUrl: string): string {
   const join = embedUrl.includes("?") ? "&" : "?";
-  if (embedUrl.includes("youtube.com/embed/")) return `${embedUrl}${join}autoplay=1&mute=1&playsinline=1&rel=0`;
-  if (embedUrl.includes("player.vimeo.com")) return `${embedUrl}${join}autoplay=1&muted=1&playsinline=1`;
+  if (embedUrl.includes("youtube.com/embed/")) return `${embedUrl}${join}autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1`;
+  if (embedUrl.includes("player.vimeo.com")) return `${embedUrl}${join}autoplay=1&muted=1&playsinline=1&api=1`;
   if (embedUrl.includes("loom.com/embed/")) return `${embedUrl}${join}autoplay=1&muted=true`;
   if (embedUrl.includes("streamable.com/e/")) return `${embedUrl}${join}autoplay=1&muted=1`;
   // Google Drive's /preview player ignores autoplay params but still embeds.
