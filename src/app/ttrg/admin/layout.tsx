@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Dog, FileText, Heart, BookOpen, Users, Building2, Settings,
   Bell, ChevronRight, Menu, X, LogOut, Shield, GraduationCap,
-  Activity, ChevronDown, Image as ImageIcon, Megaphone, Paintbrush, HeartHandshake,
+  Activity, ChevronDown, Image as ImageIcon, Megaphone, Paintbrush, HeartHandshake, Send,
 } from "lucide-react";
 import { getSession, clearSession } from "@/lib/admin-store";
 
@@ -19,6 +19,7 @@ const navByRole: Record<Role, { label: string; href: string; icon: typeof Layout
     { label: "Family Profiles", href: "/ttrg/admin/family-profiles", icon: HeartHandshake },
     { label: "Applications", href: "/ttrg/admin/applications", icon: FileText },
     { label: "Donations", href: "/ttrg/admin/donations", icon: Heart },
+    { label: "Communications", href: "/ttrg/admin/communications", icon: Send },
     { label: "Stories & Videos", href: "/ttrg/admin/media", icon: BookOpen },
     { label: "Partners", href: "/ttrg/admin/partners", icon: Building2 },
     { label: "Ticker / Banner", href: "/ttrg/admin/ticker", icon: Megaphone },
@@ -32,6 +33,7 @@ const navByRole: Record<Role, { label: string; href: string; icon: typeof Layout
     { label: "Dogs", href: "/ttrg/admin/dogs", icon: Dog },
     { label: "Family Profiles", href: "/ttrg/admin/family-profiles", icon: HeartHandshake },
     { label: "Applications", href: "/ttrg/admin/applications", icon: FileText },
+    { label: "Communications", href: "/ttrg/admin/communications", icon: Send },
     { label: "Stories & Videos", href: "/ttrg/admin/media", icon: BookOpen },
     { label: "Partners", href: "/ttrg/admin/partners", icon: Building2 },
     { label: "Ticker / Banner", href: "/ttrg/admin/ticker", icon: Megaphone },

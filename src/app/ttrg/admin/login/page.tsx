@@ -18,6 +18,17 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
 
+    // Establish the server-side session cookie too. The Message Center's API
+    // verifies this cookie before it will send anything, so a localStorage
+    // flag alone can never trigger a real campaign.
+    try {
+      await fetch("/api/ttrg/admin-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+    } catch { /* the screens below still work; only sending needs the cookie */ }
+
     // Try Supabase auth first (uses email + password_hash)
     const sbResult = await authenticateUser(username, password);
     if (sbResult) {
