@@ -18,10 +18,46 @@ CREATE TABLE IF NOT EXISTS contacts (
   sms_consent   BOOLEAN DEFAULT false,     -- REQUIRED before any text
   email_bounced BOOLEAN DEFAULT false,     -- set by the Resend webhook
   status        TEXT DEFAULT 'active',
-  source        TEXT DEFAULT '',
+
+  -- ─── Where this person came from ───────────────────────────────────────
+  source        TEXT DEFAULT '',           -- short code, e.g. lorenzo-text
+  utm_source    TEXT DEFAULT '',
+  utm_medium    TEXT DEFAULT '',
+  utm_campaign  TEXT DEFAULT '',
+  utm_content   TEXT DEFAULT '',
+  referrer      TEXT DEFAULT '',
+  landing_page  TEXT DEFAULT '',
+
+  -- ─── Proof of consent (what TCPA / CAN-SPAM ask you to be able to show) ─
+  -- Keep these forever: if a carrier or regulator ever asks "prove this
+  -- person agreed", this row is the answer.
+  consent_text     TEXT DEFAULT '',        -- the exact wording they agreed to
+  consent_ip       TEXT DEFAULT '',
+  consent_agent    TEXT DEFAULT '',
+  email_consent_at TIMESTAMPTZ,
+  sms_consent_at   TIMESTAMPTZ,
+  signed_up_at     TIMESTAMPTZ,
+
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS contacts_source_idx ON contacts (source);
+
+-- Every visit to the opt-in page, whether or not they signed up — this is how
+-- the portal can show "247 people opened Lorenzo's link, 38 joined".
+CREATE TABLE IF NOT EXISTS signup_visits (
+  id           BIGSERIAL PRIMARY KEY,
+  source       TEXT DEFAULT '',
+  utm_source   TEXT DEFAULT '',
+  utm_medium   TEXT DEFAULT '',
+  utm_campaign TEXT DEFAULT '',
+  referrer     TEXT DEFAULT '',
+  converted    BOOLEAN DEFAULT false,      -- flipped true when they submit
+  visit_id     TEXT,                       -- ties the visit to the signup
+  created_at   TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS signup_visits_source_idx ON signup_visits (source);
+CREATE INDEX IF NOT EXISTS signup_visits_visit_idx  ON signup_visits (visit_id);
 CREATE INDEX IF NOT EXISTS contacts_email_idx ON contacts (lower(email));
 CREATE INDEX IF NOT EXISTS contacts_phone_idx ON contacts (phone);
 CREATE INDEX IF NOT EXISTS contacts_email_ready_idx ON contacts (id) WHERE email_consent AND email IS NOT NULL;
@@ -81,6 +117,7 @@ CREATE TABLE IF NOT EXISTS comm_templates (
 
 -- ─── RLS: the app writes with the service role; keep anon out ─────────────
 ALTER TABLE contacts            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE signup_visits       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE message_log         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comm_webhook_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comm_settings       ENABLE ROW LEVEL SECURITY;

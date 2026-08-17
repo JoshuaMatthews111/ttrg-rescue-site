@@ -11,12 +11,15 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Mail, MessageSquare, Send, Check, ChevronRight, ChevronLeft, Loader2,
-  Users, AlertTriangle, Copy, Settings as SettingsIcon, Plus, Trash2, Eye,
+  Users, AlertTriangle, Copy, Settings as SettingsIcon, Plus, Trash2, Eye, TrendingUp,
 } from "lucide-react";
 import { personalise, smsSegments, linkIsLast, greetingName } from "@/lib/messaging";
 
 type Channel = "email" | "sms" | "both";
-type Tab = "compose" | "setup";
+type Tab = "compose" | "sources" | "setup";
+
+interface SourceRow { source: string; signups: number; email: number; sms: number; visits: number; conversion: number | null }
+interface RecentRow { name: string; email?: string | null; phone?: string | null; place: string; source: string; campaign: string; emailConsent: boolean; smsConsent: boolean; at: string }
 
 interface Template {
   id: string; name: string; audience: string; subject: string; headline: string;
@@ -144,6 +147,7 @@ export default function CommunicationsPage() {
         </div>
         <div className="flex rounded-lg overflow-hidden border border-white/10">
           <button onClick={() => setTab("compose")} className={`px-4 py-2 text-xs font-bold ${tab === "compose" ? "bg-[#C41E2A] text-white" : "text-white/60 hover:bg-white/5"}`}>Compose</button>
+          <button onClick={() => setTab("sources")} className={`px-4 py-2 text-xs font-bold flex items-center gap-1.5 ${tab === "sources" ? "bg-[#C41E2A] text-white" : "text-white/60 hover:bg-white/5"}`}><TrendingUp className="w-3.5 h-3.5" /> Sign-ups</button>
           <button onClick={() => setTab("setup")} className={`px-4 py-2 text-xs font-bold flex items-center gap-1.5 ${tab === "setup" ? "bg-[#C41E2A] text-white" : "text-white/60 hover:bg-white/5"}`}><SettingsIcon className="w-3.5 h-3.5" /> Setup</button>
         </div>
       </div>
@@ -154,7 +158,9 @@ export default function CommunicationsPage() {
         </div>
       )}
 
-      {tab === "setup" ? (
+      {tab === "sources" ? (
+        <SourcesPanel webhookBase={webhookBase} />
+      ) : tab === "setup" ? (
         <SetupPanel counts={counts} webhookBase={webhookBase} testers={testers} setTesters={setTesters} inp={inp} label={label} onSaved={load} />
       ) : (
       <>
@@ -410,6 +416,123 @@ export default function CommunicationsPage() {
         </div>
       </>
       )}
+    </div>
+  );
+}
+
+// ─── Sign-ups & traffic sources ─────────────────────────────────────────────
+function SourcesPanel({ webhookBase }: { webhookBase: string }) {
+  const [data, setData] = useState<{ sources: SourceRow[]; recent: RecentRow[]; totals: { signups: number; visits: number; conversion: number | null } } | null>(null);
+  const [err, setErr] = useState("");
+  const [copied, setCopied] = useState("");
+
+  useEffect(() => {
+    fetch("/api/ttrg/sources")
+      .then(r => r.json())
+      .then(d => d.ok ? setData(d) : setErr(d.error || "Could not load sign-ups."))
+      .catch(() => setErr("Could not reach the server."));
+  }, []);
+
+  const links = [
+    { label: "Lorenzo's text", code: "lorenzo-text" },
+    { label: "TTRG text", code: "ttrg-text" },
+    { label: "Instagram bio", code: "instagram" },
+    { label: "Facebook post", code: "facebook" },
+    { label: "QR code / flyer", code: "flyer" },
+  ];
+  function copy(url: string, key: string) {
+    navigator.clipboard.writeText(url).then(() => { setCopied(key); setTimeout(() => setCopied(""), 1500); });
+  }
+
+  return (
+    <div className="space-y-5">
+      {err && <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-amber-200 text-xs">{err}</div>}
+
+      {/* Totals */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Link opens", value: data?.totals.visits ?? "—" },
+          { label: "Joined", value: data?.totals.signups ?? "—" },
+          { label: "Conversion", value: data?.totals.conversion != null ? `${data.totals.conversion}%` : "—" },
+        ].map(c => (
+          <div key={c.label} className="bg-[#0f1b30] border border-white/5 rounded-2xl p-4">
+            <p className="text-[10px] font-bold text-white/50 uppercase tracking-wider mb-1">{c.label}</p>
+            <p className="text-2xl font-black text-white">{typeof c.value === "number" ? c.value.toLocaleString() : c.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Trackable links */}
+      <div className="bg-[#0f1b30] border border-white/5 rounded-2xl p-5">
+        <p className="text-sm font-bold text-white mb-1">Your trackable links</p>
+        <p className="text-white/40 text-xs mb-4">Use a different link in each place. Whoever signs up is tagged with where they came from.</p>
+        <div className="space-y-2">
+          {links.map(l => {
+            const url = `${webhookBase}/ttrg/join?src=${l.code}`;
+            return (
+              <div key={l.code} className="flex items-center gap-2">
+                <span className="text-[11px] text-white/50 w-32 flex-shrink-0">{l.label}</span>
+                <input readOnly value={url} className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-[#0b1524] border border-white/10 text-white/70 font-mono text-[11px]" />
+                <button onClick={() => copy(url, l.code)} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white flex-shrink-0">
+                  {copied === l.code ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-[11px] text-white/30 mt-3">
+          Add <code className="text-white/50">&amp;c=jan2026</code> to any link to tag a specific campaign.
+        </p>
+      </div>
+
+      {/* Per-source table */}
+      <div className="bg-[#0f1b30] border border-white/5 rounded-2xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-white/5">
+          <h2 className="text-sm font-bold text-white">WHERE PEOPLE CAME FROM</h2>
+        </div>
+        {!data ? (
+          <p className="p-8 text-center text-white/40 text-sm">Loading…</p>
+        ) : data.sources.length === 0 ? (
+          <p className="p-8 text-center text-white/40 text-sm">No sign-ups yet. Share one of the links above.</p>
+        ) : (
+          <>
+            <div className="hidden md:grid md:grid-cols-12 gap-3 px-5 py-3 border-b border-white/5 text-[10px] font-bold text-white/40 uppercase tracking-wider">
+              <div className="col-span-4">Source</div><div className="col-span-2">Opens</div>
+              <div className="col-span-2">Joined</div><div className="col-span-2">Conversion</div>
+              <div className="col-span-2">Permission</div>
+            </div>
+            {data.sources.map(s => (
+              <div key={s.source} className="grid grid-cols-1 md:grid-cols-12 gap-3 px-5 py-3 border-b border-white/5 items-center">
+                <div className="col-span-4 text-white text-sm font-bold">{s.source}</div>
+                <div className="col-span-2 text-white/60 text-sm">{s.visits.toLocaleString()}</div>
+                <div className="col-span-2 text-emerald-400 text-sm font-bold">{s.signups.toLocaleString()}</div>
+                <div className="col-span-2 text-white/60 text-sm">{s.conversion != null ? `${s.conversion}%` : "—"}</div>
+                <div className="col-span-2 text-[11px] text-white/50">{s.email} email · {s.sms} text</div>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      {/* Recent signups */}
+      <div className="bg-[#0f1b30] border border-white/5 rounded-2xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-white/5">
+          <h2 className="text-sm font-bold text-white">NEWEST SUPPORTERS</h2>
+        </div>
+        {!data || data.recent.length === 0 ? (
+          <p className="p-8 text-center text-white/40 text-sm">Nobody has joined through a link yet.</p>
+        ) : data.recent.map((r, i) => (
+          <div key={i} className="px-5 py-3 border-b border-white/5 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span className="text-white text-sm font-bold">{r.name}</span>
+            <span className="text-white/40 text-xs">{r.email || r.phone}</span>
+            {r.place && <span className="text-white/30 text-xs">{r.place}</span>}
+            <span className="text-[10px] bg-white/10 text-white/60 px-2 py-0.5 rounded-full">{r.source}</span>
+            {r.emailConsent && <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full">email ok</span>}
+            {r.smsConsent && <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">text ok</span>}
+            <span className="text-white/25 text-[10px] ml-auto">{new Date(r.at).toLocaleDateString()}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
