@@ -21,8 +21,13 @@ async function findProfile(slug: string): Promise<FamilyProfile | undefined> {
     const res = await fetch(`${familyProfilesCloudUrl()}?t=${Date.now()}`, { cache: "no-store" });
     if (res.ok) {
       const profiles = (await res.json()) as FamilyProfile[];
-      const match = Array.isArray(profiles) ? profiles.find(p => p.slug === slug) : undefined;
-      if (match) return match;
+      if (Array.isArray(profiles)) {
+        // Match the current slug, or an older one that has since been
+        // corrected — links already sent by text must still preview properly.
+        const match = profiles.find(p => p.slug === slug)
+          ?? profiles.find(p => (p.slugAliases || []).includes(slug));
+        if (match) return match;
+      }
     }
   } catch { /* storage unreachable — fall back to bundled demo data */ }
   return getFamilyProfileBySlug(slug);

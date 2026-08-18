@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   HeartHandshake, Heart, ArrowLeft, MapPin, Users, AlertTriangle,
@@ -30,6 +31,7 @@ function effectiveStage(p: FamilyProfile): number {
 
 export default function FamilyProfileDetail({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
+  const router = useRouter();
   const [profile, setProfile] = useState<FamilyProfile | null>(null);
   const [otherProfiles, setOtherProfiles] = useState<FamilyProfile[]>([]);
   const [donateAmount, setDonateAmount] = useState<number | null>(50);
@@ -39,13 +41,20 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
   useEffect(() => {
     let active = true;
     const load = () => {
-      setProfile(getFamilyProfileBySlug(slug) || null);
+      const found = getFamilyProfileBySlug(slug) || null;
+      setProfile(found);
+      // Arrived on an older link (a slug that has since been corrected)?
+      // Swap the address bar to the current one — the old link keeps working,
+      // which matters because links have already gone out by text.
+      if (found && found.slug !== slug) {
+        router.replace(`/ttrg/make-training-affordable/${found.slug}`);
+      }
       setOtherProfiles(getPublishedFamilyProfiles().filter(x => x.slug !== slug).slice(0, 4));
     };
     load(); // instant paint from local cache
     syncFamilyProfilesFromCloud().then(() => { if (active) load(); });
     return () => { active = false; };
-  }, [slug]);
+  }, [slug, router]);
 
   if (!profile) {
     return (

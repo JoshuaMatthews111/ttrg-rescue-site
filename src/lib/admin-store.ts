@@ -566,6 +566,9 @@ export interface FamilyProfile {
   shareTitle?: string;
   /** Optional custom thumbnail for link previews — overrides the cover image. */
   shareImage?: string;
+  /** Older slugs this campaign used to live at. Links already sent out in
+   *  texts must keep working, so lookups match these too. */
+  slugAliases?: string[];
   behaviorIssues: string;
   trainingNeeded: string;
   goalAmount: number;
@@ -677,7 +680,10 @@ export function getPublishedFamilyProfiles(): FamilyProfile[] {
 }
 
 export function getFamilyProfileBySlug(slug: string): FamilyProfile | undefined {
-  return getFamilyProfiles().find(p => p.slug === slug);
+  const all = getFamilyProfiles();
+  return all.find(p => p.slug === slug)
+      // A link that went out before the slug was corrected must still land.
+      ?? all.find(p => (p.slugAliases || []).includes(slug));
 }
 
 export function upsertFamilyProfile(profile: FamilyProfile) {
