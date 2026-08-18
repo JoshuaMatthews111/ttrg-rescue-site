@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, Eye, EyeOff, AlertCircle } from "lucide-react";
-import { authenticate, setSession, authenticateUser } from "@/lib/admin-store";
+import { setSession } from "@/lib/admin-store";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -18,33 +18,25 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
 
-    // Establish the server-side session cookie too. The Message Center's API
-    // verifies this cookie before it will send anything, so a localStorage
-    // flag alone can never trigger a real campaign.
+    // Authentication happens entirely on the server: it uses the service-role
+    // key to check the credential and sets a signed httpOnly cookie. The
+    // browser never reads the staff table, so passwords are never exposed.
     try {
-      await fetch("/api/ttrg/admin-session", {
+      const res = await fetch("/api/ttrg/admin-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-    } catch { /* the screens below still work; only sending needs the cookie */ }
-
-    // Try Supabase auth first (uses email + password_hash)
-    const sbResult = await authenticateUser(username, password);
-    if (sbResult) {
-      setSession(sbResult.name, sbResult.role);
-      router.push("/ttrg/admin");
-      setLoading(false);
-      return;
-    }
-
-    // Fallback to demo auth
-    const result = authenticate(username, password);
-    if (result) {
-      setSession(result.name, result.role);
-      router.push("/ttrg/admin");
-    } else {
-      setError("Invalid username or password.");
+      const data = await res.json();
+      if (data.ok) {
+        setSession(data.name, data.role);
+        router.push("/ttrg/admin");
+        setLoading(false);
+        return;
+      }
+      setError(data.error || "Invalid username or password.");
+    } catch {
+      setError("Could not reach the server. Please try again.");
     }
     setLoading(false);
   };
@@ -77,7 +69,7 @@ export default function AdminLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1.5">Username</label>
+              <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1.5">Email</label>
               <input
                 type="text"
                 value={username}
@@ -85,7 +77,7 @@ export default function AdminLoginPage() {
                 required
                 autoFocus
                 className="w-full h-12 px-4 rounded-xl border border-slate-200 text-sm text-[#1B2A4A] focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20 focus:border-[#C41E2A]/40"
-                placeholder="Enter username"
+                placeholder="you@lorenzosdogtrainingteam.com"
               />
             </div>
             <div>

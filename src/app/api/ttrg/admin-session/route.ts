@@ -18,20 +18,25 @@ export async function POST(req: NextRequest) {
   let name = "";
   let role = "";
 
-  // 1) Real users in Supabase.
+  // 1) Staff accounts. Passwords are stored as a SHA-256 hash; the plaintext
+  //    comparison is a fallback for any legacy row that predates hashing.
   try {
     const supabase = getServiceSupabase();
+    const crypto = await import("crypto");
+    const hash = crypto.createHash("sha256").update(password).digest("hex");
     const { data } = await supabase
       .from("admin_users")
-      .select("name, role, email, password_hash")
-      .or(`email.eq.${username},name.eq.${username}`)
+      .select("name, role, email, password_hash, status")
+      .ilike("email", String(username).trim())
       .limit(1);
     const user = data?.[0];
-    if (user?.password_hash) {
-      const crypto = await import("crypto");
-      const hash = crypto.createHash("sha256").update(password).digest("hex");
-      if (hash === user.password_hash || password === user.password_hash) {
-        name = user.name; role = user.role;
+    if (user && user.status !== "disabled" && user.password_hash) {
+      if (user.password_hash === hash || user.password_hash === password) {
+        name = user.name || user.email;
+        role = user.role;
+        await supabase.from("admin_users")
+          .update({ last_login: new Date().toISOString() })
+          .ilike("email", String(username).trim());
       }
     }
   } catch { /* fall through to the shared credential */ }
