@@ -65,6 +65,8 @@ export interface AdminDog {
   dogStatus?: DogStatusOption;
 
   price: number;
+  /** Fundraising target for this dog. Blank = use the site-wide default. */
+  goalAmount?: number;
   story: string;
   fullStory: string;
   rescueStory?: string; // The emotional journey story

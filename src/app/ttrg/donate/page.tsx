@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
@@ -10,6 +10,8 @@ import {
   Building2, ArrowRight, DollarSign, CreditCard, Lock, Loader2, XCircle,
 } from "lucide-react";
 import { addDonation } from "@/lib/admin-store";
+import GoalProgress from "@/components/ttrg/GoalProgress";
+import Confetti from "@/components/ttrg/Confetti";
 
 const donationOptions = [
   { amount: 25, label: "Feed a Rescue", desc: "Provides nutritious meals for one dog for a week", icon: PawPrint },
@@ -93,6 +95,14 @@ function DonateInner() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<{ message: string; transactionId?: string; subscriptionId?: string } | null>(null);
+  // Where the bar stood BEFORE this gift, so the thank-you can animate the
+  // donor's own contribution rather than sliding up from zero.
+  const [percentBefore, setPercentBefore] = useState(0);
+
+  useEffect(() => {
+    const url = dogName ? `/api/ttrg/progress?dog=${encodeURIComponent(dogName)}` : "/api/ttrg/progress";
+    fetch(url).then(r => r.json()).then(d => { if (d.ok) setPercentBefore(d.percent); }).catch(() => {});
+  }, [dogName]);
 
   const finalAmount = custom ? parseFloat(custom) : selected || 0;
 
@@ -168,11 +178,22 @@ function DonateInner() {
   if (success) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
+        <Confetti />
         <div className="text-center max-w-md px-4">
           <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-10 h-10 text-emerald-600" />
           </div>
-          <h1 className="text-3xl font-bold text-[#1B2A4A] mb-3">Thank You!</h1>
+          <h1 className="text-3xl font-bold text-[#1B2A4A] mb-3">Thank You{firstName ? `, ${firstName}` : ""}!</h1>
+          <p className="text-[#1B2A4A]/70 mb-6 text-lg font-medium">
+            Your ${finalAmount.toFixed(0)}{donationType === "monthly" ? "/month" : ""} just moved{dogName ? ` ${dogName}` : " us"} closer to our goal.
+          </p>
+
+          {/* The bar climbs from where it stood a moment ago to where this
+              gift has just pushed it. */}
+          <div className="bg-white border border-slate-100 rounded-2xl p-5 mb-6 shadow-sm text-left">
+            <GoalProgress dog={dogName || undefined} animateFrom={percentBefore} />
+          </div>
+
           <p className="text-[#1B2A4A]/60 mb-4">{success.message}</p>
           {success.transactionId && <p className="text-sm text-[#1B2A4A]/40 mb-2">Transaction ID: <span className="font-mono font-bold">{success.transactionId}</span></p>}
           {success.subscriptionId && <p className="text-sm text-[#1B2A4A]/40 mb-2">Subscription ID: <span className="font-mono font-bold">{success.subscriptionId}</span></p>}

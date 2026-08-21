@@ -12,6 +12,7 @@ import { getDogById, donationTiers, journeyStages, type Dog } from "@/lib/dogs";
 import { shareSubject, dogStageTitle } from "@/lib/share-messages";
 import { getVideoEmbedUrl, getDirectVideoUrl } from "@/lib/video-embed";
 import MediaShowcase from "@/components/ttrg/MediaShowcase";
+import GoalProgress from "@/components/ttrg/GoalProgress";
 import { fetchShareOverrides, type ShareOverride } from "@/lib/share-overrides";
 import { fetchDogById, subscribeToTable } from "@/lib/admin-store";
 import {
@@ -296,6 +297,12 @@ export default function DogProfilePage({ params }: { params: Promise<{ id: strin
                   <Film className="w-4 h-4" /> Watch {dog.name}&apos;s Video Full Screen
                 </button>
               )}
+
+              {/* Progress toward this dog's goal — percentage only; the
+                  dollar target is never sent to the browser. */}
+              <div className="bg-[#FAFAF8] border border-slate-100 rounded-2xl p-4 mb-5">
+                <GoalProgress dog={dog.name} />
+              </div>
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">

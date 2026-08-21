@@ -39,6 +39,7 @@ export default function AdminDogsPage() {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [shareOverride, setShareOverride] = useState<{ title: string; image: string }>({ title: "", image: "" });
+  const [goalInfo, setGoalInfo] = useState<{ goal: number; raised: number; percent: number; defaultGoal: number; usesDefault: boolean } | null>(null);
 
   const loadDogs = useCallback(async () => {
     const data = await fetchDogs();
@@ -66,6 +67,9 @@ export default function AdminDogsPage() {
     setEditDog({ ...dog, gallery: dog.gallery || [] });
     setShareOverride({ title: "", image: "" });
     fetchShareOverrides().then(map => { const o = map[dog.id]; if (o) setShareOverride({ title: o.title || "", image: o.image || "" }); });
+    setGoalInfo(null);
+    fetch(`/api/ttrg/goal?dog=${encodeURIComponent(dog.name)}`)
+      .then(r => r.json()).then(d => { if (d.ok) setGoalInfo(d); }).catch(() => {});
     setShowModal(true);
   };
 
@@ -830,6 +834,42 @@ export default function AdminDogsPage() {
 
               {/* ── Share Settings ── */}
               <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+              {/* ── Fundraising goal ── */}
+              <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-black text-[#1B2A4A]/60 uppercase">Fundraising Goal — staff only, donors never see the dollar figure</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Goal for {editDog.name || "this dog"} ($)</label>
+                    <input
+                      type="number"
+                      value={editDog.goalAmount ?? ""}
+                      onChange={(e) => setEditDog({ ...editDog, goalAmount: e.target.value === "" ? undefined : Number(e.target.value) })}
+                      placeholder={goalInfo ? String(goalInfo.defaultGoal) : "50000"}
+                      className="w-full h-9 px-3 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/20"
+                    />
+                    <p className="text-[10px] text-[#1B2A4A]/40 mt-1">
+                      Leave blank to use the site goal{goalInfo ? ` ($${goalInfo.defaultGoal.toLocaleString()})` : ""}.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Progress right now</label>
+                    {goalInfo ? (
+                      <>
+                        <p className="text-2xl font-black text-[#C41E2A] leading-tight">{goalInfo.percent}%</p>
+                        <p className="text-[10px] text-[#1B2A4A]/50">
+                          ${goalInfo.raised.toLocaleString()} raised of ${goalInfo.goal.toLocaleString()}
+                          {goalInfo.usesDefault ? " (site goal)" : " (this dog's goal)"}
+                        </p>
+                      </>
+                    ) : <p className="text-xs text-[#1B2A4A]/30">Loading…</p>}
+                  </div>
+                </div>
+                <p className="text-[10px] text-[#1B2A4A]/40">
+                  The percentage is worked out automatically from real donations — you never have to
+                  calculate it. Voided and refunded gifts drop out on their own.
+                </p>
+              </div>
+
                 <p className="text-xs font-black text-[#1B2A4A]/60 uppercase">Share Settings — how this campaign looks in texts &amp; social media</p>
                 <div>
                   <label className="block text-xs font-semibold text-[#1B2A4A]/60 mb-1">Share Title (optional)</label>
