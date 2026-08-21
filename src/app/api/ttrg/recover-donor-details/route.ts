@@ -62,13 +62,14 @@ export async function POST(req: NextRequest) {
   const supabase = getServiceSupabase();
   const { data: rows, error } = await supabase
     .from("donations")
-    .select("id, name, address, phone, transaction_id");
+    .select("id, name, email, address, phone, last4, dog_name, transaction_id");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const results = { checked: 0, recovered: 0, alreadyHadDetails: 0, noDataAtGateway: 0, lookupFailed: 0 };
 
   for (const row of rows || []) {
-    if (row.address || row.phone) { results.alreadyHadDetails++; continue; }
+    const isPlaceholder = row.name === "Authorize.net donor" || !row.name;
+    if (!isPlaceholder && (row.address || row.phone)) { results.alreadyHadDetails++; continue; }
 
     // Authorize.net transaction IDs are numeric; our own generated ids
     // (e.g. "don-1783705923867") were never real gateway transactions.
@@ -81,6 +82,27 @@ export async function POST(req: NextRequest) {
     if (!xml || xml.includes("<resultCode>Error</resultCode>")) { results.lookupFailed++; continue; }
 
     const update: Record<string, string> = {};
+    // The gateway kept everything the webhook clobbered: billTo name,
+    // customer email, card number, and the order description that names
+    // the dog / referral / trainer.
+    if (isPlaceholder) {
+      const first = tag(xml, "firstName");
+      const last = tag(xml, "lastName");
+      const fullName = [first, last].filter(Boolean).join(" ");
+      if (fullName) update.name = fullName;
+      const email = tag(xml, "email");
+      if (email && !row.email) update.email = email;
+      const card = tag(xml, "cardNumber");
+      const last4 = card.replace(/[^0-9]/g, "").slice(-4);
+      if (last4 && !row.last4) update.last4 = last4;
+      const desc = tag(xml, "description");
+      const dogMatch = desc.match(/TTRG Donation for ([^|]+)/);
+      if (dogMatch && !row.dog_name) update.dog_name = dogMatch[1].trim();
+      const refMatch = desc.match(/Referred by: ([^|]+)/);
+      if (refMatch) update.referral_source = refMatch[1].trim();
+      const trainerMatch = desc.match(/Trainer: ([^|]+)/);
+      if (trainerMatch) update.trainer_name = trainerMatch[1].trim();
+    }
     const address = tag(xml, "address");
     const city = tag(xml, "city");
     const state = tag(xml, "state");

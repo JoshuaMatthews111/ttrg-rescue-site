@@ -70,18 +70,28 @@ export async function POST(req: NextRequest) {
       const amount = Number(payload?.authAmount ?? payload?.amount ?? 0);
       const transId = String(payload?.id ?? payload?.transId ?? "");
       if (transId && amount > 0 && type.includes("authcapture")) {
-        // Upsert so a retried delivery can't create duplicate donations.
-        await supabase.from("donations").upsert({
-          id: transId,
-          name: [payload?.billTo?.firstName, payload?.billTo?.lastName].filter(Boolean).join(" ") || "Authorize.net donor",
-          email: payload?.customer?.email || "",
-          amount,
-          frequency: type.includes("subscription") ? "monthly" : "one-time",
-          dog_name: "",
-          date: new Date().toISOString(),
-          status: "completed",
-          last4: String(payload?.accountNumber || "").replace(/[^0-9]/g, "").slice(-4),
-        }, { onConflict: "id" });
+        // The donate page saves the full record (name, email, dog, referral)
+        // the moment the charge succeeds. Webhook payloads carry almost none
+        // of that, so an upsert here would REPLACE the donor's details with
+        // "Authorize.net donor" — which is exactly the bug that hit the
+        // 2026-08-21 test donations. Insert ONLY when no row exists yet
+        // (recurring subscription charges have no client-side insert), and
+        // never touch a row that is already there.
+        const { data: existing } = await supabase
+          .from("donations").select("id").eq("id", transId).limit(1);
+        if (!existing || existing.length === 0) {
+          await supabase.from("donations").insert({
+            id: transId,
+            name: [payload?.billTo?.firstName, payload?.billTo?.lastName].filter(Boolean).join(" ") || "Authorize.net donor",
+            email: payload?.customer?.email || "",
+            amount,
+            frequency: type.includes("subscription") ? "monthly" : "one-time",
+            dog_name: "",
+            date: new Date().toISOString(),
+            status: "completed",
+            last4: String(payload?.accountNumber || "").replace(/[^0-9]/g, "").slice(-4),
+          });
+        }
       }
     }
   } catch (err) {

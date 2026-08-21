@@ -29,7 +29,7 @@ interface Donation {
   category: string;
   dog?: string;
   date: string;
-  status: "paid" | "pending";
+  status: "paid" | "pending" | "voided" | "refunded";
   receipt: boolean;
   /* full details captured on the giving form */
   phone?: string;
@@ -59,6 +59,29 @@ export default function DonationsPage() {
   const [filter, setFilter] = useState<DonationType | "all">("all");
   const [allDonations, setAllDonations] = useState<Donation[]>([]);
   const [viewing, setViewing] = useState<Donation | null>(null);
+  const [voiding, setVoiding] = useState(false);
+  const [voidMsg, setVoidMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function voidDonation(d: Donation) {
+    if (!confirm(`Void the $${d.amount} donation from ${d.donor}?\n\nIf it hasn't settled yet it is cancelled outright; if it has, the card is refunded. Either way it stops counting in the totals. This cannot be undone.`)) return;
+    setVoiding(true); setVoidMsg(null);
+    try {
+      const res = await fetch("/api/ttrg/void", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ donationId: d.id }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const newStatus = data.action === "refunded" ? "refunded" as const : "voided" as const;
+        setVoidMsg({ ok: true, text: data.message });
+        setAllDonations(prev => prev.map(x => x.id === d.id ? { ...x, status: newStatus } : x));
+        setViewing(prev => prev ? { ...prev, status: newStatus } : prev);
+      } else {
+        setVoidMsg({ ok: false, text: data.error || "Void failed." });
+      }
+    } catch { setVoidMsg({ ok: false, text: "Could not reach the server." }); }
+    setVoiding(false);
+  }
 
   useEffect(() => {
     fetchRealDonations().then((real) => {
@@ -71,7 +94,9 @@ export default function DonationsPage() {
         category: r.dogName ? `Dog Sponsor – ${r.dogName}` : "General Donation",
         dog: r.dogName,
         date: r.date ? r.date.split("T")[0] : "",
-        status: r.status === "completed" ? "paid" as const : "pending" as const,
+        status: (r.status === "voided" || r.status === "refunded")
+          ? (r.status as "voided" | "refunded")
+          : r.status === "completed" ? "paid" as const : "pending" as const,
         receipt: false,
         phone: r.phone, address: r.address, city: r.city, state: r.state, zip: r.zip,
         referralSource: r.referralSource, trainerName: r.trainerName,
@@ -82,9 +107,11 @@ export default function DonationsPage() {
     });
   }, []);
 
-  const totalRaised = allDonations.reduce((sum, d) => sum + d.amount, 0);
-  const monthlyRecurring = allDonations.filter(d => d.type === "monthly").reduce((sum, d) => sum + d.amount, 0);
-  const oneTime = allDonations.filter(d => d.type === "one_time").reduce((sum, d) => sum + d.amount, 0);
+  // Voided and refunded gifts stay visible but never count in the numbers.
+  const liveDonations = allDonations.filter(d => d.status === "paid" || d.status === "pending");
+  const totalRaised = liveDonations.reduce((sum, d) => sum + d.amount, 0);
+  const monthlyRecurring = liveDonations.filter(d => d.type === "monthly").reduce((sum, d) => sum + d.amount, 0);
+  const oneTime = liveDonations.filter(d => d.type === "one_time").reduce((sum, d) => sum + d.amount, 0);
   const summary = [
     { label: "Total Raised", value: `$${totalRaised.toLocaleString()}`, sub: `${allDonations.length} donations`, icon: DollarSign, color: "from-emerald-500 to-emerald-700" },
     { label: "Monthly Recurring", value: `$${monthlyRecurring.toLocaleString()}`, sub: `${allDonations.filter(d => d.type === "monthly").length} active`, icon: Repeat, color: "from-blue-500 to-blue-700" },
@@ -157,8 +184,11 @@ export default function DonationsPage() {
                 <p className="text-white/40 text-[10px] truncate">{d.email}</p>
               </div>
             </div>
-            <div className="col-span-2 flex items-center">
-              <span className="text-emerald-400 text-base font-black">${d.amount.toLocaleString()}</span>
+            <div className="col-span-2 flex items-center gap-2">
+              <span className={`text-base font-black ${d.status === "voided" || d.status === "refunded" ? "text-white/30 line-through" : "text-emerald-400"}`}>${d.amount.toLocaleString()}</span>
+              {(d.status === "voided" || d.status === "refunded") && (
+                <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-white/10 text-white/50">{d.status}</span>
+              )}
             </div>
             <div className="col-span-2 flex items-center">
               <span className={`text-[9px] font-bold px-2 py-1 rounded capitalize ${typeColors[d.type]}`}>{d.type.replace("_", " ")}</span>
@@ -251,9 +281,24 @@ export default function DonationsPage() {
               </p>
             </div>
 
-            <div className="flex justify-end gap-3 p-5 border-t border-white/10">
-              <a href={`mailto:${viewing.email}`} className="px-4 py-2 text-xs font-bold text-white/60 hover:text-white">Email Donor</a>
-              <button onClick={() => setViewing(null)} className="bg-[#C41E2A] hover:bg-[#A01825] text-white text-xs font-bold px-5 py-2 rounded-lg">Close</button>
+            {voidMsg && (
+              <div className={`mx-5 mb-2 rounded-lg px-3 py-2 text-xs ${voidMsg.ok ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}>
+                {voidMsg.text}
+              </div>
+            )}
+            <div className="flex items-center gap-3 p-5 border-t border-white/10">
+              {viewing.status === "voided" || viewing.status === "refunded" ? (
+                <span className="text-xs font-bold uppercase text-white/40">This donation is {viewing.status}</span>
+              ) : (
+                <button onClick={() => voidDonation(viewing)} disabled={voiding}
+                  className="border border-red-500/40 text-red-300 hover:bg-red-500/10 disabled:opacity-50 text-xs font-bold px-4 py-2 rounded-lg">
+                  {voiding ? "Working…" : "Void This Payment"}
+                </button>
+              )}
+              <div className="ml-auto flex gap-3">
+                <a href={`mailto:${viewing.email}`} className="px-4 py-2 text-xs font-bold text-white/60 hover:text-white">Email Donor</a>
+                <button onClick={() => { setViewing(null); setVoidMsg(null); }} className="bg-[#C41E2A] hover:bg-[#A01825] text-white text-xs font-bold px-5 py-2 rounded-lg">Close</button>
+              </div>
             </div>
           </div>
         </div>

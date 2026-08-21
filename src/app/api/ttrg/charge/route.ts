@@ -25,6 +25,8 @@ interface ChargeBody {
   zip?: string;
   donationType: "once" | "monthly";
   dogName?: string;
+  referralSource?: string;
+  trainerName?: string;
   description?: string;
 }
 
@@ -56,9 +58,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Name and email are required." }, { status: 400 });
     }
 
-    const orderDesc = body.dogName
-      ? `TTRG Donation for ${body.dogName}`
-      : body.description || "TTRG Donation";
+    // This description shows on the Authorize.net receipt and in its
+    // transaction records, so carry the details staff reconcile against:
+    // which dog, who referred the donor, and the trainer they named.
+    const descParts = [
+      body.dogName ? `TTRG Donation for ${body.dogName}` : (body.description || "TTRG Donation"),
+      body.referralSource ? `Referred by: ${body.referralSource}` : "",
+      body.trainerName ? `Trainer: ${body.trainerName}` : "",
+    ].filter(Boolean);
+    // Authorize.net caps the description at 255 characters.
+    const orderDesc = descParts.join(" | ").slice(0, 255);
 
     // ─── ONE-TIME CHARGE ───
     if (body.donationType === "once") {

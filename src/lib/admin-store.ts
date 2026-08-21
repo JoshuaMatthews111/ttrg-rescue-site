@@ -404,7 +404,7 @@ export interface Donation {
   frequency: "one-time" | "monthly";
   dogName?: string;
   date: string;
-  status: "completed" | "failed" | "pending";
+  status: "completed" | "failed" | "pending" | "voided" | "refunded";
   last4?: string;
   /* ── full donor details captured on the giving form ── */
   phone?: string;

@@ -371,9 +371,12 @@ export async function insertDonation(donation: Donation): Promise<void> {
     card_type: donation.cardType || "",
     notes: donation.notes || "",
   };
-  const { error } = await supabase.from("donations").insert(detailed);
+  // Upsert, not insert: the Authorize.net webhook can occasionally write its
+  // minimal placeholder row for the same transaction id a moment before this
+  // runs. The donor's full record must always win that race.
+  const { error } = await supabase.from("donations").upsert(detailed, { onConflict: "id" });
   if (!error) return;
-  const { error: fallbackError } = await supabase.from("donations").insert(base);
+  const { error: fallbackError } = await supabase.from("donations").upsert(base, { onConflict: "id" });
   if (fallbackError) console.error("insertDonation error:", fallbackError.message);
   else console.warn("insertDonation: saved without donor details — run supabase-admin-upgrade.sql");
 }
