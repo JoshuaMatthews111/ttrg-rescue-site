@@ -11,6 +11,7 @@ import {
 import { getFamilyProfileBySlug, getPublishedFamilyProfiles, syncFamilyProfilesFromCloud, type FamilyProfile } from "@/lib/admin-store";
 import { shareSubject, familyStageTitle } from "@/lib/share-messages";
 import MediaShowcase from "@/components/ttrg/MediaShowcase";
+import GoalProgress from "@/components/ttrg/GoalProgress";
 
 const FAMILY_STAGES = [
   { title: "Family in Need", description: "A family with limited resources needs help keeping their dog." },
@@ -37,6 +38,9 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
   const [donateAmount, setDonateAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState("");
   const [copied, setCopied] = useState(false);
+  // Live figures, so the page reflects real donations rather than the
+  // hand-typed numbers stored on the campaign record.
+  const [live, setLive] = useState<{ percent: number; donors: number } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -69,9 +73,9 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
     );
   }
 
-  const pct = profile.goalAmount > 0 ? Math.min(100, Math.round((profile.raisedAmount / profile.goalAmount) * 100)) : 0;
+  const pct = live ? Math.round(live.percent) : 0;
+  const donorCount = live ? live.donors : 0;
   const isCompleted = profile.status === "completed";
-  const remaining = Math.max(0, profile.goalAmount - profile.raisedAmount);
   const finalAmount = customAmount ? parseFloat(customAmount) : donateAmount || 0;
 
   async function share() {
@@ -84,7 +88,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
         urgent: p.urgent,
         goalAmount: p.goalAmount,
         raisedAmount: p.raisedAmount,
-        donorCount: p.donorCount,
+        donorCount: live?.donors ?? p.donorCount,
         familyName: p.familyName,
         location: p.location,
         customTitle: p.shareTitle || familyStageTitle(p.dogName, p.familyName, effectiveStage(p)),
@@ -218,17 +222,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
             <div className="bg-white rounded-3xl p-6 border border-slate-100 sticky top-24">
               {/* Progress */}
               <div className="mb-6">
-                <div className="flex justify-between items-end mb-2">
-                  <p className="text-lg font-black text-[#1B2A4A]">Training Fund Progress</p>
-                  <p className={`text-2xl font-black ${isCompleted ? "text-emerald-600" : "text-[#D97706]"}`}>{pct}%</p>
-                </div>
-                <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? "bg-emerald-500" : "bg-gradient-to-r from-[#D97706] to-[#F59E0B]"}`} style={{ width: `${pct}%` }} />
-                </div>
-                <div className="flex justify-between text-xs text-slate-400 mt-2">
-                  <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {profile.donorCount} supporters</span>
-                  {!isCompleted && <span>{100 - pct}% still needed</span>}
-                </div>
+                <GoalProgress dog={profile.dogName} showDonors onData={setLive} />
               </div>
 
               {!isCompleted ? (
@@ -276,7 +270,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
                 <div className="text-center py-4">
                   <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
                   <p className="font-black text-emerald-700 text-lg">Fully Funded & Completed!</p>
-                  <p className="text-sm text-slate-400 mt-1">Thank you to all {profile.donorCount} donors who made this possible.</p>
+                  <p className="text-sm text-slate-400 mt-1">Thank you to all {donorCount} donors who made this possible.</p>
                   <Link href="/ttrg/make-training-affordable" className="inline-flex items-center gap-2 mt-4 text-[#D97706] font-bold text-sm hover:underline">
                     Help Another Family <ArrowRight className="w-4 h-4" />
                   </Link>
@@ -315,7 +309,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
                       <div className="h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
                         <div className="h-full bg-[#D97706] rounded-full" style={{ width: `${opPct}%` }} />
                       </div>
-                      <p className="text-[10px] text-slate-400 mt-1">{opPct}% of ${op.goalAmount.toLocaleString()}</p>
+                      <p className="text-[10px] text-slate-400 mt-1">{opPct}% of their goal</p>
                     </div>
                   </Link>
                 );

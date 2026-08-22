@@ -16,19 +16,50 @@ export default function GoalProgress({
   animateFrom,
   compact = false,
   className = "",
-}: { dog?: string; animateFrom?: number; compact?: boolean; className?: string }) {
+  showDonors = false,
+  onData,
+}: {
+  dog?: string; animateFrom?: number; compact?: boolean; className?: string;
+  showDonors?: boolean;
+  onData?: (d: { percent: number; donors: number }) => void;
+}) {
   const [percent, setPercent] = useState<number | null>(null);
+  const [donors, setDonors] = useState(0);
   const [shown, setShown] = useState(animateFrom ?? 0);
   const raf = useRef(0);
+  const onDataRef = useRef(onData);
+  onDataRef.current = onData;
 
+  // Refresh on its own so a gift made moments ago shows up without anyone
+  // reloading: poll while the page is open, and re-check the instant the
+  // visitor returns to the tab (e.g. straight back from donating).
   useEffect(() => {
     let cancelled = false;
     const url = dog ? `/api/ttrg/progress?dog=${encodeURIComponent(dog)}` : "/api/ttrg/progress";
-    fetch(url)
+
+    const load = () => fetch(url, { cache: "no-store" })
       .then(r => r.json())
-      .then(d => { if (!cancelled && d.ok) setPercent(d.percent); })
+      .then(d => {
+        if (cancelled || !d.ok) return;
+        setPercent(d.percent);
+        setDonors(d.donors ?? 0);
+        onDataRef.current?.({ percent: d.percent, donors: d.donors ?? 0 });
+      })
       .catch(() => {});
-    return () => { cancelled = true; cancelAnimationFrame(raf.current); };
+
+    load();
+    const poll = setInterval(load, 20000);
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", load);
+
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", load);
+      cancelAnimationFrame(raf.current);
+    };
   }, [dog]);
 
   // Ease the bar up to its value so it always feels like movement.
@@ -92,6 +123,12 @@ export default function GoalProgress({
           </span>
         ))}
       </div>
+
+      {showDonors && donors > 0 && (
+        <p className="text-xs text-[#1B2A4A]/60 mt-2 font-medium">
+          {donors} {donors === 1 ? "supporter" : "supporters"} so far
+        </p>
+      )}
 
       {!compact && (
         <p className="text-xs text-[#1B2A4A]/50 mt-3 flex items-center gap-1.5">

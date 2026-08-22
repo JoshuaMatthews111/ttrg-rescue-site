@@ -27,10 +27,29 @@ export async function GET(req: NextRequest) {
     let goal = Number(settings?.default_goal) || 50000;
 
     if (dog) {
+      // A dog in the dogs table may carry its own target...
       const { data: dogRows } = await supabase
         .from("dogs").select("goal_amount").ilike("name", dog).limit(1);
       const dogGoal = Number(dogRows?.[0]?.goal_amount);
-      if (dogGoal > 0) goal = dogGoal;
+      if (dogGoal > 0) {
+        goal = dogGoal;
+      } else {
+        // ...otherwise the dog may belong to a family campaign, which keeps
+        // its goal on the campaign record. Staff set it in the admin panel.
+        try {
+          const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/site-data/family-profiles.json?t=${Date.now()}`;
+          const res = await fetch(url, { cache: "no-store" });
+          if (res.ok) {
+            const profiles = await res.json();
+            const match = Array.isArray(profiles)
+              ? profiles.find((p: { dogName?: string }) =>
+                  (p.dogName || "").toLowerCase() === dog.toLowerCase())
+              : null;
+            const famGoal = Number(match?.goalAmount);
+            if (famGoal > 0) goal = famGoal;
+          }
+        } catch { /* fall back to the site default */ }
+      }
     }
 
     // Raised is summed live rather than kept as a counter, so a voided or
@@ -46,10 +65,16 @@ export async function GET(req: NextRequest) {
     const exact = goal > 0 ? (raised / goal) * 100 : 0;
     const percent = Math.min(100, Math.round(exact * 10) / 10); // one decimal
 
+    // A count of supporters is safe to publish (it reveals no dollar figure)
+    // and it is what the campaign pages display.
+    const donors = (donations || [])
+      .filter(d => d.status === "completed" || d.status === "pending").length;
+
     return NextResponse.json({
       ok: true,
       dog: dog || null,
       percent,
+      donors,
       reached: MILESTONES.filter(m => percent >= m),
       nextMilestone: MILESTONES.find(m => percent < m) ?? null,
       milestones: MILESTONES,

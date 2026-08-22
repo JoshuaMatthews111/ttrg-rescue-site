@@ -7,6 +7,7 @@ import {
   CheckCircle, DollarSign, Star, Search, Filter,
 } from "lucide-react";
 import { getPublishedFamilyProfiles, syncFamilyProfilesFromCloud, type FamilyProfile } from "@/lib/admin-store";
+import GoalProgress from "@/components/ttrg/GoalProgress";
 
 export default function MakeTrainingAffordable() {
   const [profiles, setProfiles] = useState<FamilyProfile[]>([]);
@@ -65,7 +66,6 @@ export default function MakeTrainingAffordable() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filtered.map(profile => {
-                const pct = profile.goalAmount > 0 ? Math.min(100, Math.round((profile.raisedAmount / profile.goalAmount) * 100)) : 0;
                 const isCompleted = profile.status === "completed";
                 return (
                   <Link key={profile.id} href={`/ttrg/make-training-affordable/${profile.slug}`} className="group">
@@ -103,18 +103,10 @@ export default function MakeTrainingAffordable() {
                         <p className="text-[#D97706] text-xs font-bold uppercase tracking-wider mb-1">{profile.familyName}</p>
                         <p className="text-sm text-[#1B2A4A]/60 leading-relaxed line-clamp-2 mb-4">{profile.shortSummary}</p>
 
-                        {/* Progress bar */}
+                        {/* Progress — live percentage, milestones and supporter
+                            count. No dollar figures are shown to the public. */}
                         <div className="mb-4">
-                          <div className="flex justify-between text-xs mb-1.5">
-                            <span className="font-bold text-[#1B2A4A]">{pct}% funded</span>
-                            <span className="flex items-center gap-1 text-slate-400"><Users className="w-3 h-3" /> {profile.donorCount} supporters</span>
-                          </div>
-                          <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all duration-1000 ${isCompleted ? "bg-emerald-500" : "bg-gradient-to-r from-[#D97706] to-[#F59E0B]"}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
+                          <GoalProgress dog={profile.dogName} compact showDonors />
                         </div>
 
                         {/* CTA */}
