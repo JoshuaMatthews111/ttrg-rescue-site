@@ -406,7 +406,7 @@ export interface Donation {
   frequency: "one-time" | "monthly";
   dogName?: string;
   date: string;
-  status: "completed" | "failed" | "pending" | "voided" | "refunded";
+  status: "completed" | "failed" | "pending" | "archived";
   last4?: string;
   /* ── full donor details captured on the giving form ── */
   phone?: string;
@@ -420,6 +420,8 @@ export interface Donation {
   subscriptionId?: string;
   cardType?: string;
   notes?: string;
+  archiveReason?: string;
+  archivedAt?: string;
 }
 
 export interface Partner {

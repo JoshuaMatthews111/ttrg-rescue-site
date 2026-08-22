@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DollarSign, Heart, TrendingUp, Search, Building2, Repeat, Filter, Info } from "lucide-react";
+import { DollarSign, Heart, TrendingUp, Search, Building2, Repeat, Filter, Info, Archive } from "lucide-react";
 import { fetchDonations as fetchRealDonations } from "@/lib/admin-store";
 
 function InfoTip({ text }: { text: string }) {
@@ -29,7 +29,9 @@ interface Donation {
   category: string;
   dog?: string;
   date: string;
-  status: "paid" | "pending" | "voided" | "refunded";
+  status: "paid" | "pending" | "archived";
+  archiveReason?: string;
+  archivedAt?: string;
   receipt: boolean;
   /* full details captured on the giving form */
   phone?: string;
@@ -59,28 +61,38 @@ export default function DonationsPage() {
   const [filter, setFilter] = useState<DonationType | "all">("all");
   const [allDonations, setAllDonations] = useState<Donation[]>([]);
   const [viewing, setViewing] = useState<Donation | null>(null);
-  const [voiding, setVoiding] = useState(false);
-  const [voidMsg, setVoidMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [view, setView] = useState<"active" | "archived">("active");
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  const [archiveReason, setArchiveReason] = useState("Test donation");
 
-  async function voidDonation(d: Donation) {
-    if (!confirm(`Void the $${d.amount} donation from ${d.donor}?\n\nIf it hasn't settled yet it is cancelled outright; if it has, the card is refunded. Either way it stops counting in the totals. This cannot be undone.`)) return;
-    setVoiding(true); setVoidMsg(null);
+  async function archiveDonation(d: Donation, restore = false) {
+    if (!restore && !confirm(
+      `Remove ${d.donor}'s $${d.amount} donation from the totals?\n\nReason: ${archiveReason}\n\n` +
+      `This is bookkeeping only — it does NOT refund or void the payment at Authorize.net. ` +
+      `You can put it back at any time.`
+    )) return;
+
+    setBusy(true); setNotice(null);
     try {
-      const res = await fetch("/api/ttrg/void", {
+      const res = await fetch("/api/ttrg/archive-donation", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ donationId: d.id }),
+        body: JSON.stringify({ donationId: d.id, reason: archiveReason, restore }),
       });
       const data = await res.json();
       if (data.ok) {
-        const newStatus = data.action === "refunded" ? "refunded" as const : "voided" as const;
-        setVoidMsg({ ok: true, text: data.message });
-        setAllDonations(prev => prev.map(x => x.id === d.id ? { ...x, status: newStatus } : x));
-        setViewing(prev => prev ? { ...prev, status: newStatus } : prev);
+        const next = data.status === "archived" ? "archived" as const
+          : data.status === "completed" ? "paid" as const : "pending" as const;
+        setNotice({ ok: true, text: data.message });
+        setAllDonations(prev => prev.map(x => x.id === d.id
+          ? { ...x, status: next, archiveReason: restore ? "" : archiveReason }
+          : x));
+        setViewing(null);
       } else {
-        setVoidMsg({ ok: false, text: data.error || "Void failed." });
+        setNotice({ ok: false, text: data.error || "That didn't work." });
       }
-    } catch { setVoidMsg({ ok: false, text: "Could not reach the server." }); }
-    setVoiding(false);
+    } catch { setNotice({ ok: false, text: "Could not reach the server." }); }
+    setBusy(false);
   }
 
   useEffect(() => {
@@ -94,9 +106,10 @@ export default function DonationsPage() {
         category: r.dogName ? `Dog Sponsor – ${r.dogName}` : "General Donation",
         dog: r.dogName,
         date: r.date ? r.date.split("T")[0] : "",
-        status: (r.status === "voided" || r.status === "refunded")
-          ? (r.status as "voided" | "refunded")
+        status: r.status === "archived" ? "archived" as const
           : r.status === "completed" ? "paid" as const : "pending" as const,
+        archiveReason: r.archiveReason,
+        archivedAt: r.archivedAt,
         receipt: false,
         phone: r.phone, address: r.address, city: r.city, state: r.state, zip: r.zip,
         referralSource: r.referralSource, trainerName: r.trainerName,
@@ -108,18 +121,20 @@ export default function DonationsPage() {
   }, []);
 
   // Voided and refunded gifts stay visible but never count in the numbers.
-  const liveDonations = allDonations.filter(d => d.status === "paid" || d.status === "pending");
+  const liveDonations = allDonations.filter(d => d.status !== "archived");
+  const archivedDonations = allDonations.filter(d => d.status === "archived");
   const totalRaised = liveDonations.reduce((sum, d) => sum + d.amount, 0);
   const monthlyRecurring = liveDonations.filter(d => d.type === "monthly").reduce((sum, d) => sum + d.amount, 0);
   const oneTime = liveDonations.filter(d => d.type === "one_time").reduce((sum, d) => sum + d.amount, 0);
   const summary = [
-    { label: "Total Raised", value: `$${totalRaised.toLocaleString()}`, sub: `${allDonations.length} donations`, icon: DollarSign, color: "from-emerald-500 to-emerald-700" },
-    { label: "Monthly Recurring", value: `$${monthlyRecurring.toLocaleString()}`, sub: `${allDonations.filter(d => d.type === "monthly").length} active`, icon: Repeat, color: "from-blue-500 to-blue-700" },
-    { label: "One-Time Gifts", value: `$${oneTime.toLocaleString()}`, sub: `${allDonations.filter(d => d.type === "one_time").length} gifts`, icon: Heart, color: "from-red-500 to-red-700" },
-    { label: "Avg Donation", value: `$${allDonations.length > 0 ? Math.round(totalRaised / allDonations.length) : 0}`, sub: "Per donation", icon: TrendingUp, color: "from-violet-500 to-purple-700" },
+    { label: "Total Raised", value: `$${totalRaised.toLocaleString()}`, sub: `${liveDonations.length} donations`, icon: DollarSign, color: "from-emerald-500 to-emerald-700" },
+    { label: "Monthly Recurring", value: `$${monthlyRecurring.toLocaleString()}`, sub: `${liveDonations.filter(d => d.type === "monthly").length} active`, icon: Repeat, color: "from-blue-500 to-blue-700" },
+    { label: "One-Time Gifts", value: `$${oneTime.toLocaleString()}`, sub: `${liveDonations.filter(d => d.type === "one_time").length} gifts`, icon: Heart, color: "from-red-500 to-red-700" },
+    { label: "Avg Donation", value: `$${liveDonations.length > 0 ? Math.round(totalRaised / liveDonations.length) : 0}`, sub: "Per donation", icon: TrendingUp, color: "from-violet-500 to-purple-700" },
   ];
 
   const filtered = allDonations.filter((d) => {
+    if (view === "archived" ? d.status !== "archived" : d.status === "archived") return false;
     if (filter !== "all" && d.type !== filter) return false;
     if (search && !`${d.donor} ${d.email} ${d.category}`.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -130,9 +145,27 @@ export default function DonationsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">DONATIONS <InfoTip text="Shows all real donations processed through the site. Numbers reflect actual payments. Connect Authorize.net reporting API for historical transaction data." /></h1>
-          <p className="text-white/40 text-xs mt-1">Live donation data from the database — {allDonations.length} total records</p>
+          <p className="text-white/40 text-xs mt-1">
+            {view === "active"
+              ? `${liveDonations.length} donations counting toward your totals`
+              : `${archivedDonations.length} archived — not counted`}
+          </p>
+        </div>
+        <div className="flex rounded-lg overflow-hidden border border-white/10">
+          <button onClick={() => setView("active")} className={`px-4 py-2 text-xs font-bold ${view === "active" ? "bg-[#C41E2A] text-white" : "text-white/60 hover:bg-white/5"}`}>
+            Active ({liveDonations.length})
+          </button>
+          <button onClick={() => setView("archived")} className={`px-4 py-2 text-xs font-bold flex items-center gap-1.5 ${view === "archived" ? "bg-[#C41E2A] text-white" : "text-white/60 hover:bg-white/5"}`}>
+            <Archive className="w-3.5 h-3.5" /> Archived ({archivedDonations.length})
+          </button>
         </div>
       </div>
+
+      {notice && (
+        <div className={`rounded-xl px-4 py-3 mb-5 text-xs ${notice.ok ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300" : "bg-red-500/10 border border-red-500/30 text-red-300"}`}>
+          {notice.text}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         {summary.map((s) => (
@@ -185,9 +218,9 @@ export default function DonationsPage() {
               </div>
             </div>
             <div className="col-span-2 flex items-center gap-2">
-              <span className={`text-base font-black ${d.status === "voided" || d.status === "refunded" ? "text-white/30 line-through" : "text-emerald-400"}`}>${d.amount.toLocaleString()}</span>
-              {(d.status === "voided" || d.status === "refunded") && (
-                <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-white/10 text-white/50">{d.status}</span>
+              <span className={`text-base font-black ${d.status === "archived" ? "text-white/30 line-through" : "text-emerald-400"}`}>${d.amount.toLocaleString()}</span>
+              {d.status === "archived" && d.archiveReason && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-white/50">{d.archiveReason}</span>
               )}
             </div>
             <div className="col-span-2 flex items-center">
@@ -281,23 +314,41 @@ export default function DonationsPage() {
               </p>
             </div>
 
-            {voidMsg && (
-              <div className={`mx-5 mb-2 rounded-lg px-3 py-2 text-xs ${voidMsg.ok ? "bg-emerald-500/10 text-emerald-300" : "bg-red-500/10 text-red-300"}`}>
-                {voidMsg.text}
-              </div>
-            )}
-            <div className="flex items-center gap-3 p-5 border-t border-white/10">
-              {viewing.status === "voided" || viewing.status === "refunded" ? (
-                <span className="text-xs font-bold uppercase text-white/40">This donation is {viewing.status}</span>
+            <div className="p-5 border-t border-white/10 space-y-3">
+              {viewing.status === "archived" ? (
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex-1 min-w-[200px]">
+                    <p className="text-xs font-bold text-white/60">Archived{viewing.archiveReason ? ` — ${viewing.archiveReason}` : ""}</p>
+                    <p className="text-[10px] text-white/35 mt-0.5">Not counted in any total. The payment at Authorize.net was never changed.</p>
+                  </div>
+                  <button onClick={() => archiveDonation(viewing, true)} disabled={busy}
+                    className="border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 disabled:opacity-50 text-xs font-bold px-4 py-2 rounded-lg">
+                    {busy ? "Working…" : "Put Back in Totals"}
+                  </button>
+                </div>
               ) : (
-                <button onClick={() => voidDonation(viewing)} disabled={voiding}
-                  className="border border-red-500/40 text-red-300 hover:bg-red-500/10 disabled:opacity-50 text-xs font-bold px-4 py-2 rounded-lg">
-                  {voiding ? "Working…" : "Void This Payment"}
-                </button>
+                <div className="flex flex-wrap items-end gap-3">
+                  <div className="flex-1 min-w-[190px]">
+                    <label className="text-[10px] text-white/40 uppercase tracking-wider mb-1 block">Reason for archiving</label>
+                    <select value={archiveReason} onChange={e => setArchiveReason(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg bg-[#0b1524] border border-white/10 text-white text-xs">
+                      {["Test donation", "Refunded in Authorize.net", "Duplicate charge", "Chargeback", "Entered by mistake", "Other"]
+                        .map(r => <option key={r} value={r} className="bg-[#0b1524]">{r}</option>)}
+                    </select>
+                  </div>
+                  <button onClick={() => archiveDonation(viewing)} disabled={busy}
+                    className="border border-amber-500/40 text-amber-300 hover:bg-amber-500/10 disabled:opacity-50 text-xs font-bold px-4 py-2 rounded-lg">
+                    {busy ? "Working…" : "Archive — Remove from Totals"}
+                  </button>
+                </div>
               )}
-              <div className="ml-auto flex gap-3">
+              <p className="text-[10px] text-white/30 leading-relaxed">
+                Archiving is bookkeeping only. It does not refund or void the card payment —
+                do that in Authorize.net if money needs to go back.
+              </p>
+              <div className="flex justify-end gap-3 pt-1">
                 <a href={`mailto:${viewing.email}`} className="px-4 py-2 text-xs font-bold text-white/60 hover:text-white">Email Donor</a>
-                <button onClick={() => { setViewing(null); setVoidMsg(null); }} className="bg-[#C41E2A] hover:bg-[#A01825] text-white text-xs font-bold px-5 py-2 rounded-lg">Close</button>
+                <button onClick={() => { setViewing(null); setNotice(null); }} className="bg-[#C41E2A] hover:bg-[#A01825] text-white text-xs font-bold px-5 py-2 rounded-lg">Close</button>
               </div>
             </div>
           </div>

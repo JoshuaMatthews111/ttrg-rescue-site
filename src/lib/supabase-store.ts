@@ -346,6 +346,7 @@ export async function fetchDonations(): Promise<Donation[]> {
     referralSource: r.referral_source, trainerName: r.trainer_name,
     transactionId: r.transaction_id, subscriptionId: r.subscription_id,
     cardType: r.card_type, notes: r.notes,
+    archiveReason: r.archive_reason, archivedAt: r.archived_at,
   })) as Donation[];
 }
 
