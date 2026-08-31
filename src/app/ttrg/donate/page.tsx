@@ -71,14 +71,18 @@ function DonateInner() {
 
   const [selected, setSelected] = useState<number | null>(preAmount || 50);
   const [custom, setCustom] = useState("");
-  const [donationType, setDonationType] = useState<"monthly" | "once">("once");
+  // Arriving from the Rescue Mission sign-up (/ttrg/join) the person has
+  // already chosen a monthly level — don't make them pick it twice.
+  const [donationType, setDonationType] = useState<"monthly" | "once">(
+    params.get("type") === "monthly" ? "monthly" : "once",
+  );
   const [showCosts, setShowCosts] = useState(false);
 
   // Form fields
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [firstName, setFirstName] = useState(params.get("firstName") || "");
+  const [lastName, setLastName] = useState(params.get("lastName") || "");
+  const [email, setEmail] = useState(params.get("email") || "");
+  const [phone, setPhone] = useState(params.get("phone") || "");
   const [referralSource, setReferralSource] = useState("");
   const [trainerName, setTrainerName] = useState("");
   const [address, setAddress] = useState("");
@@ -105,6 +109,15 @@ function DonateInner() {
   }, [dogName]);
 
   const finalAmount = custom ? parseFloat(custom) : selected || 0;
+
+  // A Rescue Mission level that isn't one of the preset buttons must show up
+  // in the custom box, otherwise the amount they chose quietly changes.
+  useEffect(() => {
+    if (preAmount && preAmount > 0 && !donationOptions.some(o => o.amount === preAmount)) {
+      setSelected(null);
+      setCustom(String(preAmount));
+    }
+  }, [preAmount]);
 
   function scrollToForm() {
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });

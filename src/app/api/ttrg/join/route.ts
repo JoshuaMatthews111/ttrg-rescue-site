@@ -25,6 +25,11 @@ export async function POST(req: NextRequest) {
   const emailConsent = body.emailConsent === true;
   const smsConsent = body.smsConsent === true;
 
+  // Two ways in: updates only, or a monthly gift at a chosen level.
+  const membershipType = body.membershipType === "mission" ? "mission" : "updates";
+  const level = Number(body.membershipLevel);
+  const membershipLevel = membershipType === "mission" && level > 0 ? level : null;
+
   if (!firstName) return NextResponse.json({ ok: false, error: "Please enter your first name." }, { status: 400 });
   if (!email && !phone) return NextResponse.json({ ok: false, error: "Please give us an email address or a mobile number." }, { status: 400 });
   if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
@@ -43,6 +48,13 @@ export async function POST(req: NextRequest) {
   }
   if (emailConsent && !email) {
     return NextResponse.json({ ok: false, error: "Add your email address to receive emails." }, { status: 400 });
+  }
+  // A monthly supporter must pick an amount, and we need a receipt address.
+  if (membershipType === "mission" && !membershipLevel) {
+    return NextResponse.json({ ok: false, error: "Please choose a monthly amount." }, { status: 400 });
+  }
+  if (membershipType === "mission" && !email) {
+    return NextResponse.json({ ok: false, error: "We need your email address to send your monthly receipts." }, { status: 400 });
   }
 
   const now = new Date().toISOString();
@@ -81,6 +93,13 @@ export async function POST(req: NextRequest) {
     signed_up_at: now,
     status: "active",
     updated_at: now,
+
+    membership_type: membershipType,
+    membership_level: membershipLevel,
+    membership_started_at: membershipType === "mission" ? now : null,
+    // Only the completed charge flips this on — picking a level is an
+    // intention, not a payment.
+    membership_active: false,
   };
 
   const supabase = getServiceSupabase();
@@ -103,6 +122,14 @@ export async function POST(req: NextRequest) {
     // Don't downgrade an existing permission because a box was left unticked.
     if (!emailConsent) { delete update.email_consent; delete update.email_consent_at; }
     if (!smsConsent) { delete update.sms_consent; delete update.sms_consent_at; }
+    // Likewise, someone already giving monthly who comes back for updates
+    // must not be demoted out of the mission.
+    if (membershipType !== "mission") {
+      delete update.membership_type;
+      delete update.membership_level;
+      delete update.membership_started_at;
+    }
+    delete update.membership_active;
     const { error } = await supabase.from("contacts").update(update).eq("id", existingId);
     if (error) return NextResponse.json({ ok: false, error: "We couldn't save that — please try again." }, { status: 500 });
   } else {
@@ -115,5 +142,10 @@ export async function POST(req: NextRequest) {
     await supabase.from("signup_visits").update({ converted: true }).eq("visit_id", String(body.visitId));
   }
 
-  return NextResponse.json({ ok: true, returning: !!existingId });
+  return NextResponse.json({
+    ok: true,
+    returning: !!existingId,
+    membershipType,
+    membershipLevel,
+  });
 }
