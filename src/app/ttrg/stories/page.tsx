@@ -1,5 +1,7 @@
 "use client";
 
+import JoinInline from "@/components/ttrg/JoinInline";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Heart, Play, X, ChevronDown, PawPrint, ChevronRight, Sparkles, HandHeart, Users } from "lucide-react";
@@ -222,13 +224,7 @@ export default function StoriesPage() {
                 <p className="text-white/70 text-[11px]">Subscribe to get new rescue stories, updates, and heartwarming moments—straight to your inbox.</p>
               </div>
             </div>
-            <form className="flex items-center gap-2 w-full sm:w-auto" onSubmit={(e) => e.preventDefault()}>
-              <input type="text" placeholder="First Name" className="w-full sm:w-36 h-10 px-4 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder:text-white/50 focus:outline-none" />
-              <input type="email" placeholder="Email Address" className="w-full sm:w-44 h-10 px-4 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder:text-white/50 focus:outline-none" />
-              <button className="h-10 px-5 bg-white text-[#C41E2A] rounded-lg text-sm font-bold whitespace-nowrap flex items-center gap-1 hover:bg-white/90 transition-colors">
-                SUBSCRIBE <Heart className="w-3 h-3 fill-[#C41E2A]" />
-              </button>
-            </form>
+            <JoinInline source="stories-page" buttonLabel="SUBSCRIBE" />
           </div>
           <p className="text-white/40 text-[10px] text-center mt-2">We respect your privacy. You can unsubscribe at any time.</p>
         </div>

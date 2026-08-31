@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { Heart, MapPin, Phone, Mail } from "lucide-react";
+import JoinInline from "@/components/ttrg/JoinInline";
 
 function FacebookIcon({ className }: { className?: string }) {
   return (
@@ -11,9 +11,6 @@ function FacebookIcon({ className }: { className?: string }) {
 }
 
 export default function TTRGFooter() {
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-
   return (
     <>
       {/* Email Capture Bar */}
@@ -29,25 +26,7 @@ export default function TTRGFooter() {
                 <p className="text-white/50 text-xs">Join our rescue network and help save lives.</p>
               </div>
             </div>
-            <form className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="text"
-                placeholder="First Name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full sm:w-40 h-10 px-4 rounded-lg bg-white/10 border border-white/10 text-white text-sm placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/50"
-              />
-              <input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full sm:w-48 h-10 px-4 rounded-lg bg-white/10 border border-white/10 text-white text-sm placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/50"
-              />
-              <button className="h-10 px-6 bg-[#C41E2A] hover:bg-[#A01825] text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap">
-                JOIN THE RESCUE MISSION
-              </button>
-            </form>
+            <JoinInline source="footer" buttonLabel="JOIN THE RESCUE MISSION" />
             <p className="text-white/30 text-[10px] flex items-center gap-1">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
               We respect your privacy.
