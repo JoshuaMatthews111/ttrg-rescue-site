@@ -25,7 +25,7 @@ const FAMILY_STAGES = [
 function effectiveStage(p: FamilyProfile): number {
   if (p.currentStage && p.currentStage >= 1 && p.currentStage <= 5) return p.currentStage;
   if (p.status === "completed") return 5;
-  if (p.status === "funded" || (p.goalAmount > 0 && p.raisedAmount >= p.goalAmount)) return 4;
+  if (p.status === "funded") return 4;
   if (p.status === "published") return 4;
   return 3;
 }
@@ -41,6 +41,17 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
   // Live figures, so the page reflects real donations rather than the
   // hand-typed numbers stored on the campaign record.
   const [live, setLive] = useState<{ percent: number; donors: number } | null>(null);
+  // Progress for the "other families" cards, fetched in one batched request.
+  const [otherLive, setOtherLive] = useState<Record<string, { percent: number; donors: number }>>({});
+
+  useEffect(() => {
+    const names = otherProfiles.map(o => o.dogName).filter(Boolean);
+    if (names.length === 0) return;
+    fetch(`/api/ttrg/progress?dogs=${encodeURIComponent(names.join(","))}`, { cache: "no-store" })
+      .then(r => r.json())
+      .then(d => { if (d.ok) setOtherLive(d.byDog || {}); })
+      .catch(() => {});
+  }, [otherProfiles]);
 
   useEffect(() => {
     let active = true;
@@ -86,9 +97,8 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
         name: p.dogName,
         story: p.shortSummary || p.story,
         urgent: p.urgent,
-        goalAmount: p.goalAmount,
-        raisedAmount: p.raisedAmount,
-        donorCount: live?.donors ?? p.donorCount,
+        percent: live?.percent,
+        donorCount: live?.donors ?? 0,
         familyName: p.familyName,
         location: p.location,
         customTitle: p.shareTitle || familyStageTitle(p.dogName, p.familyName, effectiveStage(p)),
@@ -298,7 +308,7 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
             <h3 className="text-lg font-black text-[#1B2A4A] mb-4">Other Families That Need Help</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {otherProfiles.map(op => {
-                const opPct = op.goalAmount > 0 ? Math.min(100, Math.round((op.raisedAmount / op.goalAmount) * 100)) : 0;
+                const opPct = Math.round(otherLive[op.dogName]?.percent ?? 0);
                 return (
                   <Link key={op.id} href={`/ttrg/make-training-affordable/${op.slug}`} className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg transition-all">
                     <div className="h-32 overflow-hidden">

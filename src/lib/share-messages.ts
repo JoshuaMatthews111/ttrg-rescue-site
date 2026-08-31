@@ -51,8 +51,10 @@ export interface ShareSubject {
   name: string;          // dog's name
   story: string;         // short story / summary
   urgent?: boolean;
-  goalAmount?: number;
-  raisedAmount?: number;
+  /** Live progress toward the goal, as a percentage. Dollar figures are
+   *  deliberately absent — share text goes out in public and must never
+   *  reveal the goal or the amount raised. */
+  percent?: number;
   donorCount?: number;
   familyName?: string;   // set for family campaigns
   location?: string;
@@ -62,11 +64,8 @@ export interface ShareSubject {
 
 export function buildShareMessage(s: ShareSubject, url: string): { title: string; text: string; url: string } {
   const hook = firstSentence(s.story);
-  const pct = s.goalAmount && s.goalAmount > 0 && s.raisedAmount !== undefined
-    ? Math.min(100, Math.round((s.raisedAmount / s.goalAmount) * 100))
-    : undefined;
-  const remaining = s.goalAmount && s.raisedAmount !== undefined
-    ? Math.max(0, s.goalAmount - s.raisedAmount)
+  const pct = s.percent !== undefined
+    ? Math.min(100, Math.round(s.percent))
     : undefined;
 
   const templates: Array<() => string> = [
@@ -76,7 +75,7 @@ export function buildShareMessage(s: ShareSubject, url: string): { title: string
     () => `${s.name} needs help right now. ${hook} It only takes a minute to change this story — be the reason it ends well.`,
     // Goal proximity (people give more when a goal is nearly met)
     () => pct !== undefined && pct >= 40
-      ? `${s.name} is already ${pct}% of the way there — just $${remaining} to go. ${hook} Help close the gap?`
+      ? `${s.name} is already ${pct}% of the way there. ${hook} Help close the gap?`
       : `${s.name}'s journey is just beginning. ${hook} Early support matters most — be one of the first to stand with ${s.name}.`,
     // Social proof
     () => s.donorCount && s.donorCount > 3

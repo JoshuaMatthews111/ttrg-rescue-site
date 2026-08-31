@@ -68,11 +68,40 @@ export default function AdminFamilyProfiles() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [videoProgress, setVideoProgress] = useState("");
+  // Real money, summed live from the donations table. Nothing here is typed in
+  // by hand any more — a stored total is only correct until the next gift.
+  const [liveTotals, setLiveTotals] = useState<Record<string, { raised: number; donors: number }>>({});
 
   useEffect(() => {
     setProfiles(getFamilyProfiles());
     syncFamilyProfilesFromCloud().then(() => setProfiles(getFamilyProfiles()));
   }, []);
+
+  // One batched request for every campaign on screen, refreshed on a timer and
+  // whenever staff come back to the tab, so the office sees a donation land
+  // without anyone reloading the page.
+  useEffect(() => {
+    const names = profiles.map(p => p.dogName).filter(Boolean);
+    if (names.length === 0) return;
+    let cancelled = false;
+    const load = () =>
+      fetch(`/api/ttrg/goal?dogs=${encodeURIComponent(names.join(","))}`, { cache: "no-store" })
+        .then(r => r.json())
+        .then(d => { if (!cancelled && d.ok) setLiveTotals(d.byDog || {}); })
+        .catch(() => {});
+    load();
+    const poll = setInterval(load, 30000);
+    const onVisible = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      clearInterval(poll);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [profiles]);
+
+  /** Live raised/donors for a campaign, falling back to zero before it loads. */
+  const totalsFor = (dogName: string) => liveTotals[dogName] || { raised: 0, donors: 0 };
 
   const filtered = profiles.filter(p => {
     const q = search.toLowerCase();
@@ -204,7 +233,8 @@ export default function AdminFamilyProfiles() {
             </thead>
             <tbody>
               {filtered.map(p => {
-                const pct = p.goalAmount > 0 ? Math.min(100, Math.round((p.raisedAmount / p.goalAmount) * 100)) : 0;
+                const t = totalsFor(p.dogName);
+                const pct = p.goalAmount > 0 ? Math.min(100, Math.round((t.raised / p.goalAmount) * 100)) : 0;
                 return (
                   <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                     <td className="px-4 py-3">
@@ -226,13 +256,13 @@ export default function AdminFamilyProfiles() {
                     <td className="px-4 py-3">
                       <div className="w-32">
                         <div className="flex justify-between text-xs mb-1">
-                          <span className="font-bold text-[#1B2A4A]">${p.raisedAmount.toLocaleString()}</span>
+                          <span className="font-bold text-[#1B2A4A]">${t.raised.toLocaleString()}</span>
                           <span className="text-slate-400">of ${p.goalAmount.toLocaleString()}</span>
                         </div>
                         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div className={`h-full rounded-full ${pct >= 100 ? "bg-emerald-500" : "bg-[#D97706]"}`} style={{ width: `${pct}%` }} />
                         </div>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{pct}% · {p.donorCount} donors</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{pct}% · {t.donors} donor{t.donors === 1 ? "" : "s"} · live</p>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -424,14 +454,31 @@ export default function AdminFamilyProfiles() {
                 <div>
                   <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Goal Amount ($)</label>
                   <input type="number" value={editProfile.goalAmount} onChange={e => setEditProfile({ ...editProfile, goalAmount: Number(e.target.value) })} className={inp} />
+                  <p className="text-[10px] text-slate-400 mt-1">The only figure you set. Never shown to the public.</p>
+                </div>
+                {/* Raised and donors are counted from real donations, so there
+                    is nothing to type — and nothing that can drift out of date. */}
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Raised (Live)</label>
+                  <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100">
+                    <p className="text-lg font-black text-emerald-700">
+                      ${totalsFor(editProfile.dogName).raised.toLocaleString()}
+                    </p>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">Counted from actual donations</p>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Raised Amount ($)</label>
-                  <input type="number" value={editProfile.raisedAmount} onChange={e => setEditProfile({ ...editProfile, raisedAmount: Number(e.target.value) })} className={inp} />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Donor Count</label>
-                  <input type="number" value={editProfile.donorCount} onChange={e => setEditProfile({ ...editProfile, donorCount: Number(e.target.value) })} className={inp} />
+                  <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Donors (Live)</label>
+                  <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-100">
+                    <p className="text-lg font-black text-emerald-700">
+                      {totalsFor(editProfile.dogName).donors}
+                    </p>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {editProfile.goalAmount > 0
+                      ? `${Math.min(100, Math.round((totalsFor(editProfile.dogName).raised / editProfile.goalAmount) * 100))}% of goal`
+                      : "Set a goal to see progress"}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

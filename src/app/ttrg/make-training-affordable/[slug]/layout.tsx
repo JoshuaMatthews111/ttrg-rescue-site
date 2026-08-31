@@ -7,7 +7,7 @@ import { familyStageTitle } from "@/lib/share-messages";
 function stageOf(p: FamilyProfile): number {
   if (p.currentStage && p.currentStage >= 1 && p.currentStage <= 5) return p.currentStage;
   if (p.status === "completed") return 5;
-  if (p.status === "funded" || (p.goalAmount > 0 && p.raisedAmount >= p.goalAmount)) return 4;
+  if (p.status === "funded") return 4;
   if (p.status === "published") return 4;
   return 3;
 }
