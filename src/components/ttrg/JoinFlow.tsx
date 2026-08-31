@@ -73,6 +73,7 @@ export default function JoinFlow({
   const [smsConsent, setSmsConsent] = useState(true);
 
   const [attribution, setAttribution] = useState<Record<string, string>>({});
+  const [path, setPath] = useState<Path>("mission");
   const [busy, setBusy] = useState<Path | null>(null);
   const [error, setError] = useState("");
   const [joined, setJoined] = useState<Path | null>(null);
@@ -209,11 +210,47 @@ export default function JoinFlow({
   // ── The form: details, consent, and the two ways in ──────────────────
   const form = (
     <div className="space-y-4">
+      {/* The choice comes first, before any details are filled in. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <button
+          type="button" onClick={() => setPath("updates")} aria-pressed={path === "updates"}
+          className={`text-left p-4 rounded-2xl border-2 transition-all ${
+            path === "updates"
+              ? "border-[#1B2A4A] bg-[#1B2A4A] text-white shadow-lg"
+              : "border-slate-200 bg-white hover:border-slate-300"
+          }`}
+        >
+          <Mail className={`w-6 h-6 mb-2 ${path === "updates" ? "text-white" : "text-[#1B2A4A]"}`} />
+          <p className={`font-black ${path === "updates" ? "text-white" : "text-[#1B2A4A]"}`}>Stay in the Loop</p>
+          <p className={`text-xs mt-1 leading-relaxed ${path === "updates" ? "text-white/70" : "text-[#1B2A4A]/55"}`}>
+            Free. Texts and emails about the dogs — no donation needed.
+          </p>
+        </button>
+
+        <button
+          type="button" onClick={() => setPath("mission")} aria-pressed={path === "mission"}
+          className={`relative text-left p-4 rounded-2xl border-2 transition-all ${
+            path === "mission"
+              ? "border-[#C41E2A] bg-[#C41E2A] text-white shadow-lg"
+              : "border-slate-200 bg-white hover:border-slate-300"
+          }`}
+        >
+          <span className="absolute top-3 right-3 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F5B841] text-[#1B2A4A]">
+            Most impact
+          </span>
+          <Heart className={`w-6 h-6 mb-2 ${path === "mission" ? "text-white fill-white" : "text-[#C41E2A]"}`} />
+          <p className={`font-black ${path === "mission" ? "text-white" : "text-[#1B2A4A]"}`}>Join the Rescue Mission</p>
+          <p className={`text-xs mt-1 leading-relaxed ${path === "mission" ? "text-white/80" : "text-[#1B2A4A]/55"}`}>
+            Give monthly at a level you choose — plus all the updates.
+          </p>
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First Name *" className={inp} autoComplete="given-name" />
         <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last Name" className={inp} autoComplete="family-name" />
       </div>
-      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email Address" className={inp} autoComplete="email" inputMode="email" />
+      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={path === "mission" ? "Email Address *" : "Email Address"} className={inp} autoComplete="email" inputMode="email" />
       <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Mobile Number" className={inp} autoComplete="tel" inputMode="tel" />
       <div className="grid grid-cols-3 gap-3">
         <input value={city} onChange={e => setCity(e.target.value)} placeholder="City" className={`${inp} col-span-2`} autoComplete="address-level2" />
@@ -254,36 +291,17 @@ export default function JoinFlow({
 
       {error && <p className="text-sm text-[#C41E2A] font-medium">{error}</p>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button
-          type="button" onClick={() => join("updates")} disabled={busy !== null}
-          className="text-left p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-[#1B2A4A] hover:shadow-lg disabled:opacity-60 transition-all"
-        >
-          <Mail className="w-6 h-6 mb-2 text-[#1B2A4A]" />
-          <p className="font-black text-[#1B2A4A] flex items-center gap-2">
-            {busy === "updates" && <Loader2 className="w-4 h-4 animate-spin" />} Stay in the Loop
-          </p>
-          <p className="text-xs mt-1 leading-relaxed text-[#1B2A4A]/55">
-            Free. Texts and emails about the dogs — no donation needed.
-          </p>
-        </button>
-
-        <button
-          type="button" onClick={() => join("mission")} disabled={busy !== null}
-          className="relative text-left p-4 rounded-2xl border-2 border-[#C41E2A] bg-[#C41E2A] text-white hover:bg-[#A01825] hover:shadow-lg disabled:opacity-60 transition-all"
-        >
-          <span className="absolute top-3 right-3 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F5B841] text-[#1B2A4A]">
-            Most impact
-          </span>
-          <Heart className="w-6 h-6 mb-2 text-white fill-white" />
-          <p className="font-black text-white flex items-center gap-2">
-            {busy === "mission" && <Loader2 className="w-4 h-4 animate-spin" />} Join the Rescue Mission
-          </p>
-          <p className="text-xs mt-1 leading-relaxed text-white/80">
-            Give monthly at a level you choose — plus all the updates.
-          </p>
-        </button>
-      </div>
+      <button
+        type="button" onClick={() => join(path)} disabled={busy !== null}
+        className={`w-full text-white py-4 rounded-full font-black text-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-60 ${
+          path === "mission" ? "bg-[#C41E2A] hover:bg-[#A01825]" : "bg-[#1B2A4A] hover:bg-[#0F1B33]"
+        }`}
+      >
+        {busy ? <><Loader2 className="w-5 h-5 animate-spin" /> Joining…</>
+          : path === "mission"
+            ? <><Heart className="w-5 h-5 fill-white" /> Join the Rescue Mission</>
+            : <><Mail className="w-5 h-5" /> Stay in the Loop</>}
+      </button>
 
       <p className="text-[11px] text-center text-[#1B2A4A]/40 flex items-center justify-center gap-1.5">
         <ShieldCheck className="w-3.5 h-3.5" /> 501(c)(3) nonprofit · Your details stay with TTRG
