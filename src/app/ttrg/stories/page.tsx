@@ -1,6 +1,6 @@
 "use client";
 
-import JoinInline from "@/components/ttrg/JoinInline";
+import JoinLauncher from "@/components/ttrg/JoinLauncher";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -224,7 +224,7 @@ export default function StoriesPage() {
                 <p className="text-white/70 text-[11px]">Subscribe to get new rescue stories, updates, and heartwarming moments—straight to your inbox.</p>
               </div>
             </div>
-            <JoinInline source="stories-page" buttonLabel="SUBSCRIBE" />
+            <JoinLauncher source="stories-page" buttonLabel="SUBSCRIBE" />
           </div>
           <p className="text-white/40 text-[10px] text-center mt-2">We respect your privacy. You can unsubscribe at any time.</p>
         </div>

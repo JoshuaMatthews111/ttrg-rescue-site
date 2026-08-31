@@ -13,6 +13,7 @@ import {
 import { dogs as dogData } from "@/lib/dogs";
 import { fetchPublishedDogs, fetchTickerItems, subscribeToDogs, type TickerItem } from "@/lib/admin-store";
 import DogCard from "@/components/ttrg/DogCard";
+import JoinFlow from "@/components/ttrg/JoinFlow";
 
 /* ─── HERO DATA — single video, rotating headlines ─── */
 const heroVideo = "/ttrg/video/lo-walkin-web.mp4";
@@ -169,8 +170,8 @@ export default function TTRGHome() {
   const [popupEmail, setPopupEmail] = useState("");
   const [popupSubmitted, setPopupSubmitted] = useState(false);
   const [popupName, setPopupName] = useState("");
-  const [popupBusy, setPopupBusy] = useState(false);
   const [popupError, setPopupError] = useState("");
+  const [joinOpen, setJoinOpen] = useState(false);
   const [dogs, setDogs] = useState(dogData);
   const [boVideoOpen, setBoVideoOpen] = useState(false);
   const [tickerItems, setTickerItems] = useState<TickerItem[]>([]);
@@ -208,38 +209,18 @@ export default function TTRGHome() {
 
   const closePopup = () => { setPopupOpen(false); setPopupDismissed(true); sessionStorage.setItem("ttrg-popup-closed", "1"); };
 
-  // Actually record the sign-up. This pop-up previously showed "You're in the
-  // mission" without saving anything, so every address typed into it was lost.
-  async function submitPopup(e: React.FormEvent) {
+  // The welcome pop-up collects a name and email, then opens the same
+  // two-path window used on the join page — so the visitor chooses updates or
+  // a monthly gift, and consents, before anything is saved.
+  function submitPopup(e: React.FormEvent) {
     e.preventDefault();
     setPopupError("");
     if (!popupName.trim()) { setPopupError("Please add your first name."); return; }
-    setPopupBusy(true);
-    try {
-      const res = await fetch("/api/ttrg/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: popupName,
-          email: popupEmail,
-          emailConsent: true,
-          smsConsent: false,
-          membershipType: "updates",
-          consentText:
-            "I want to hear from Team Trainers Rescue Group about rescue dogs, training programs " +
-            "and ways to help. I understand I can stop at any time by clicking unsubscribe in an " +
-            "email. TTRG will never sell or share my information.",
-          source: "homepage-popup",
-          landingPage: window.location.href,
-          referrer: document.referrer || "",
-        }),
-      });
-      const data = await res.json();
-      if (data.ok) setPopupSubmitted(true);
-      else setPopupError(data.error || "Something went wrong. Please try again.");
-    } catch { setPopupError("We couldn't reach the server. Please try again."); }
-    setPopupBusy(false);
+    setPopupOpen(false);
+    setJoinOpen(true);
   }
+
+
 
   /* ─── Hero text rotation (video plays continuously) ─── */
   const [heroIdx, setHeroIdx] = useState(0);
@@ -725,6 +706,29 @@ export default function TTRGHome() {
         </div>
       )}
 
+      {/* ═══ THE TWO-PATH JOIN WINDOW ═══ */}
+      {joinOpen && (
+        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true">
+          <div className="bg-white rounded-3xl max-w-lg w-full my-auto p-6 sm:p-7 relative shadow-2xl">
+            <button onClick={() => setJoinOpen(false)} aria-label="Close" className="absolute top-4 right-4 text-slate-300 hover:text-slate-500 transition-colors z-10">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="text-center mb-5">
+              <h2 className="text-2xl font-black text-[#1B2A4A]">Join the Rescue Mission</h2>
+              <p className="text-sm text-[#1B2A4A]/55 mt-1 leading-relaxed">
+                Choose how you want to help — updates only, or a monthly gift.
+              </p>
+            </div>
+            <JoinFlow
+              inModal
+              source="homepage-popup"
+              prefill={{ firstName: popupName, email: popupEmail }}
+              onClose={() => setJoinOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* ═══ EMAIL POPUP ═══ */}
       {popupOpen && (
         <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
@@ -750,8 +754,8 @@ export default function TTRGHome() {
                   <form onSubmit={submitPopup} className="space-y-3">
                     <input type="text" required value={popupName} onChange={(e) => setPopupName(e.target.value)} placeholder="Your first name" className="w-full h-12 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/30 focus:border-[#C41E2A]" />
                     <input type="email" required value={popupEmail} onChange={(e) => setPopupEmail(e.target.value)} placeholder="Your email address" className="w-full h-12 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C41E2A]/30 focus:border-[#C41E2A]" />
-                    <button type="submit" disabled={popupBusy} className="w-full bg-[#C41E2A] hover:bg-[#A01825] disabled:opacity-60 text-white h-12 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
-                      <PawPrint className="w-4 h-4" /> {popupBusy ? "Joining…" : "Join the Rescue Mission"}
+                    <button type="submit" className="w-full bg-[#C41E2A] hover:bg-[#A01825] disabled:opacity-60 text-white h-12 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                      <PawPrint className="w-4 h-4" /> Join the Rescue Mission
                     </button>
                   </form>
                   {popupError && <p className="text-xs text-[#C41E2A] font-medium text-center mt-2">{popupError}</p>}
