@@ -122,8 +122,11 @@ export async function GET(req: NextRequest) {
       .filter(d => d.status === "completed" || d.status === "pending")
       .reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
 
-    const exact = goal > 0 ? (raised / goal) * 100 : 0;
-    const percent = Math.min(100, Math.round(exact * 10) / 10); // one decimal
+    // Same arithmetic and rounding order as the staff endpoint, so the office
+    // and the public bar can never disagree by a tenth of a percent.
+    const percent = goal > 0
+      ? Math.min(100, Math.round((raised / goal) * 1000) / 10)
+      : 0;
 
     // A count of supporters is safe to publish (it reveals no dollar figure)
     // and it is what the campaign pages display.
