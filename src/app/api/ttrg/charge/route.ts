@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { verifyCaptcha, tooManyAttempts } from "@/lib/captcha";
 
 const API_LOGIN_ID = process.env.AUTHNET_API_LOGIN_ID!;
 const TRANSACTION_KEY = process.env.AUTHNET_TRANSACTION_KEY!;
@@ -28,6 +29,7 @@ interface ChargeBody {
   referralSource?: string;
   trainerName?: string;
   description?: string;
+  altcha?: string;
 }
 
 function verifyTransactionSignature(
@@ -45,7 +47,24 @@ function verifyTransactionSignature(
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
+    if (tooManyAttempts(ip)) {
+      return NextResponse.json(
+        { success: false, error: "Too many payment attempts. Please wait a few minutes and try again." },
+        { status: 429 },
+      );
+    }
+
     const body: ChargeBody = await req.json();
+
+    // Nothing reaches the gateway without a solved CAPTCHA — this is what
+    // NMI Payments required to stop automated card testing.
+    if (!(await verifyCaptcha(body.altcha))) {
+      return NextResponse.json(
+        { success: false, error: "Please tick \"I'm not a robot\" before submitting your donation.", captcha: true },
+        { status: 403 },
+      );
+    }
 
     // Basic validation
     if (!body.amount || body.amount < 1) {

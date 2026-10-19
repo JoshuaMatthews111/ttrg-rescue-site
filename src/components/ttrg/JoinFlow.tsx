@@ -15,12 +15,13 @@
 // giving steps swap the contents in place rather than stacking a second
 // overlay on top.
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Heart, Check, Loader2, ShieldCheck, Mail, X, Sparkles, Lock,
 } from "lucide-react";
 import Confetti from "@/components/ttrg/Confetti";
+import CaptchaField, { type CaptchaHandle } from "@/components/ttrg/CaptchaField";
 
 const CONSENT_TEXT =
   "I want to hear from Team Trainers Rescue Group about rescue dogs, training programs and ways to help. " +
@@ -87,6 +88,8 @@ export default function JoinFlow({
   const [cvv, setCvv] = useState("");
   const [zip, setZip] = useState("");
   const [paying, setPaying] = useState(false);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const captchaRef = useRef<CaptchaHandle>(null);
   const [payError, setPayError] = useState("");
   const [paid, setPaid] = useState<{ amount: number; give: Give } | null>(null);
 
@@ -163,6 +166,7 @@ export default function JoinFlow({
     if (!(chosenAmount >= 1)) { setPayError("Please choose an amount."); return; }
     const exp = expiry.replace(/\D/g, "");
     if (exp.length !== 4) { setPayError("Please enter the expiry date as MM/YY."); return; }
+    if (!captcha) { setPayError("Please tick \"I'm not a robot\" first."); return; }
 
     setPaying(true);
     try {
@@ -179,6 +183,7 @@ export default function JoinFlow({
           zip: zip || undefined,
           donationType: give === "monthly" ? "monthly" : "once",
           referralSource: attribution.source || "Join page",
+          altcha: captcha,
         }),
       });
       const data = await res.json();
@@ -192,8 +197,12 @@ export default function JoinFlow({
         setPaid({ amount: chosenAmount, give });
       } else {
         setPayError(data.error || "That payment didn't go through. Please check the card details.");
+        captchaRef.current?.reset();
       }
-    } catch { setPayError("We couldn't reach the payment system. Please try again."); }
+    } catch {
+      setPayError("We couldn't reach the payment system. Please try again.");
+      captchaRef.current?.reset();
+    }
     setPaying(false);
   }
 
@@ -351,8 +360,9 @@ export default function JoinFlow({
             placeholder="ZIP" inputMode="numeric" autoComplete="postal-code" className={smallInp} />
         </div>
       </div>
+      <div className="mt-3"><CaptchaField ref={captchaRef} onChange={setCaptcha} /></div>
       {payError && <p className="text-sm text-[#C41E2A] font-medium mt-3">{payError}</p>}
-      <button type="submit" disabled={paying}
+      <button type="submit" disabled={paying || !captcha}
         className="w-full mt-4 inline-flex items-center justify-center gap-2 bg-[#C41E2A] hover:bg-[#A01825] disabled:opacity-60 text-white px-7 py-4 rounded-full font-black transition-colors">
         {paying ? <><Loader2 className="w-5 h-5 animate-spin" /> Processing…</>
           : <><Lock className="w-4 h-4" /> Give ${chosenAmount}{give === "monthly" ? "/month" : ""}</>}

@@ -12,6 +12,7 @@ import {
 import { addDonation } from "@/lib/admin-store";
 import GoalProgress from "@/components/ttrg/GoalProgress";
 import Confetti from "@/components/ttrg/Confetti";
+import CaptchaField, { type CaptchaHandle } from "@/components/ttrg/CaptchaField";
 
 const donationOptions = [
   { amount: 25, label: "Feed a Rescue", desc: "Provides nutritious meals for one dog for a week", icon: PawPrint },
@@ -97,6 +98,8 @@ function DonateInner() {
 
   // State
   const [processing, setProcessing] = useState(false);
+  const [captcha, setCaptcha] = useState<string | null>(null);
+  const captchaRef = useRef<CaptchaHandle>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<{ message: string; transactionId?: string; subscriptionId?: string } | null>(null);
   // Where the bar stood BEFORE this gift, so the thank-you can animate the
@@ -134,6 +137,7 @@ function DonateInner() {
     // Format expiry from MM/YY to MMYY
     const expClean = expiry.replace(/\D/g, "");
     if (expClean.length !== 4) { setError("Please enter a valid expiration date (MM/YY)."); return; }
+    if (!captcha) { setError("Please tick \"I'm not a robot\" below before donating."); return; }
 
     setProcessing(true);
     try {
@@ -157,6 +161,7 @@ function DonateInner() {
           dogName: dogName || undefined,
           referralSource: referralSource || undefined,
           trainerName: trainerName || undefined,
+          altcha: captcha,
         }),
       });
       const data = await res.json();
@@ -180,9 +185,11 @@ function DonateInner() {
         setSuccess(data);
       } else {
         setError(data.error || "Payment failed. Please try again.");
+        captchaRef.current?.reset();
       }
     } catch {
       setError("Network error. Please check your connection and try again.");
+      captchaRef.current?.reset();
     } finally {
       setProcessing(false);
     }
@@ -384,6 +391,8 @@ function DonateInner() {
               />
             </div>
 
+            <CaptchaField ref={captchaRef} onChange={setCaptcha} />
+
             {/* Error */}
             {error && (
               <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
@@ -395,7 +404,7 @@ function DonateInner() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={processing || finalAmount < 1}
+              disabled={processing || finalAmount < 1 || !captcha}
               className="w-full bg-[#C41E2A] hover:bg-[#A01825] disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl text-base font-bold transition-colors flex items-center justify-center gap-2"
             >
               {processing ? (
