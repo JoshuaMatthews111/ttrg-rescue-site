@@ -86,6 +86,8 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
     );
   }
 
+  const profileUpdates = updatesForProfile(profile.slug, profile.dogName);
+  const latestUpdate = profileUpdates[0];
   const pct = live ? Math.round(live.percent) : 0;
   const donorCount = live ? live.donors : 0;
   const isCompleted = profile.status === "completed";
@@ -144,10 +146,12 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
           </button>
         </div>
 
-        {/* Video plays right here at the top; photos are thumbnails below it */}
+        {/* Video plays right here at the top; photos are thumbnails below it.
+            When a follow-up update exists, the newest one takes the top spot
+            and the original campaign video moves down to "Where it began". */}
         <div className="mb-8">
           <MediaShowcase
-            videoUrl={profile.videoUrl}
+            videoUrl={latestUpdate?.videoUrl || profile.videoUrl}
             images={[profile.image, ...(profile.gallery || [])]}
             poster={profile.image}
             title={`${profile.dogName} — ${profile.familyName}`}
@@ -157,12 +161,36 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main content — second on mobile, left on desktop */}
           <div className="lg:col-span-7 order-2 lg:order-1 space-y-6">
-            {/* Follow-up video updates (src/lib/journey-updates.ts) */}
-            {updatesForProfile(profile.slug, profile.dogName).length > 0 && (
+            {/* Follow-up updates (src/lib/journey-updates.ts): the newest plays
+                at the top of the page, so this section shows the original
+                story video plus any older updates. */}
+            {latestUpdate && (
               <div id="updates" className="scroll-mt-28">
-                <h2 className="text-xl font-black text-[#1B2A4A] mb-4">{profile.dogName}&apos;s Follow-Up Updates</h2>
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 mb-6">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#C41E2A] mb-1">Now Playing Above · Follow-Up Update</p>
+                  <h2 className="text-xl font-black text-[#1B2A4A] mb-2">{latestUpdate.title}</h2>
+                  <p className="text-sm text-[#1B2A4A]/60 leading-relaxed">{latestUpdate.summary}</p>
+                </div>
+                <h2 className="text-xl font-black text-[#1B2A4A] mb-4">Where {profile.dogName}&apos;s Journey Began</h2>
                 <div className="space-y-6">
-                  {updatesForProfile(profile.slug, profile.dogName).map(u => (
+                  {profile.videoUrl && (
+                    <JourneyUpdateCard
+                      update={{
+                        id: "original",
+                        dogName: profile.dogName,
+                        profileSlug: profile.slug,
+                        familyName: profile.familyName,
+                        title: `Meet ${profile.familyName.replace(/^The\s+/i, "the ")}`,
+                        date: "",
+                        videoUrl: profile.videoUrl,
+                        summary: profile.shortSummary || `The original story of ${profile.dogName} and ${profile.familyName}.`,
+                      }}
+                      badge="Original Story"
+                      showDate={false}
+                      showProfileLink={false}
+                    />
+                  )}
+                  {profileUpdates.slice(1).map(u => (
                     <JourneyUpdateCard key={u.id} update={u} showProfileLink={false} />
                   ))}
                 </div>

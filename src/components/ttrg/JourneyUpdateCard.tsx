@@ -9,7 +9,7 @@ import { type JourneyUpdate, donateHref, profileHref, formatUpdateDate } from "@
  * One follow-up video update. `showProfileLink` is on for the Dog Journeys
  * page (routes visitors to the dog's profile) and off on the profile itself.
  */
-export default function JourneyUpdateCard({ update, showProfileLink = true }: { update: JourneyUpdate; showProfileLink?: boolean }) {
+export default function JourneyUpdateCard({ update, showProfileLink = true, badge = "Follow-Up Update", showDate = true }: { update: JourneyUpdate; showProfileLink?: boolean; badge?: string; showDate?: boolean }) {
   const embed = getVideoEmbedUrl(update.videoUrl);
   return (
     <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
@@ -30,11 +30,13 @@ export default function JourneyUpdateCard({ update, showProfileLink = true }: { 
       <div className="p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-2 mb-2">
           <span className="inline-flex items-center gap-1 bg-[#C41E2A]/10 text-[#C41E2A] text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
-            <Film className="w-3 h-3" /> Follow-Up Update
+            <Film className="w-3 h-3" /> {badge}
           </span>
-          <span className="inline-flex items-center gap-1 text-[11px] text-[#1B2A4A]/40">
-            <Calendar className="w-3 h-3" /> {formatUpdateDate(update.date)}
-          </span>
+          {showDate && update.date && (
+            <span className="inline-flex items-center gap-1 text-[11px] text-[#1B2A4A]/40">
+              <Calendar className="w-3 h-3" /> {formatUpdateDate(update.date)}
+            </span>
+          )}
         </div>
         <h3 className="text-lg sm:text-xl font-black text-[#1B2A4A] mb-2">{update.title}</h3>
         <p className="text-sm text-[#1B2A4A]/60 leading-relaxed mb-5">{update.summary}</p>
