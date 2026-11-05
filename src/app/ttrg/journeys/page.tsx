@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Heart, PawPrint, ChevronRight, Play, X, Shield, Stethoscope, Home, HandHeart, Repeat, Loader2 } from "lucide-react";
 import { fetchDogs } from "@/lib/admin-store";
 import type { AdminDog } from "@/lib/admin-store";
+import JourneyUpdateCard from "@/components/ttrg/JourneyUpdateCard";
+import { journeyUpdates } from "@/lib/journey-updates";
 
 const journeySteps = [
   { num: 1, label: "Rescue", icon: Shield, desc: "We save dogs from high-risk situations, shelters, and emergency surrenders — safety is their first step." },
@@ -158,6 +160,23 @@ export default function JourneysPage() {
           )}
         </div>
       </section>
+
+      {/* ═══ FOLLOW-UP UPDATES (src/lib/journey-updates.ts) ═══ */}
+      {journeyUpdates.length > 0 && (
+        <section id="updates" className="py-20 bg-white border-t border-slate-100 scroll-mt-28">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-10">
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#1B2A4A]">Follow-Up Updates</h2>
+              <p className="text-sm text-[#1B2A4A]/50 mt-1">See the progress your gifts are making possible.</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {[...journeyUpdates].sort((a, b) => b.date.localeCompare(a.date)).map(u => (
+                <JourneyUpdateCard key={u.id} update={u} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ═══ FEATURED STORY VIDEOS ═══ */}
       <section className="py-20 bg-[#FAFAF8]">

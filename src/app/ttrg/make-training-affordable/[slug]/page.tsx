@@ -12,6 +12,8 @@ import { getFamilyProfileBySlug, getPublishedFamilyProfiles, syncFamilyProfilesF
 import { shareSubject, familyStageTitle } from "@/lib/share-messages";
 import MediaShowcase from "@/components/ttrg/MediaShowcase";
 import GoalProgress from "@/components/ttrg/GoalProgress";
+import JourneyUpdateCard from "@/components/ttrg/JourneyUpdateCard";
+import { updatesForProfile } from "@/lib/journey-updates";
 
 const FAMILY_STAGES = [
   { title: "Family in Need", description: "A family with limited resources needs help keeping their dog." },
@@ -155,6 +157,18 @@ export default function FamilyProfileDetail({ params }: { params: Promise<{ slug
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Main content — second on mobile, left on desktop */}
           <div className="lg:col-span-7 order-2 lg:order-1 space-y-6">
+            {/* Follow-up video updates (src/lib/journey-updates.ts) */}
+            {updatesForProfile(profile.slug, profile.dogName).length > 0 && (
+              <div id="updates" className="scroll-mt-28">
+                <h2 className="text-xl font-black text-[#1B2A4A] mb-4">{profile.dogName}&apos;s Follow-Up Updates</h2>
+                <div className="space-y-6">
+                  {updatesForProfile(profile.slug, profile.dogName).map(u => (
+                    <JourneyUpdateCard key={u.id} update={u} showProfileLink={false} />
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Journey stages */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-100">
               <h2 className="text-xl font-black text-[#1B2A4A] mb-6">{profile.dogName}&apos;s Journey</h2>
